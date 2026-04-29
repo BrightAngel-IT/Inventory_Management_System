@@ -1,27 +1,40 @@
 const express = require('express');
 const router = express.Router();
+const { 
+  createPaymentWithAllocations, 
+  getPaymentDetails,
+  getUnpaidInvoices 
+} = require('../services/paymentAllocationService');
 const Payment = require('../models/Payment');
 
-// CRUD routes for Payment
-router.get('/', async (req, res) => {
-  const payments = await Payment.find().populate('invoice');
-  res.json(payments);
+router.get('/', async (req, res, next) => {
+  try {
+    const payments = await Payment.find().populate('customerId').populate('allocations.invoiceId');
+    res.json(payments);
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.post('/', async (req, res) => {
-  const payment = new Payment(req.body);
-  await payment.save();
-  res.json(payment);
+router.post('/', async (req, res, next) => {
+  try {
+    const payment = await createPaymentWithAllocations(req.body);
+    res.status(201).json(payment);
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.put('/:id', async (req, res) => {
-  const payment = await Payment.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.json(payment);
-});
-
-router.delete('/:id', async (req, res) => {
-  await Payment.findByIdAndDelete(req.params.id);
-  res.json({ success: true });
+router.get('/:id', async (req, res, next) => {
+  try {
+    const payment = await getPaymentDetails(req.params.id);
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+    res.json(payment);
+  } catch (error) {
+    next(error);
+  }
 });
 
 module.exports = router;

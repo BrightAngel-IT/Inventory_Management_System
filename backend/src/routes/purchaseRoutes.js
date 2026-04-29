@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Purchase = require('../models/Purchase');
+const SupplierInvoice = require('../models/SupplierInvoice');
 
 // CRUD routes for Purchase
 router.get('/', async (req, res) => {
@@ -11,6 +12,17 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const purchase = new Purchase(req.body);
   await purchase.save();
+
+  // Create Supplier Invoice
+  await SupplierInvoice.create({
+    invoiceNo: `PUR-${Date.now()}`,
+    supplierId: purchase.supplier,
+    date: purchase.date || new Date(),
+    totalAmount: purchase.total,
+    balanceAmount: purchase.total,
+    status: 'UNPAID'
+  });
+
   res.json(purchase);
 });
 

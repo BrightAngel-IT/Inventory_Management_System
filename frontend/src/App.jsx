@@ -21,12 +21,13 @@ import { CashierDashboard } from './pages/cashier/CashierDashboard'
 import { POS } from './pages/cashier/POS'
 import { Inventory } from './pages/admin/Inventory'
 import { Reports } from './pages/admin/Reports'
+import { ProductManager } from './pages/admin/ProductManager'
 import Suppliers from './pages/admin/Suppliers'
 import Customers from './pages/admin/Customers'
 import Purchases from './pages/admin/Purchases'
 import Invoices from './pages/admin/Invoices'
-import Payments from './pages/admin/Payments'
 import { Notifications } from './pages/admin/Notifications'
+import { PaymentAllocation } from './pages/admin/PaymentAllocation'
 
 // Utils
 import {
@@ -95,6 +96,7 @@ function App() {
   const [sales, setSales] = useState([])
   const [reportRange, setReportRange] = useState('weekly')
   const [report, setReport] = useState(null)
+  const [customers, setCustomers] = useState([])
   const [catalogQuery, setCatalogQuery] = useState('')
   const [inventoryQuery, setInventoryQuery] = useState('')
   const [onlyLowStock, setOnlyLowStock] = useState(false)
@@ -185,26 +187,30 @@ function App() {
     if (!session?.token) return
 
     let isCancelled = false
-    async function bootstrap() {
+    async function fetchAllData() {
       setPageLoading(true)
       try {
-        const [overviewResponse, productsResponse, salesResponse] = await Promise.all([
+        const [ov, pr, sl, rp, cs] = await Promise.all([
           api.get('/dashboard/overview', authConfig(session.token)),
           api.get('/products', authConfig(session.token)),
           api.get('/sales', authConfig(session.token)),
+          api.get('/reports/sales?range=' + reportRange, authConfig(session.token)),
+          api.get('/customers', authConfig(session.token)),
         ])
         if (isCancelled) return
-        setOverview(overviewResponse.data)
-        setProducts(productsResponse.data.products || [])
-        setSales(salesResponse.data.sales || [])
+        setOverview(ov.data)
+        setProducts(pr.data.products || [])
+        setSales(sl.data.sales || [])
+        setReport(rp.data)
+        setCustomers(cs.data)
       } catch (error) {
         if (isCancelled) return
-        onRequestError(error, 'Unable to load the dashboard.')
+        setNotice({ type: 'error', text: 'Cloud sync failed. Check connectivity.' })
       } finally {
         if (!isCancelled) setPageLoading(false)
       }
     }
-    bootstrap()
+    fetchAllData()
     return () => { isCancelled = true }
   }, [session?.token])
 
@@ -421,6 +427,20 @@ function App() {
     }
   }
 
+  async function handleProductDelete(productId) {
+    if (!window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) return
+    setBusyAction('product-delete')
+    try {
+      await api.delete(`/products/${productId}`, authConfig(session.token))
+      await refreshCoreData()
+      setNotice({ type: 'success', text: 'Product deleted successfully.' })
+    } catch (error) {
+      handleRequestError(error, 'Unable to delete product.')
+    } finally {
+      setBusyAction('')
+    }
+  }
+
   async function handleCheckout(event) {
     event.preventDefault()
     if (cart.length === 0) return
@@ -512,6 +532,7 @@ function App() {
             {activeView === 'pos' && (
               <POS
                 catalogProducts={catalogProducts}
+                customers={customers}
                 catalogQuery={catalogQuery}
                 setCatalogQuery={setCatalogQuery}
                 cart={cart}
@@ -542,13 +563,32 @@ function App() {
                 resetProductEditor={resetProductEditor}
                 editingProductId={editingProductId}
                 busyAction={busyAction}
+                startTransition={startTransition}
+                setActiveView={setActiveView}
+                handleProductDelete={handleProductDelete}
+              />
+            )}
+            {activeView === 'product-manager' && session.user.role === 'admin' && (
+              <ProductManager
+                productForm={productForm}
+                handleProductFormChange={handleProductFormChange}
+                handleProductSave={handleProductSave}
+                resetProductEditor={resetProductEditor}
+                editingProductId={editingProductId}
+                busyAction={busyAction}
               />
             )}
             {activeView === 'suppliers' && session.user.role === 'admin' && <Suppliers />}
             {activeView === 'customers' && session.user.role === 'admin' && <Customers />}
             {activeView === 'purchases' && session.user.role === 'admin' && <Purchases />}
             {activeView === 'invoices' && session.user.role === 'admin' && <Invoices />}
-            {activeView === 'payments' && session.user.role === 'admin' && <Payments />}
+            {activeView === 'payments' && session.user.role === 'admin' && (
+              <PaymentAllocation 
+                api={api} 
+                session={session} 
+                onNotice={setNotice} 
+              />
+            )}
             {activeView === 'notifications' && (
               <Notifications
                 notifications={notifications}

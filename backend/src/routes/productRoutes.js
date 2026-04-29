@@ -1,7 +1,7 @@
 const express = require('express');
 
 const { requireAuth, requireRole } = require('../middleware/auth');
-const { getProducts, saveProduct } = require('../services/store');
+const { getProducts, saveProduct, deleteProduct } = require('../services/store');
 
 const router = express.Router();
 
@@ -32,6 +32,15 @@ router.patch('/:id', requireAuth, requireRole(['admin']), async (req, res, next)
   try {
     const product = await saveProduct({ ...req.body, _id: req.params.id });
     res.json({ product, message: 'Product updated successfully.' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete('/:id', requireAuth, requireRole(['admin']), async (req, res, next) => {
+  try {
+    await deleteProduct(req.params.id);
+    res.json({ message: 'Product deleted successfully.' });
   } catch (error) {
     next(error);
   }

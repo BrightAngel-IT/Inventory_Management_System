@@ -11,6 +11,7 @@ const supplierRoutes = require('./routes/supplierRoutes');
 const customerRoutes = require('./routes/customerRoutes');
 const purchaseRoutes = require('./routes/purchaseRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
+const customerInvoiceRoutes = require('./routes/customerInvoiceRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 
 function createApp() {
@@ -41,6 +42,7 @@ function createApp() {
   app.use('/api/customers', customerRoutes);
   app.use('/api/purchases', purchaseRoutes);
   app.use('/api/invoices', invoiceRoutes);
+  app.use('/api/customer-invoices', customerInvoiceRoutes);
   app.use('/api/payments', paymentRoutes);
 
   app.use((error, _req, res, _next) => {

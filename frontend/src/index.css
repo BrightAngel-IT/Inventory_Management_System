@@ -640,3 +640,92 @@ p { margin: 0; line-height: 1.6; }
   .app-shell { grid-template-columns: 80px 1fr; }
   .sidebar span, .sidebar h2, .sidebar p, .sidebar .role-banner { display: none; }
 }
+
+/* Professional Table & High-Density UI */
+.professional-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  table-layout: auto;
+}
+
+.professional-table th {
+  padding: 20px 16px;
+  background: var(--bg-soft);
+  color: var(--text-soft);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+
+.professional-table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s ease;
+}
+
+.table-row-hover:hover td {
+  background: var(--bg-soft);
+}
+
+.icon-btn.ghost {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-soft);
+}
+
+.icon-btn.hover-accent:hover {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.icon-btn.hover-danger:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.animate-slide {
+  animation: slideIn 0.4s ease forwards;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.table-row-hover {
+  transition: all 0.2s ease;
+}
+
+.table-row-hover:hover {
+  background: var(--bg-soft);
+}
+
+.pill.success-soft { background: var(--success-soft); color: var(--success); }
+.pill.warning-soft { background: var(--warning-soft); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
+.pill.danger-soft { background: var(--danger-soft); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); }
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); }
+
+.input-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel-strong);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0 16px;
+}
+
+.input-with-icon .input {
+  border: none;
+  background: transparent;
+  padding: 12px 0;
+  flex: 1;
+}
+

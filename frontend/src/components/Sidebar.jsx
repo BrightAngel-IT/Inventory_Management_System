@@ -14,6 +14,7 @@ import {
   Clock,
   User,
   Bell,
+  Wallet,
 } from 'lucide-react'
 
 export function Sidebar({
@@ -33,11 +34,12 @@ export function Sidebar({
     { key: 'notifications', label: 'Notifications', icon: Bell, badge: unreadCount },
     ...(session?.user?.role === 'admin'
       ? [
+          { key: 'product-manager', label: 'Product Catalog', icon: Boxes },
           { key: 'suppliers', label: 'Suppliers', icon: User },
           { key: 'customers', label: 'Customers', icon: User },
           { key: 'purchases', label: 'Purchases', icon: Receipt },
           { key: 'invoices', label: 'Invoices', icon: Receipt },
-          { key: 'payments', label: 'Payments', icon: Receipt },
+          { key: 'payments', label: 'Settlements', icon: Wallet },
           { key: 'reports', label: 'Sales Reports', icon: BarChart3 },
         ]
       : []),

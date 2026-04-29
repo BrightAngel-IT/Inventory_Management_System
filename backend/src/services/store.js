@@ -7,6 +7,7 @@ const { buildDemoSales, demoProducts, demoUsers } = require('../data/demoData');
 const Product = require('../models/Product');
 const Sale = require('../models/Sale');
 const User = require('../models/User');
+const CustomerInvoice = require('../models/CustomerInvoice');
 
 const memoryStore = {
   ready: false,
@@ -370,6 +371,24 @@ async function saveProduct(payload) {
   };
 }
 
+async function deleteProduct(productId) {
+  if (isDatabaseReady()) {
+    const product = await Product.findByIdAndDelete(productId);
+    if (!product) {
+      throw createError('Product not found.', 404);
+    }
+    return { success: true };
+  }
+
+  const index = memoryStore.products.findIndex((p) => String(p._id) === String(productId));
+  if (index < 0) {
+    throw createError('Product not found.', 404);
+  }
+
+  memoryStore.products.splice(index, 1);
+  return { success: true };
+}
+
 async function createSale(payload) {
   const items = Array.isArray(payload.items) ? payload.items : [];
 
@@ -422,13 +441,14 @@ async function createSale(payload) {
   const salePayload = {
     invoiceNumber: makeInvoiceNumber(),
     customerName: String(payload.customerName || 'Walk-in customer').trim(),
-    paymentMethod: ['cash', 'card', 'upi', 'bank-transfer'].includes(payload.paymentMethod)
+    paymentMethod: ['cash', 'card', 'upi', 'bank-transfer', 'credit'].includes(payload.paymentMethod)
       ? payload.paymentMethod
       : 'cash',
     discount,
     tax,
     subtotal,
     total,
+    customerId: payload.customerId, // Optional customer link
     items: saleItems,
     cashier: {
       userId: payload.cashier._id,
@@ -444,6 +464,18 @@ async function createSale(payload) {
     for (const item of saleItems) {
       await Product.findByIdAndUpdate(item.productId, {
         $inc: { quantityInStock: -item.quantity },
+      });
+    }
+
+    // Create Invoice if Credit
+    if (salePayload.paymentMethod === 'credit' && salePayload.customerId) {
+      await CustomerInvoice.create({
+        invoiceNo: salePayload.invoiceNumber,
+        customerId: salePayload.customerId,
+        date: new Date(),
+        totalAmount: salePayload.total,
+        balanceAmount: salePayload.total,
+        status: 'UNPAID'
       });
     }
 
@@ -582,6 +614,7 @@ function getRangeStart(range) {
 async function getSalesReport(range = 'weekly') {
   const sales = await getAllSales();
   const products = await getAllProducts();
+  const productSalesMap = new Map();
   const validRange = ['daily', 'weekly', 'monthly', 'annual'].includes(range) ? range : 'weekly';
   const rangeStart = getRangeStart(validRange);
   const filteredSales = sales.filter((sale) => new Date(sale.createdAt) >= rangeStart);
@@ -610,8 +643,28 @@ async function getSalesReport(range = 'weekly') {
         category,
         formatCurrencyAmount((categoryBreakdownMap.get(category) || 0) + Number(item.lineTotal)),
       );
+
+      // Track top products
+      if (!productSalesMap.has(item.productId)) {
+        productSalesMap.set(item.productId, {
+          productId: item.productId,
+          name: item.name,
+          sku: item.sku,
+          image: item.image,
+          category,
+          quantity: 0,
+          revenue: 0
+        });
+      }
+      const entry = productSalesMap.get(item.productId);
+      entry.quantity += Number(item.quantity);
+      entry.revenue = formatCurrencyAmount(entry.revenue + Number(item.lineTotal));
     });
   });
+
+  const topSellingProducts = [...productSalesMap.values()]
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5);
 
   return {
     range: validRange,
@@ -629,7 +682,11 @@ async function getSalesReport(range = 'weekly') {
     categoryBreakdown: [...categoryBreakdownMap.entries()]
       .map(([label, value]) => ({ label, value }))
       .sort((left, right) => right.value - left.value),
-    recentSales: filteredSales.slice(0, 6),
+    topSellingProducts,
+    recentSales: filteredSales.slice(0, 10).map(sale => ({
+      ...sale,
+      cashierName: sale.cashierName || (sale.cashier?.name) || 'System'
+    })),
   };
 }
 
@@ -733,6 +790,7 @@ async function getOverviewData(user) {
 
 module.exports = {
   createSale,
+  deleteProduct,
   getOverviewData,
   getProducts,
   getRecentSales,

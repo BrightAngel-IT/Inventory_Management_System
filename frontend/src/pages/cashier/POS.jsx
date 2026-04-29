@@ -32,6 +32,7 @@ export function POS({
   cartTax,
   cartTotal,
   barcodeValue,
+  customers,
 }) {
   const [heldBills, setHeldBills] = useState([])
   const [activeCategory, setActiveCategory] = useState('All')
@@ -228,9 +229,30 @@ export function POS({
                   placeholder="Walk-in Customer"
                   value={checkoutForm.customerName}
                   onChange={(e) => setCheckoutForm({ ...checkoutForm, customerName: e.target.value })}
+                  list="customer-list"
                 />
+                <datalist id="customer-list">
+                  {customers.map(c => <option key={c._id} value={c.name} />)}
+                </datalist>
               </div>
             </label>
+
+            {checkoutForm.paymentMethod === 'credit' && (
+              <label className="field animate-fade">
+                <span>Link to Customer Profile</span>
+                <select 
+                  className="input"
+                  value={checkoutForm.customerId || ''}
+                  onChange={(e) => setCheckoutForm({ ...checkoutForm, customerId: e.target.value })}
+                  required
+                >
+                  <option value="">Select Account...</option>
+                  {customers.map(c => (
+                    <option key={c._id} value={c._id}>{c.name}</option>
+                  ))}
+                </select>
+              </label>
+            )}
 
             <div className="split-fields">
               <label className="field">
@@ -243,6 +265,7 @@ export function POS({
                   <option value="cash">Cash Payment</option>
                   <option value="card">Card Payment</option>
                   <option value="upi">UPI / Digital</option>
+                  <option value="credit">Store Credit / Account</option>
                 </select>
               </label>
               <label className="field">

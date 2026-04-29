@@ -1,13 +1,18 @@
-import React from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   BarChart3,
   Boxes,
   Receipt,
   ShoppingCart,
   Download,
+  Search,
   Filter,
   Calendar,
   FileText,
+  TrendingUp,
+  ArrowUpRight,
+  Package,
+  Layers
 } from 'lucide-react'
 import {
   ResponsiveContainer,
@@ -24,82 +29,117 @@ import { formatCurrency, formatDate } from '../../utils'
 
 export function Reports({ report, reportRange, setReportRange }) {
   const ranges = ['daily', 'weekly', 'monthly', 'annual']
+  const [ledgerSearch, setLedgerSearch] = useState('')
+
+  const filteredSales = useMemo(() => {
+    const sales = report?.recentSales || []
+    if (!ledgerSearch) return sales
+    return sales.filter(s => 
+      s.invoiceNumber.toLowerCase().includes(ledgerSearch.toLowerCase()) ||
+      (s.customerName || '').toLowerCase().includes(ledgerSearch.toLowerCase())
+    )
+  }, [report?.recentSales, ledgerSearch])
 
   return (
     <div className="stack gap-6 animate-fade">
-      <div className="between wrap-row panel p-6 glass-panel">
+      {/* Premium Header */}
+      <div className="between wrap-row panel p-6 glass-panel" style={{ borderLeft: '4px solid var(--accent)' }}>
         <div className="cluster gap-4">
-          <div className="icon-btn" style={{ background: 'var(--accent-soft)', color: 'var(--accent)', border: 'none' }}>
+          <div className="icon-btn" style={{ background: 'var(--accent-soft)', color: 'var(--accent)', border: 'none', width: '48px', height: '48px' }}>
             <BarChart3 size={24} />
           </div>
-          <SectionHeading
-            title="Revenue Intelligence"
-            text="Deep dive into financial performance and order velocity."
-          />
+          <div>
+            <SectionHeading
+              title="Revenue Intelligence"
+              text="Analyze financial velocity and inventory turnover."
+            />
+          </div>
         </div>
         <div className="cluster gap-3 wrap-row">
-          <div className="range-switcher">
+          <div className="range-switcher p-1" style={{ background: 'var(--bg-soft)', borderRadius: '14px', display: 'flex', gap: '4px' }}>
             {ranges.map((range) => (
               <button
                 key={range}
-                className={`range-btn ${reportRange === range ? 'active' : ''}`}
+                className={`btn ${reportRange === range ? 'btn-primary' : ''}`}
+                style={{ 
+                  padding: '8px 16px', 
+                  borderRadius: '10px', 
+                  fontSize: '0.8rem', 
+                  textTransform: 'capitalize',
+                  background: reportRange === range ? '' : 'transparent',
+                  color: reportRange === range ? '' : 'var(--text-soft)',
+                  border: 'none',
+                  boxShadow: reportRange === range ? 'var(--shadow)' : 'none'
+                }}
                 onClick={() => setReportRange(range)}
               >
                 {range}
               </button>
             ))}
           </div>
-          <button className="btn btn-secondary glow-on-hover">
+          <button className="btn btn-secondary glow-on-hover" style={{ borderRadius: '14px', padding: '10px 20px' }}>
             <Download size={18} />
-            Export Ledger
+            Export Data
           </button>
         </div>
       </div>
 
+      {/* High Density Metrics */}
       <div className="metric-grid">
         <MetricCard
           icon={ShoppingCart}
           title="Gross Revenue"
           value={formatCurrency(report?.summary.totalRevenue ?? 0)}
-          helper="Consolidated sales value"
+          helper="Total settled billing"
+          accent="var(--accent)"
         />
         <MetricCard
           icon={Receipt}
-          title="Order Volume"
+          title="Order Count"
           value={String(report?.summary.totalOrders ?? 0)}
-          helper="Total finalized invoices"
+          helper="Success transactions"
+          accent="var(--success)"
         />
         <MetricCard
-          icon={Boxes}
-          title="Inventory Flow"
+          icon={Package}
+          title="Units Moved"
           value={String(report?.summary.unitsSold ?? 0)}
-          helper="Individual items processed"
+          helper="Total items processed"
+          accent="var(--warning)"
         />
         <MetricCard
-          icon={BarChart3}
-          title="Ticket Average"
+          icon={TrendingUp}
+          title="Ticket Mean"
           value={formatCurrency(report?.summary.averageTicket ?? 0)}
-          helper="Mean value per transaction"
+          helper="Average bill value"
+          accent="var(--accent-strong)"
         />
       </div>
 
-      <div className="reports-grid">
-        <div className="panel p-6 stack gap-6 glass-panel">
-          <SectionHeading
-            title="Revenue Pacing"
-            text="Tracking growth across the timeline."
-          />
-          <div style={{ width: '100%', height: '320px', position: 'relative' }}>
+      <div className="grid-2 gap-6">
+        {/* Main Pacing Chart */}
+        <div className="panel p-6 stack gap-6 glass-panel" style={{ gridColumn: 'span 2' }}>
+          <div className="between">
+            <SectionHeading
+              title="Performance Pacing"
+              text="Historical revenue trends for the selected window."
+            />
+            <div className="pill success-soft cluster gap-2" style={{ fontSize: '0.7rem' }}>
+              <ArrowUpRight size={14} />
+              Real-time Sync
+            </div>
+          </div>
+          <div style={{ width: '100%', height: '380px', position: 'relative' }}>
             {report?.trend?.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={report.trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.5}/>
+                      <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.4}/>
                       <stop offset="95%" stopColor="var(--accent)" stopOpacity={0.0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.3} />
                   <XAxis 
                     dataKey="label" 
                     stroke="var(--muted)" 
@@ -117,11 +157,17 @@ export function Reports({ report, reportRange, setReportRange }) {
                     dx={-10}
                   />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: 'var(--panel-strong)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)' }}
+                    contentStyle={{ 
+                      backgroundColor: 'var(--panel-strong)', 
+                      border: '1px solid var(--border)', 
+                      borderRadius: '12px', 
+                      boxShadow: 'var(--shadow)',
+                      color: 'var(--text)' 
+                    }}
                     itemStyle={{ color: 'var(--accent-strong)', fontWeight: 700 }}
                     formatter={(value) => [formatCurrency(value), 'Revenue']}
                     labelStyle={{ color: 'var(--muted)', marginBottom: '4px' }}
-                    cursor={{ stroke: 'var(--border)', strokeWidth: 1, strokeDasharray: '4 4' }}
+                    cursor={{ stroke: 'var(--accent)', strokeWidth: 1, strokeDasharray: '4 4' }}
                   />
                   <Area 
                     type="monotone" 
@@ -134,67 +180,177 @@ export function Reports({ report, reportRange, setReportRange }) {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="empty-state compact" style={{ height: '100%', display: 'grid', placeItems: 'center' }}>No pacing data for this range.</div>
+              <div className="empty-state compact" style={{ height: '100%', display: 'grid', placeItems: 'center' }}>
+                <BarChart3 size={48} className="muted mb-3" style={{ opacity: 0.2 }} />
+                <p className="muted">No sufficient data for trend analysis.</p>
+              </div>
             )}
           </div>
         </div>
 
-        <div className="panel p-6 stack gap-6">
+        {/* Top Products Table */}
+        <div className="panel p-0 glass-panel overflow-hidden">
+          <div className="p-6">
+            <SectionHeading
+              title="High Velocity Items"
+              text="Top 5 products driving revenue."
+            />
+          </div>
+          <table className="w-full professional-table">
+            <thead>
+              <tr>
+                <th style={{ paddingLeft: '24px' }}>Product</th>
+                <th className="text-right">Units</th>
+                <th className="text-right" style={{ paddingRight: '24px' }}>Revenue</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(report?.topSellingProducts || []).map((p) => (
+                <tr key={p.productId} className="table-row-hover">
+                  <td style={{ paddingLeft: '24px' }}>
+                    <div className="cluster gap-3">
+                      <img src={p.image} alt="" style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'cover' }} />
+                      <div className="stack">
+                        <strong className="small">{p.name}</strong>
+                        <span className="muted x-small">{p.category}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="text-right"><span className="pill neutral small">{p.quantity}</span></td>
+                  <td className="text-right font-strong" style={{ paddingRight: '24px', color: 'var(--accent-strong)' }}>
+                    {formatCurrency(p.revenue)}
+                  </td>
+                </tr>
+              ))}
+              {(report?.topSellingProducts || []).length === 0 && (
+                <tr>
+                  <td colSpan="3" className="text-center p-8 muted small">No sales data recorded yet.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Breakdown Lists */}
+        <div className="panel p-6 stack gap-6 glass-panel">
           <SectionHeading
-            title="Revenue Distribution"
-            text="Insights by payment and category."
+            title="Distribution Mix"
+            text="Revenue weighted by category and channel."
           />
           <div className="stack gap-5">
             <div className="stack gap-3">
-              <span className="eyebrow" style={{ fontSize: '0.6rem' }}>By Channel</span>
-              {(report?.paymentBreakdown || []).map((entry) => (
-                <div key={entry.label} className="list-row p-3 panel-strong glow-on-hover" style={{ borderRadius: '12px', border: '1px solid var(--border)' }}>
-                  <strong className="font-strong">{entry.label}</strong>
-                  <span style={{ color: 'var(--accent-strong)' }}>{formatCurrency(entry.value)}</span>
-                </div>
-              ))}
+              <div className="cluster gap-2 mb-1">
+                <Layers size={14} className="accent-text" />
+                <span className="eyebrow" style={{ fontSize: '0.65rem' }}>Top Categories</span>
+              </div>
+              <div className="stack gap-2">
+                {(report?.categoryBreakdown || []).slice(0, 4).map((entry) => {
+                  const maxVal = Math.max(...(report?.categoryBreakdown || []).map(b => b.value));
+                  const percentage = (entry.value / maxVal) * 100;
+                  return (
+                    <div key={entry.label} className="stack gap-1">
+                      <div className="between x-small">
+                        <span className="font-strong">{entry.label}</span>
+                        <span className="muted">{formatCurrency(entry.value)}</span>
+                      </div>
+                      <div style={{ height: '6px', background: 'var(--bg-soft)', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${percentage}%`, background: 'var(--success)', borderRadius: '3px' }}></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="stack gap-3">
-              <span className="eyebrow" style={{ fontSize: '0.6rem' }}>By Category</span>
-              {(report?.categoryBreakdown || []).map((entry) => (
-                <div key={entry.label} className="list-row p-3 panel-strong glow-on-hover" style={{ borderRadius: '12px', border: '1px solid var(--border)' }}>
-                  <strong className="font-strong">{entry.label}</strong>
-                  <span style={{ color: 'var(--success)' }}>{formatCurrency(entry.value)}</span>
-                </div>
-              ))}
+            
+            <div className="stack gap-3 pt-4" style={{ borderTop: '1px dashed var(--border)' }}>
+              <div className="cluster gap-2 mb-1">
+                <ShoppingCart size={14} className="accent-text" />
+                <span className="eyebrow" style={{ fontSize: '0.65rem' }}>Payment Channels</span>
+              </div>
+              <div className="grid-2 gap-3">
+                {(report?.paymentBreakdown || []).map((entry) => (
+                  <div key={entry.label} className="panel-strong p-3 text-center" style={{ borderRadius: '12px', border: '1px solid var(--border)' }}>
+                    <p className="muted x-small uppercase font-strong mb-1">{entry.label}</p>
+                    <strong className="accent-text">{formatCurrency(entry.value)}</strong>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="panel p-6 stack gap-6 glass-panel" style={{ gridColumn: 'span 2' }}>
-          <SectionHeading
-            title="Chronological Ledger"
-            text="Complete transaction stream for this period."
-          />
-          <div className="stack gap-2" style={{ maxHeight: '480px', overflowY: 'auto' }}>
-            {(report?.recentSales || []).map((sale) => (
-              <div key={sale._id} className="list-row p-4 panel-strong glow-on-hover" style={{ borderRadius: '16px', border: '1px solid var(--border)' }}>
-                <div className="cluster gap-4">
-                  <div className="icon-btn small success-soft" style={{ border: 'none' }}>
-                    <FileText size={18} />
-                  </div>
-                  <div>
-                    <strong className="font-strong" style={{ fontSize: '1rem' }}>{sale.invoiceNumber}</strong>
-                    <p className="muted small">{sale.customerName || 'Walk-in'} · {sale.cashierName}</p>
-                  </div>
-                </div>
-                <div className="text-right stack gap-1">
-                  <strong style={{ color: 'var(--accent-strong)', fontSize: '1.1rem' }}>{formatCurrency(sale.total)}</strong>
-                  <div className="cluster gap-2 justify-end">
-                    <span className="pill neutral" style={{ fontSize: '0.6rem' }}>{sale.paymentMethod}</span>
-                    <p className="muted small">{formatDate(sale.createdAt)}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {(report?.recentSales || []).length === 0 && (
-              <div className="empty-state compact">No invoices in this range.</div>
-            )}
+        {/* Comprehensive Transaction Ledger */}
+        <div className="panel p-0 glass-panel overflow-hidden" style={{ gridColumn: 'span 2' }}>
+          <div className="between p-6 wrap-row gap-4">
+            <SectionHeading
+              title="Chronological Audit Trail"
+              text="Verifiable transaction stream for the active period."
+            />
+            <div className="input-shell compact" style={{ flexBasis: '300px' }}>
+              <Search size={16} className="muted" />
+              <input 
+                className="ghost-input x-small" 
+                placeholder="Search Invoice # or Customer..."
+                value={ledgerSearch}
+                onChange={(e) => setLedgerSearch(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <div className="overflow-auto" style={{ maxHeight: '500px' }}>
+            <table className="w-full professional-table">
+              <thead>
+                <tr>
+                  <th style={{ paddingLeft: '24px' }}>Transaction ID</th>
+                  <th>Customer Profile</th>
+                  <th>Payment Type</th>
+                  <th className="text-right">Valuation</th>
+                  <th className="text-right" style={{ paddingRight: '24px' }}>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSales.map((sale) => (
+                  <tr key={sale._id} className="table-row-hover">
+                    <td style={{ paddingLeft: '24px' }}>
+                      <div className="cluster gap-2">
+                        <FileText size={14} className="muted" />
+                        <strong className="small">{sale.invoiceNumber}</strong>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="stack">
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{sale.customerName || 'Walk-in Guest'}</span>
+                        {sale.cashierName && (
+                          <span className="muted x-small" style={{ opacity: 0.8 }}>Processed by {sale.cashierName}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <span className="pill neutral small" style={{ textTransform: 'capitalize', fontSize: '0.7rem' }}>{sale.paymentMethod}</span>
+                    </td>
+                    <td className="text-right">
+                      <strong className="accent-text" style={{ fontSize: '1rem' }}>{formatCurrency(sale.total)}</strong>
+                    </td>
+                    <td className="text-right" style={{ paddingRight: '24px' }}>
+                      <div className="stack align-end">
+                        <span className="small font-strong">{formatDate(sale.createdAt).split(',')[0]}</span>
+                        <span className="muted x-small">{formatDate(sale.createdAt).split(',')[1]}</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filteredSales.length === 0 && (
+                  <tr>
+                    <td colSpan="5" className="text-center p-12">
+                      <div className="stack align-center gap-3 muted">
+                        <Filter size={32} style={{ opacity: 0.3 }} />
+                        <p>No transactions match your search filter.</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
