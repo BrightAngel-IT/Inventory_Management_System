@@ -13,6 +13,7 @@ import {
   BarChart3,
   Clock,
   User,
+  Bell,
 } from 'lucide-react'
 
 export function Sidebar({
@@ -23,11 +24,13 @@ export function Sidebar({
   setTheme,
   handleLogout,
   startTransition,
+  unreadCount,
 }) {
   const navigation = [
     { key: 'overview', label: 'Overview', icon: LayoutDashboard },
     { key: 'pos', label: 'Billing Desk', icon: ShoppingCart },
     { key: 'inventory', label: 'Inventory', icon: Warehouse },
+    { key: 'notifications', label: 'Notifications', icon: Bell, badge: unreadCount },
     ...(session?.user?.role === 'admin'
       ? [
           { key: 'categories', label: 'Categories', icon: Boxes },
@@ -107,12 +110,19 @@ export function Sidebar({
                 )}
                 <button
                   type="button"
-                  className={`nav-link ${isActive ? 'active glow-on-hover' : ''}`}
+                  className={`nav-link between ${isActive ? 'active glow-on-hover' : ''}`}
                   style={isActive ? { borderLeft: '3px solid var(--accent-strong)', paddingLeft: '13px', background: 'linear-gradient(90deg, var(--accent-soft), transparent)', fontWeight: 600 } : { borderLeft: '3px solid transparent' }}
                   onClick={() => startTransition(() => setActiveView(item.key))}
                 >
-                  <Icon size={18} style={{ color: isActive ? 'var(--accent-strong)' : 'inherit' }} />
-                  <span>{item.label}</span>
+                  <div className="cluster gap-2">
+                    <Icon size={18} style={{ color: isActive ? 'var(--accent-strong)' : 'inherit' }} />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.badge > 0 && (
+                    <span className="pill" style={{ background: 'var(--danger)', color: 'white', padding: '2px 6px', fontSize: '0.65rem', minWidth: '20px', textAlign: 'center' }}>
+                      {item.badge}
+                    </span>
+                  )}
                 </button>
               </React.Fragment>
             )

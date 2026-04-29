@@ -28,6 +28,7 @@ import Locations from './pages/admin/Locations'
 import Purchases from './pages/admin/Purchases'
 import Invoices from './pages/admin/Invoices'
 import Payments from './pages/admin/Payments'
+import { Notifications } from './pages/admin/Notifications'
 
 // Utils
 import {
@@ -112,6 +113,41 @@ function App() {
   const [pageLoading, setPageLoading] = useState(false)
   const [busyAction, setBusyAction] = useState('')
   const [notice, setNotice] = useState(null)
+  
+  const [readNotifications, setReadNotifications] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('ims-read-notifications')) || []
+    } catch {
+      return []
+    }
+  })
+  const [hasShownPopup, setHasShownPopup] = useState(false)
+
+  const notifications = products
+    .filter((p) => p.quantityInStock <= p.reorderLevel)
+    .map((p) => ({
+      id: `low-stock-${p._id}`,
+      type: 'low_stock',
+      title: 'Low Stock Alert',
+      message: `${p.name} is low on stock (${p.quantityInStock} remaining). Reorder level is ${p.reorderLevel}.`,
+      read: readNotifications.includes(`low-stock-${p._id}`)
+    }))
+
+  const unreadCount = notifications.filter(n => !n.read).length
+
+  function markNotificationRead(id) {
+    setReadNotifications(prev => {
+      const next = [...prev, id]
+      localStorage.setItem('ims-read-notifications', JSON.stringify(next))
+      return next
+    })
+  }
+
+  function markAllNotificationsRead() {
+    const allIds = notifications.map(n => n.id)
+    setReadNotifications(allIds)
+    localStorage.setItem('ims-read-notifications', JSON.stringify(allIds))
+  }
 
   const deferredCatalogQuery = useDeferredValue(catalogQuery)
   const deferredInventoryQuery = useDeferredValue(inventoryQuery)
@@ -139,6 +175,13 @@ function App() {
     }, 4000)
     return () => window.clearTimeout(timer)
   }, [notice])
+
+  useEffect(() => {
+    if (products.length > 0 && unreadCount > 0 && !hasShownPopup) {
+      setNotice({ type: 'warning', text: `You have ${unreadCount} items low on stock. Check notifications.` })
+      setHasShownPopup(true)
+    }
+  }, [products.length, unreadCount, hasShownPopup])
 
   useEffect(() => {
     if (!session?.token) return
@@ -436,6 +479,7 @@ function App() {
         setTheme={setTheme}
         handleLogout={handleLogout}
         startTransition={startTransition}
+        unreadCount={unreadCount}
       />
 
       <main className="workspace stack gap-6">
@@ -509,6 +553,13 @@ function App() {
             {activeView === 'purchases' && session.user.role === 'admin' && <Purchases />}
             {activeView === 'invoices' && session.user.role === 'admin' && <Invoices />}
             {activeView === 'payments' && session.user.role === 'admin' && <Payments />}
+            {activeView === 'notifications' && (
+              <Notifications
+                notifications={notifications}
+                markNotificationRead={markNotificationRead}
+                markAllNotificationsRead={markAllNotificationsRead}
+              />
+            )}
             {activeView === 'reports' && session.user.role === 'admin' && (
               <Reports
                 report={report}

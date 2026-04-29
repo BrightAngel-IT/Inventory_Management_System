@@ -9,6 +9,15 @@ import {
   Calendar,
   FileText,
 } from 'lucide-react'
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid
+} from 'recharts'
 import { MetricCard } from '../../components/MetricCard'
 import { SectionHeading } from '../../components/SectionHeading'
 import { formatCurrency, formatDate } from '../../utils'
@@ -80,31 +89,52 @@ export function Reports({ report, reportRange, setReportRange }) {
             title="Revenue Pacing"
             text="Tracking growth across the timeline."
           />
-          <div className="stack gap-5">
-            {(report?.trend || []).map((point) => (
-              <div key={point.label} className="stack gap-2">
-                <div className="between">
-                  <div className="cluster gap-2">
-                    <Calendar size={12} className="muted" />
-                    <strong className="font-strong" style={{ fontSize: '0.9rem' }}>{point.label}</strong>
-                  </div>
-                  <span className="muted small">
-                    <strong style={{ color: 'var(--text)' }}>{formatCurrency(point.revenue)}</strong> · {point.orders} orders
-                  </span>
-                </div>
-                <div className="progress-track tall" style={{ height: '8px' }}>
-                  <div
-                    className="progress-bar"
-                    style={{
-                      width: `${report?.summary.totalRevenue ? (point.revenue / report.summary.totalRevenue) * 100 : 0}%`,
-                      background: 'linear-gradient(90deg, var(--accent), var(--accent-strong))'
-                    }}
+          <div style={{ width: '100%', height: '320px', position: 'relative' }}>
+            {report?.trend?.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={report.trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.5}/>
+                      <stop offset="95%" stopColor="var(--accent)" stopOpacity={0.0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
+                  <XAxis 
+                    dataKey="label" 
+                    stroke="var(--muted)" 
+                    fontSize={12} 
+                    tickLine={false} 
+                    axisLine={false} 
+                    dy={10} 
                   />
-                </div>
-              </div>
-            ))}
-            {(report?.trend || []).length === 0 && (
-              <div className="empty-state compact">No pacing data for this range.</div>
+                  <YAxis 
+                    stroke="var(--muted)" 
+                    fontSize={12} 
+                    tickLine={false} 
+                    axisLine={false} 
+                    tickFormatter={(value) => `$${value >= 1000 ? (value / 1000) + 'k' : value}`} 
+                    dx={-10}
+                  />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'var(--panel-strong)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)' }}
+                    itemStyle={{ color: 'var(--accent-strong)', fontWeight: 700 }}
+                    formatter={(value) => [formatCurrency(value), 'Revenue']}
+                    labelStyle={{ color: 'var(--muted)', marginBottom: '4px' }}
+                    cursor={{ stroke: 'var(--border)', strokeWidth: 1, strokeDasharray: '4 4' }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="var(--accent)" 
+                    strokeWidth={3} 
+                    fillOpacity={1} 
+                    fill="url(#colorRevenue)" 
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="empty-state compact" style={{ height: '100%', display: 'grid', placeItems: 'center' }}>No pacing data for this range.</div>
             )}
           </div>
         </div>
