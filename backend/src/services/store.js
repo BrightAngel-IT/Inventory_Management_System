@@ -1,0 +1,744 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
+
+const { isDatabaseReady } = require('../config/database');
+const { buildDemoSales, demoProducts, demoUsers } = require('../data/demoData');
+const Product = require('../models/Product');
+const Sale = require('../models/Sale');
+const User = require('../models/User');
+
+const memoryStore = {
+  ready: false,
+  users: [],
+  products: [],
+  sales: [],
+};
+
+function clonePlain(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function generateId() {
+  return new mongoose.Types.ObjectId().toString();
+}
+
+function createError(message, statusCode = 400) {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
+}
+
+function formatCurrencyAmount(value) {
+  return Number((value || 0).toFixed(2));
+}
+
+function sanitizeUser(user) {
+  return {
+    _id: String(user._id),
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    branch: user.branch,
+  };
+}
+
+function makeInvoiceNumber() {
+  const now = new Date();
+  const parts = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+  ];
+  const suffix = String(Date.now()).slice(-4);
+  return `INV-${parts.join('')}-${suffix}`;
+}
+
+function getRackLabel(rack) {
+  return `R${rack.rowNumber}-C${rack.columnNumber}-S${rack.shelfNumber}`;
+}
+
+function sameDay(dateA, dateB) {
+  const left = new Date(dateA);
+  const right = new Date(dateB);
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+  );
+}
+
+function startOfWeek(date) {
+  const clone = new Date(date);
+  const day = (clone.getDay() + 6) % 7;
+  clone.setDate(clone.getDate() - day);
+  clone.setHours(0, 0, 0, 0);
+  return clone;
+}
+
+function startOfMonth(date) {
+  const clone = new Date(date);
+  clone.setDate(1);
+  clone.setHours(0, 0, 0, 0);
+  return clone;
+}
+
+function startOfYear(date) {
+  const clone = new Date(date);
+  clone.setMonth(0, 1);
+  clone.setHours(0, 0, 0, 0);
+  return clone;
+}
+
+async function prepareSeedUsers() {
+  const prepared = [];
+
+  for (const user of demoUsers) {
+    prepared.push({
+      _id: generateId(),
+      name: user.name,
+      email: user.email.toLowerCase(),
+      passwordHash: await bcrypt.hash(user.password, 10),
+      role: user.role,
+      branch: user.branch,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  return prepared;
+}
+
+function prepareSeedProducts() {
+  return demoProducts.map((product) => ({
+    _id: generateId(),
+    ...clonePlain(product),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }));
+}
+
+async function seedMemoryStore() {
+  if (memoryStore.ready) {
+    return;
+  }
+
+  const users = await prepareSeedUsers();
+  const products = prepareSeedProducts();
+  const sales = buildDemoSales(products, users).map((sale) => ({
+    _id: generateId(),
+    ...sale,
+  }));
+
+  memoryStore.users = users;
+  memoryStore.products = products;
+  memoryStore.sales = sales;
+  memoryStore.ready = true;
+}
+
+async function seedDatabase() {
+  const [userCount, productCount, saleCount] = await Promise.all([
+    User.countDocuments(),
+    Product.countDocuments(),
+    Sale.countDocuments(),
+  ]);
+
+  if (userCount === 0) {
+    const users = await prepareSeedUsers();
+    await User.insertMany(users);
+  }
+
+  if (productCount === 0) {
+    const products = prepareSeedProducts();
+    await Product.insertMany(products);
+  }
+
+  if (saleCount === 0) {
+    const [users, products] = await Promise.all([User.find().lean(), Product.find().lean()]);
+    const sales = buildDemoSales(products, users);
+    await Sale.insertMany(sales);
+  }
+}
+
+async function initializeStore() {
+  if (isDatabaseReady()) {
+    await seedDatabase();
+    memoryStore.users = await User.find().lean();
+    return;
+  }
+
+  await seedMemoryStore();
+}
+
+function signToken(user) {
+  return jwt.sign(
+    {
+      id: user._id,
+      role: user.role,
+      email: user.email,
+    },
+    process.env.JWT_SECRET || 'inventory-demo-secret',
+    { expiresIn: '12h' },
+  );
+}
+
+async function loginUser(email, password) {
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const user = await findUserByEmail(normalizedEmail);
+
+  if (!user) {
+    throw createError('Invalid email or password.', 401);
+  }
+
+  const validPassword = await bcrypt.compare(password, user.passwordHash);
+
+  if (!validPassword) {
+    throw createError('Invalid email or password.', 401);
+  }
+
+  const sanitizedUser = sanitizeUser(user);
+
+  return {
+    token: signToken(sanitizedUser),
+    user: sanitizedUser,
+  };
+}
+
+async function findUserByEmail(email) {
+  if (isDatabaseReady()) {
+    return User.findOne({ email }).lean();
+  }
+
+  return memoryStore.users.find((user) => user.email === email) || null;
+}
+
+function getUserById(id) {
+  const user = memoryStore.users.find((item) => String(item._id) === String(id));
+  return user ? sanitizeUser(user) : null;
+}
+
+async function getAllUsersForLookup() {
+  if (isDatabaseReady()) {
+    const users = await User.find().lean();
+    memoryStore.users = users;
+    return users;
+  }
+
+  return memoryStore.users;
+}
+
+async function getAllProducts() {
+  if (isDatabaseReady()) {
+    const products = await Product.find().sort({ name: 1 }).lean();
+    return products.map((product) => ({
+      ...product,
+      _id: String(product._id),
+    }));
+  }
+
+  return clonePlain(memoryStore.products).sort((left, right) => left.name.localeCompare(right.name));
+}
+
+async function getAllSales() {
+  if (isDatabaseReady()) {
+    const sales = await Sale.find().sort({ createdAt: -1 }).lean();
+    return sales.map((sale) => ({
+      ...sale,
+      _id: String(sale._id),
+      items: sale.items.map((item) => ({
+        ...item,
+        productId: String(item.productId),
+      })),
+    }));
+  }
+
+  return clonePlain(memoryStore.sales).sort(
+    (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+  );
+}
+
+async function getProducts(filters = {}) {
+  const products = await getAllProducts();
+
+  return products
+    .filter((product) => {
+      const matchesQuery = filters.query
+        ? `${product.name} ${product.sku} ${product.barcode}`
+            .toLowerCase()
+            .includes(String(filters.query).toLowerCase())
+        : true;
+      const matchesCategory = filters.category
+        ? product.category.toLowerCase() === String(filters.category).toLowerCase()
+        : true;
+      const matchesStock = filters.lowStockOnly
+        ? Number(product.quantityInStock) <= Number(product.reorderLevel)
+        : true;
+
+      return matchesQuery && matchesCategory && matchesStock;
+    })
+    .map((product) => ({
+      ...product,
+      rackLabel: getRackLabel(product.rack),
+    }));
+}
+
+async function saveProduct(payload) {
+  const productData = {
+    name: String(payload.name || '').trim(),
+    sku: String(payload.sku || '').trim(),
+    barcode: String(payload.barcode || '').trim(),
+    category: String(payload.category || '').trim(),
+    description: String(payload.description || '').trim(),
+    unit: String(payload.unit || 'pcs').trim(),
+    price: Number(payload.price || 0),
+    costPrice: Number(payload.costPrice || 0),
+    quantityInStock: Number(payload.quantityInStock || 0),
+    reorderLevel: Number(payload.reorderLevel || 0),
+    rack: {
+      rowNumber: Number(payload.rack?.rowNumber || 1),
+      columnNumber: Number(payload.rack?.columnNumber || 1),
+      shelfNumber: Number(payload.rack?.shelfNumber || 1),
+    },
+    image: String(payload.image || '').trim(),
+  };
+
+  if (!productData.name || !productData.sku || !productData.barcode || !productData.category) {
+    throw createError('Name, SKU, barcode, and category are required.');
+  }
+
+  if (!productData.image) {
+    productData.image =
+      'data:image/svg+xml;charset=UTF-8,' +
+      encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480"><rect width="640" height="480" rx="40" fill="#dbeafe"/><text x="72" y="220" font-size="54" font-family="Segoe UI, Arial, sans-serif" fill="#0f172a">${productData.name}</text><text x="72" y="286" font-size="26" font-family="Segoe UI, Arial, sans-serif" fill="#475569">${productData.category}</text></svg>`,
+      );
+  }
+
+  if (isDatabaseReady()) {
+    if (payload._id) {
+      const product = await Product.findByIdAndUpdate(payload._id, productData, {
+        new: true,
+        runValidators: true,
+      }).lean();
+
+      if (!product) {
+        throw createError('Product not found.', 404);
+      }
+
+      return { ...product, _id: String(product._id), rackLabel: getRackLabel(product.rack) };
+    }
+
+    const product = await Product.create(productData);
+    const plainProduct = product.toObject();
+    return {
+      ...plainProduct,
+      _id: String(plainProduct._id),
+      rackLabel: getRackLabel(plainProduct.rack),
+    };
+  }
+
+  if (payload._id) {
+    const index = memoryStore.products.findIndex((product) => String(product._id) === String(payload._id));
+    if (index < 0) {
+      throw createError('Product not found.', 404);
+    }
+
+    memoryStore.products[index] = {
+      ...memoryStore.products[index],
+      ...productData,
+      updatedAt: new Date().toISOString(),
+    };
+
+    return {
+      ...clonePlain(memoryStore.products[index]),
+      rackLabel: getRackLabel(memoryStore.products[index].rack),
+    };
+  }
+
+  const newProduct = {
+    _id: generateId(),
+    ...productData,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  memoryStore.products.push(newProduct);
+
+  return {
+    ...clonePlain(newProduct),
+    rackLabel: getRackLabel(newProduct.rack),
+  };
+}
+
+async function createSale(payload) {
+  const items = Array.isArray(payload.items) ? payload.items : [];
+
+  if (items.length === 0) {
+    throw createError('Add at least one item before checking out.');
+  }
+
+  const products = await getAllProducts();
+  const productMap = new Map(products.map((product) => [String(product._id), product]));
+
+  const saleItems = items.map((item) => {
+    const product = productMap.get(String(item.productId));
+
+    if (!product) {
+      throw createError('One of the selected products was not found.', 404);
+    }
+
+    const quantity = Number(item.quantity || 0);
+
+    if (quantity <= 0) {
+      throw createError(`Quantity must be greater than zero for ${product.name}.`);
+    }
+
+    if (quantity > Number(product.quantityInStock)) {
+      throw createError(`Not enough stock for ${product.name}.`);
+    }
+
+    const lineTotal = formatCurrencyAmount(product.price * quantity);
+
+    return {
+      productId: product._id,
+      name: product.name,
+      sku: product.sku,
+      barcode: product.barcode,
+      price: product.price,
+      quantity,
+      lineTotal,
+      image: product.image,
+      rack: product.rack,
+    };
+  });
+
+  const subtotal = formatCurrencyAmount(
+    saleItems.reduce((sum, item) => sum + item.lineTotal, 0),
+  );
+  const discount = formatCurrencyAmount(Number(payload.discount || 0));
+  const tax = formatCurrencyAmount(Number(payload.tax || subtotal * 0.08));
+  const total = formatCurrencyAmount(subtotal + tax - discount);
+
+  const salePayload = {
+    invoiceNumber: makeInvoiceNumber(),
+    customerName: String(payload.customerName || 'Walk-in customer').trim(),
+    paymentMethod: ['cash', 'card', 'upi', 'bank-transfer'].includes(payload.paymentMethod)
+      ? payload.paymentMethod
+      : 'cash',
+    discount,
+    tax,
+    subtotal,
+    total,
+    items: saleItems,
+    cashier: {
+      userId: payload.cashier._id,
+      name: payload.cashier.name,
+      email: payload.cashier.email,
+    },
+    notes: String(payload.notes || '').trim(),
+  };
+
+  if (isDatabaseReady()) {
+    const sale = await Sale.create(salePayload);
+
+    for (const item of saleItems) {
+      await Product.findByIdAndUpdate(item.productId, {
+        $inc: { quantityInStock: -item.quantity },
+      });
+    }
+
+    const plainSale = sale.toObject();
+    return {
+      ...plainSale,
+      _id: String(plainSale._id),
+      items: plainSale.items.map((item) => ({
+        ...item,
+        productId: String(item.productId),
+      })),
+    };
+  }
+
+  saleItems.forEach((item) => {
+    const product = memoryStore.products.find((entry) => String(entry._id) === String(item.productId));
+    product.quantityInStock -= item.quantity;
+    product.updatedAt = new Date().toISOString();
+  });
+
+  const sale = {
+    _id: generateId(),
+    ...salePayload,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  memoryStore.sales.unshift(sale);
+
+  return clonePlain(sale);
+}
+
+async function getRecentSales(limit = 8) {
+  const sales = await getAllSales();
+  return sales.slice(0, limit);
+}
+
+function createTrend(range, sales) {
+  const now = new Date();
+  const buckets = [];
+
+  if (range === 'daily') {
+    for (let index = 6; index >= 0; index -= 1) {
+      const date = new Date(now);
+      date.setDate(now.getDate() - index);
+      date.setHours(0, 0, 0, 0);
+      buckets.push({
+        key: date.toISOString().slice(0, 10),
+        label: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        revenue: 0,
+        orders: 0,
+      });
+    }
+  } else if (range === 'weekly') {
+    for (let index = 7; index >= 0; index -= 1) {
+      const date = startOfWeek(now);
+      date.setDate(date.getDate() - index * 7);
+      buckets.push({
+        key: date.toISOString().slice(0, 10),
+        label: `W${date.toLocaleDateString('en-US', { month: 'short' })} ${date.getDate()}`,
+        revenue: 0,
+        orders: 0,
+      });
+    }
+  } else if (range === 'monthly') {
+    for (let index = 11; index >= 0; index -= 1) {
+      const date = new Date(now.getFullYear(), now.getMonth() - index, 1);
+      buckets.push({
+        key: `${date.getFullYear()}-${date.getMonth() + 1}`,
+        label: date.toLocaleDateString('en-US', { month: 'short' }),
+        revenue: 0,
+        orders: 0,
+      });
+    }
+  } else {
+    for (let index = 4; index >= 0; index -= 1) {
+      const year = now.getFullYear() - index;
+      buckets.push({
+        key: String(year),
+        label: String(year),
+        revenue: 0,
+        orders: 0,
+      });
+    }
+  }
+
+  const map = new Map(buckets.map((bucket) => [bucket.key, bucket]));
+
+  sales.forEach((sale) => {
+    const saleDate = new Date(sale.createdAt);
+    let key = '';
+
+    if (range === 'daily') {
+      key = saleDate.toISOString().slice(0, 10);
+    } else if (range === 'weekly') {
+      key = startOfWeek(saleDate).toISOString().slice(0, 10);
+    } else if (range === 'monthly') {
+      key = `${saleDate.getFullYear()}-${saleDate.getMonth() + 1}`;
+    } else {
+      key = String(saleDate.getFullYear());
+    }
+
+    const bucket = map.get(key);
+    if (bucket) {
+      bucket.revenue = formatCurrencyAmount(bucket.revenue + Number(sale.total));
+      bucket.orders += 1;
+    }
+  });
+
+  return buckets;
+}
+
+function getRangeStart(range) {
+  const now = new Date();
+
+  if (range === 'daily') {
+    const date = new Date(now);
+    date.setDate(now.getDate() - 6);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
+  if (range === 'weekly') {
+    const date = startOfWeek(now);
+    date.setDate(date.getDate() - 7 * 7);
+    return date;
+  }
+
+  if (range === 'monthly') {
+    return new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  }
+
+  return new Date(now.getFullYear() - 4, 0, 1);
+}
+
+async function getSalesReport(range = 'weekly') {
+  const sales = await getAllSales();
+  const products = await getAllProducts();
+  const validRange = ['daily', 'weekly', 'monthly', 'annual'].includes(range) ? range : 'weekly';
+  const rangeStart = getRangeStart(validRange);
+  const filteredSales = sales.filter((sale) => new Date(sale.createdAt) >= rangeStart);
+  const totalRevenue = formatCurrencyAmount(
+    filteredSales.reduce((sum, sale) => sum + Number(sale.total), 0),
+  );
+  const totalOrders = filteredSales.length;
+  const unitsSold = filteredSales.reduce(
+    (sum, sale) => sum + sale.items.reduce((itemSum, item) => itemSum + Number(item.quantity), 0),
+    0,
+  );
+
+  const paymentBreakdownMap = new Map();
+  const categoryBreakdownMap = new Map();
+
+  filteredSales.forEach((sale) => {
+    paymentBreakdownMap.set(
+      sale.paymentMethod,
+      formatCurrencyAmount((paymentBreakdownMap.get(sale.paymentMethod) || 0) + Number(sale.total)),
+    );
+
+    sale.items.forEach((item) => {
+      const product = products.find((entry) => String(entry._id) === String(item.productId));
+      const category = product?.category || 'Uncategorized';
+      categoryBreakdownMap.set(
+        category,
+        formatCurrencyAmount((categoryBreakdownMap.get(category) || 0) + Number(item.lineTotal)),
+      );
+    });
+  });
+
+  return {
+    range: validRange,
+    summary: {
+      totalRevenue,
+      totalOrders,
+      unitsSold,
+      averageTicket: totalOrders ? formatCurrencyAmount(totalRevenue / totalOrders) : 0,
+    },
+    trend: createTrend(validRange, filteredSales),
+    paymentBreakdown: [...paymentBreakdownMap.entries()].map(([label, value]) => ({
+      label,
+      value,
+    })),
+    categoryBreakdown: [...categoryBreakdownMap.entries()]
+      .map(([label, value]) => ({ label, value }))
+      .sort((left, right) => right.value - left.value),
+    recentSales: filteredSales.slice(0, 6),
+  };
+}
+
+async function getOverviewData(user) {
+  const [products, sales, users] = await Promise.all([
+    getAllProducts(),
+    getAllSales(),
+    getAllUsersForLookup(),
+  ]);
+
+  const now = new Date();
+  const weekStart = startOfWeek(now);
+  const monthStart = startOfMonth(now);
+  const yearStart = startOfYear(now);
+
+  const inventoryValue = formatCurrencyAmount(
+    products.reduce((sum, product) => sum + Number(product.quantityInStock) * Number(product.price), 0),
+  );
+  const stockCost = formatCurrencyAmount(
+    products.reduce((sum, product) => sum + Number(product.quantityInStock) * Number(product.costPrice), 0),
+  );
+  const lowStockProducts = products
+    .filter((product) => Number(product.quantityInStock) <= Number(product.reorderLevel))
+    .sort((left, right) => left.quantityInStock - right.quantityInStock)
+    .map((product) => ({
+      ...product,
+      rackLabel: getRackLabel(product.rack),
+    }));
+
+  const salesToday = sales.filter((sale) => sameDay(sale.createdAt, now));
+  const salesThisWeek = sales.filter((sale) => new Date(sale.createdAt) >= weekStart);
+  const salesThisMonth = sales.filter((sale) => new Date(sale.createdAt) >= monthStart);
+  const salesThisYear = sales.filter((sale) => new Date(sale.createdAt) >= yearStart);
+
+  const rackSummaryMap = new Map();
+  products.forEach((product) => {
+    const key = `Row ${product.rack.rowNumber}`;
+    if (!rackSummaryMap.has(key)) {
+      rackSummaryMap.set(key, { row: key, items: 0, units: 0 });
+    }
+    const entry = rackSummaryMap.get(key);
+    entry.items += 1;
+    entry.units += Number(product.quantityInStock);
+  });
+
+  const productSalesMap = new Map();
+  sales.forEach((sale) => {
+    sale.items.forEach((item) => {
+      if (!productSalesMap.has(item.productId)) {
+        productSalesMap.set(item.productId, {
+          productId: item.productId,
+          name: item.name,
+          quantity: 0,
+          revenue: 0,
+          image: item.image,
+          rackLabel: getRackLabel(item.rack),
+        });
+      }
+      const entry = productSalesMap.get(item.productId);
+      entry.quantity += Number(item.quantity);
+      entry.revenue = formatCurrencyAmount(entry.revenue + Number(item.lineTotal));
+    });
+  });
+
+  const recentSales = sales.slice(0, 6).map((sale) => ({
+    ...sale,
+    cashierName: sale.cashier?.name || 'Unknown cashier',
+  }));
+
+  return {
+    user: sanitizeUser(user),
+    metrics: {
+      totalProducts: products.length,
+      lowStockCount: lowStockProducts.length,
+      inventoryValue,
+      stockCost,
+      revenueToday: formatCurrencyAmount(salesToday.reduce((sum, sale) => sum + Number(sale.total), 0)),
+      revenueWeekly: formatCurrencyAmount(
+        salesThisWeek.reduce((sum, sale) => sum + Number(sale.total), 0),
+      ),
+      revenueMonthly: formatCurrencyAmount(
+        salesThisMonth.reduce((sum, sale) => sum + Number(sale.total), 0),
+      ),
+      revenueYearly: formatCurrencyAmount(
+        salesThisYear.reduce((sum, sale) => sum + Number(sale.total), 0),
+      ),
+      activeUsers: users.length,
+    },
+    lowStockProducts,
+    products: products.map((product) => ({
+      ...product,
+      rackLabel: getRackLabel(product.rack),
+    })),
+    recentSales,
+    topProducts: [...productSalesMap.values()]
+      .sort((left, right) => right.quantity - left.quantity)
+      .slice(0, 5),
+    rackSummary: [...rackSummaryMap.values()],
+  };
+}
+
+module.exports = {
+  createSale,
+  getOverviewData,
+  getProducts,
+  getRecentSales,
+  getSalesReport,
+  getUserById,
+  initializeStore,
+  loginUser,
+  saveProduct,
+};
