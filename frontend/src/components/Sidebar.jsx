@@ -33,10 +33,8 @@ export function Sidebar({
     { key: 'notifications', label: 'Notifications', icon: Bell, badge: unreadCount },
     ...(session?.user?.role === 'admin'
       ? [
-          { key: 'categories', label: 'Categories', icon: Boxes },
           { key: 'suppliers', label: 'Suppliers', icon: User },
           { key: 'customers', label: 'Customers', icon: User },
-          { key: 'locations', label: 'Locations', icon: Warehouse },
           { key: 'purchases', label: 'Purchases', icon: Receipt },
           { key: 'invoices', label: 'Invoices', icon: Receipt },
           { key: 'payments', label: 'Payments', icon: Receipt },

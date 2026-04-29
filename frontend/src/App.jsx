@@ -21,10 +21,8 @@ import { CashierDashboard } from './pages/cashier/CashierDashboard'
 import { POS } from './pages/cashier/POS'
 import { Inventory } from './pages/admin/Inventory'
 import { Reports } from './pages/admin/Reports'
-import Categories from './pages/admin/Categories'
 import Suppliers from './pages/admin/Suppliers'
 import Customers from './pages/admin/Customers'
-import Locations from './pages/admin/Locations'
 import Purchases from './pages/admin/Purchases'
 import Invoices from './pages/admin/Invoices'
 import Payments from './pages/admin/Payments'
@@ -230,13 +228,13 @@ function App() {
   }, [reportRange, session?.token, session?.user?.role])
 
   const catalogProducts = products.filter((product) =>
-    `\${product.name} \${product.barcode} \${product.sku} \${product.category}`
+    `${product.name} ${product.barcode} ${product.sku} ${product.category}`
       .toLowerCase()
       .includes(deferredCatalogQuery.toLowerCase()),
   )
 
   const inventoryProducts = products.filter((product) => {
-    const matchesSearch = `\${product.name} \${product.barcode} \${product.sku} \${product.rackLabel}`
+    const matchesSearch = `${product.name} ${product.barcode} ${product.sku} ${product.category} ${product.rackLabel}`
       .toLowerCase()
       .includes(deferredInventoryQuery.toLowerCase())
     if (!onlyLowStock) return matchesSearch
@@ -546,10 +544,8 @@ function App() {
                 busyAction={busyAction}
               />
             )}
-            {activeView === 'categories' && session.user.role === 'admin' && <Categories />}
             {activeView === 'suppliers' && session.user.role === 'admin' && <Suppliers />}
             {activeView === 'customers' && session.user.role === 'admin' && <Customers />}
-            {activeView === 'locations' && session.user.role === 'admin' && <Locations />}
             {activeView === 'purchases' && session.user.role === 'admin' && <Purchases />}
             {activeView === 'invoices' && session.user.role === 'admin' && <Invoices />}
             {activeView === 'payments' && session.user.role === 'admin' && <Payments />}
