@@ -1,14 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { getUnpaidInvoices } = require('../services/paymentAllocationService');
+const CustomerInvoice = require('../models/CustomerInvoice');
 
-router.get('/:customerId', async (req, res, next) => {
-  try {
-    const invoices = await getUnpaidInvoices(req.params.customerId);
-    res.json(invoices);
-  } catch (error) {
-    next(error);
-  }
+router.get('/', async (req, res) => {
+  const invoices = await CustomerInvoice.find().populate('customerId').sort({ date: -1 });
+  res.json(invoices);
+});
+
+router.get('/customer/:customerId', async (req, res) => {
+  const invoices = await CustomerInvoice.find({ customerId: req.params.customerId }).sort({ date: -1 });
+  res.json(invoices);
 });
 
 module.exports = router;
