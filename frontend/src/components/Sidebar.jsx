@@ -19,19 +19,11 @@ export function Sidebar({
   session,
   activeView,
   setActiveView,
-  barcodeValue,
   theme,
   setTheme,
   handleLogout,
   startTransition,
 }) {
-  const [time, setTime] = useState(new Date())
-
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000)
-    return () => clearInterval(timer)
-  }, [])
-
   const navigation = [
     { key: 'overview', label: 'Overview', icon: LayoutDashboard },
     { key: 'pos', label: 'Billing Desk', icon: ShoppingCart },
@@ -51,94 +43,111 @@ export function Sidebar({
   ]
 
   return (
-    <aside className="sidebar panel glass-panel">
-      <div className="stack gap-6">
-        <div className="brand-lockup">
-          <div className="brand-badge glow-on-hover">
-            <Boxes size={24} />
+    <aside className="sidebar panel glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+      {/* Fixed Header */}
+      <div className="brand-lockup between" style={{ 
+        paddingBottom: '24px', 
+        marginBottom: '24px', 
+        borderBottom: '1px solid var(--border)',
+        flexShrink: 0
+      }}>
+        <div className="cluster gap-3">
+          <div className="brand-badge glow-on-hover" style={{ boxShadow: '0 4px 12px rgba(245, 158, 11, 0.25)', width: '42px', height: '42px', borderRadius: '12px' }}>
+            <Boxes size={22} />
           </div>
           <div>
-            <p className="eyebrow" style={{ fontSize: '0.65rem', color: 'var(--accent)' }}>System Command</p>
-            <h2 style={{ fontSize: '1.1rem', letterSpacing: '-0.03em' }}>BrightAngel Flow</h2>
+            <p className="eyebrow" style={{ fontSize: '0.65rem', color: 'var(--accent-strong)', letterSpacing: '0.05em' }}>System Node</p>
+            <h2 style={{ fontSize: '1.25rem', letterSpacing: '-0.04em', fontWeight: 800, color: 'var(--text)' }}>BrightAngel</h2>
           </div>
         </div>
+        <button
+          type="button"
+          className="icon-btn glow-on-hover"
+          style={{ borderRadius: '12px', width: '38px', height: '38px', background: 'var(--bg-soft)', border: '1px solid var(--border)', color: 'var(--text)', transition: 'all 0.2s' }}
+          title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
+          onClick={() => setTheme((current) => (current === 'light' ? 'dark' : 'light'))}
+        >
+          {theme === 'light' ? <Moon size={18} /> : <SunMedium size={18} />}
+        </button>
+      </div>
 
-        <div className="user-profile panel-strong p-4" style={{ borderRadius: '16px', border: '1px solid var(--border)' }}>
+      {/* Scrollable Content */}
+      <div className="stack gap-4" style={{ flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
+
+        <div className="user-profile panel-strong p-3 glow-on-hover" style={{ borderRadius: '16px', border: '1px solid var(--border)', background: 'linear-gradient(145deg, var(--panel-strong), var(--bg-soft))' }}>
           <div className="cluster gap-3">
-            <div className="avatar" style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--accent-soft)', display: 'grid', placeItems: 'center', color: 'var(--accent-strong)' }}>
-              {session.user.role === 'admin' ? <Crown size={20} /> : <User size={20} />}
+            <div className="avatar" style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent-soft)', display: 'grid', placeItems: 'center', color: 'var(--accent-strong)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+              {session.user.role === 'admin' ? <Crown size={22} /> : <User size={22} />}
             </div>
             <div className="stack">
-              <strong style={{ fontSize: '0.9rem' }}>{session.user.name}</strong>
-              <span className="muted small" style={{ textTransform: 'capitalize' }}>{session.user.role} Account</span>
+              <strong style={{ fontSize: '0.95rem' }}>{session.user.name}</strong>
+              <div className="cluster gap-1">
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)' }}></div>
+                <span className="muted small" style={{ textTransform: 'capitalize', fontSize: '0.75rem' }}>{session.user.role} Status</span>
+              </div>
             </div>
           </div>
         </div>
 
         <nav className="stack gap-1">
-          {navigation.map((item) => {
+          {navigation.map((item, index) => {
             const Icon = item.icon
+            const isActive = activeView === item.key
+            
+            // Add a visual separator before admin items if first admin item
+            const showDivider = session?.user?.role === 'admin' && index === 3
 
             return (
-              <button
-                key={item.key}
-                type="button"
-                className={`nav-link ${activeView === item.key ? 'active' : ''}`}
-                onClick={() => startTransition(() => setActiveView(item.key))}
-              >
-                <Icon size={18} />
-                <span>{item.label}</span>
-              </button>
+              <React.Fragment key={item.key}>
+                {showDivider && (
+                  <div className="my-2 stack gap-1">
+                    <span className="eyebrow muted ml-4 mb-1" style={{ fontSize: '0.65rem' }}>Management</span>
+                    <div style={{ height: '1px', background: 'var(--border)', margin: '0 16px' }}></div>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  className={`nav-link ${isActive ? 'active glow-on-hover' : ''}`}
+                  style={isActive ? { borderLeft: '3px solid var(--accent-strong)', paddingLeft: '13px', background: 'linear-gradient(90deg, var(--accent-soft), transparent)', fontWeight: 600 } : { borderLeft: '3px solid transparent' }}
+                  onClick={() => startTransition(() => setActiveView(item.key))}
+                >
+                  <Icon size={18} style={{ color: isActive ? 'var(--accent-strong)' : 'inherit' }} />
+                  <span>{item.label}</span>
+                </button>
+              </React.Fragment>
             )
           })}
         </nav>
       </div>
 
-      <div className="stack gap-5">
-        <div className="panel-strong p-4 stack gap-3" style={{ borderRadius: '16px', border: '1px solid var(--border)', background: 'var(--bg-soft)' }}>
-          <div className="between">
-            <div className="cluster gap-2">
-              <Clock size={14} className="accent-text" />
-              <span className="eyebrow" style={{ fontSize: '0.6rem' }}>System Time</span>
-            </div>
-            <div className="pill success" style={{ padding: '2px 8px', fontSize: '0.6rem' }}>Online</div>
-          </div>
-          <div style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
-            {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-          </div>
-        </div>
-
-        <div className={`scanner-panel p-4 ${barcodeValue ? 'animate-pulse-soft' : ''}`} style={{ borderRadius: '16px', background: barcodeValue ? 'var(--accent-soft)' : 'var(--bg-soft)', border: `1px solid ${barcodeValue ? 'var(--accent)' : 'var(--border)'}` }}>
-          <div className="cluster gap-2 mb-2">
-            <ScanLine size={16} className={barcodeValue ? 'accent-text' : 'muted'} />
-            <strong style={{ fontSize: '0.85rem' }}>Scanner Active</strong>
-          </div>
-          <p className="muted small" style={{ fontSize: '0.75rem' }}>
-            Ready for input...
-          </p>
-          {barcodeValue && (
-            <div className="mt-2 p-2 bg-strong" style={{ borderRadius: '8px', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--accent-strong)' }}>
-              {barcodeValue}
-            </div>
-          )}
-        </div>
-
-        <div className="stack gap-2">
-          <button
-            type="button"
-            className="btn btn-secondary w-full"
-            style={{ justifyContent: 'flex-start', padding: '10px 16px' }}
-            onClick={() => setTheme((current) => (current === 'light' ? 'dark' : 'light'))}
-          >
-            {theme === 'light' ? <Moon size={18} /> : <SunMedium size={18} />}
-            <span>Theme: {theme === 'light' ? 'Dark' : 'Light'}</span>
-          </button>
-
-          <button type="button" className="btn btn-ghost w-full" style={{ justifyContent: 'flex-start', padding: '10px 16px', color: 'var(--danger)' }} onClick={handleLogout}>
-            <LogOut size={18} />
-            <span>Sign Out</span>
-          </button>
-        </div>
+      <div className="mt-auto pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+        <button 
+          type="button" 
+          className="btn w-full cluster justify-start gap-3" 
+          style={{ 
+            padding: '12px 16px', 
+            borderRadius: '12px', 
+            color: 'var(--muted)', 
+            background: 'transparent',
+            border: '1px solid transparent',
+            transition: 'all 0.2s ease',
+            cursor: 'pointer'
+          }} 
+          onMouseEnter={(e) => {
+             e.currentTarget.style.color = 'var(--danger)';
+             e.currentTarget.style.background = 'var(--danger-soft)';
+             e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+             e.currentTarget.style.color = 'var(--muted)';
+             e.currentTarget.style.background = 'transparent';
+             e.currentTarget.style.borderColor = 'transparent';
+          }}
+          onClick={handleLogout}
+        >
+          <LogOut size={18} />
+          <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>Sign out session</span>
+        </button>
       </div>
     </aside>
   )

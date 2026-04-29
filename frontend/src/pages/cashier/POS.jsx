@@ -11,6 +11,7 @@ import {
   History,
   Tag,
   UserPlus,
+  ScanLine,
 } from 'lucide-react'
 import { SectionHeading } from '../../components/SectionHeading'
 import { formatCurrency } from '../../utils'
@@ -30,6 +31,7 @@ export function POS({
   cartSubtotal,
   cartTax,
   cartTotal,
+  barcodeValue,
 }) {
   const [heldBills, setHeldBills] = useState([])
   const [activeCategory, setActiveCategory] = useState('All')
@@ -62,7 +64,7 @@ export function POS({
     <div className="pos-grid animate-fade">
       <section className="stack gap-6">
         <div className="panel p-6 stack gap-5 glass-panel">
-          <div className="between wrap-row">
+          <div className="between wrap-row gap-4 mb-4">
             <SectionHeading
               title="Billing Console"
               text="Search and select items to add to the active bill."
@@ -133,16 +135,34 @@ export function POS({
 
       <aside className="stack gap-6 sticky-panel">
         <div className="panel p-6 stack gap-5 glass-panel" style={{ minHeight: '400px' }}>
-          <div className="between">
+          <div className="between wrap-row gap-2 mb-2">
             <SectionHeading title="Active Cart" text={`${cart.length} items`} />
             <div className="cluster gap-2">
-               <button className="icon-btn" title="Hold Bill" onClick={handleHoldBill} disabled={cart.length === 0}>
+               <button className="icon-btn glow-on-hover" title="Hold Bill" onClick={handleHoldBill} disabled={cart.length === 0} style={{ width: '40px', height: '40px', background: 'var(--panel-strong)', borderRadius: '12px' }}>
                 <PauseCircle size={18} />
               </button>
-              <button className="icon-btn" title="Clear All" onClick={() => setCart([])} disabled={cart.length === 0} style={{ color: 'var(--danger)' }}>
+              <button className="icon-btn glow-on-hover" title="Clear All" onClick={() => setCart([])} disabled={cart.length === 0} style={{ color: 'var(--danger)', width: '40px', height: '40px', background: 'var(--danger-soft)', borderColor: 'transparent', borderRadius: '12px' }}>
                 <Trash2 size={18} />
               </button>
             </div>
+          </div>
+
+          <div className={`scanner-panel p-3 ${barcodeValue ? 'animate-pulse-soft' : ''}`} style={{ borderRadius: '12px', background: barcodeValue ? 'linear-gradient(145deg, var(--accent-soft), transparent)' : 'var(--bg-soft)', border: `1px solid ${barcodeValue ? 'var(--accent)' : 'var(--border)'}`, transition: 'all 0.3s ease', marginBottom: '8px' }}>
+            <div className="between mb-1">
+              <div className="cluster gap-2">
+                <ScanLine size={14} className={barcodeValue ? 'accent-text' : 'muted'} />
+                <strong style={{ fontSize: '0.8rem' }}>Barcode Scanner</strong>
+              </div>
+              {barcodeValue && <div className="pill" style={{ fontSize: '0.55rem', background: 'var(--accent)', color: 'white' }}>Captured</div>}
+            </div>
+            <p className="muted small" style={{ fontSize: '0.7rem' }}>
+              {barcodeValue ? 'Item added to cart' : 'Awaiting barcode input...'}
+            </p>
+            {barcodeValue && (
+              <div className="mt-2 p-2" style={{ borderRadius: '8px', background: 'var(--panel-strong)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--accent-strong)', border: '1px solid var(--accent-soft)', textAlign: 'center', fontWeight: 600 }}>
+                {barcodeValue}
+              </div>
+            )}
           </div>
 
           <div className="stack gap-3" style={{ flex: 1, overflowY: 'auto', maxHeight: '360px' }}>

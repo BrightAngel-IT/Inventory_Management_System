@@ -432,7 +432,6 @@ function App() {
         session={session}
         activeView={activeView}
         setActiveView={setActiveView}
-        barcodeValue={barcodeValue}
         theme={theme}
         setTheme={setTheme}
         handleLogout={handleLogout}
@@ -484,6 +483,7 @@ function App() {
                 cartSubtotal={cartSubtotal}
                 cartTax={cartTax}
                 cartTotal={cartTotal}
+                barcodeValue={barcodeValue}
               />
             )}
             {activeView === 'inventory' && session.user.role === 'admin' && (

@@ -48,72 +48,76 @@ export function Inventory({
             text="Global inventory view and rack placement management."
           />
           <div className="cluster gap-3">
-            <div className="input-shell compact" style={{ flexBasis: '300px' }}>
-              <Search size={18} className="muted" />
+            <div className="input-shell compact" style={{ flexBasis: '350px', background: 'var(--bg-soft)', border: '1px solid var(--accent-soft)', borderRadius: '999px', padding: '6px 20px', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}>
+              <Search size={18} className="accent-text" style={{ color: 'var(--accent)' }} />
               <input
                 className="ghost-input"
-                placeholder="Name, SKU or Rack..."
+                style={{ fontSize: '0.95rem' }}
+                placeholder="Search by name, SKU, barcode..."
                 value={inventoryQuery}
                 onChange={(e) => setInventoryQuery(e.target.value)}
               />
             </div>
             <button
-              className={`pill ${onlyLowStock ? 'warning' : 'neutral'}`}
-              style={{ cursor: 'pointer', border: 'none' }}
+              className={`btn ${onlyLowStock ? 'btn-primary' : 'btn-secondary'} glow-on-hover`}
+              style={{ padding: '8px 20px', borderRadius: '999px', fontSize: '0.85rem', fontWeight: 600 }}
               onClick={() => setOnlyLowStock(!onlyLowStock)}
             >
-              {onlyLowStock ? 'Showing Critical' : 'Filter Low Stock'}
+              <AlertCircle size={16} />
+              {onlyLowStock ? 'Showing Critical' : 'Low Stock Alerts'}
             </button>
           </div>
         </div>
 
         <div className="stack gap-3">
           {inventoryProducts.map((product) => (
-            <div key={product._id} className="inventory-row p-4 panel-strong glow-on-hover" style={{ borderRadius: '20px', border: '1px solid var(--border)' }}>
-              <div className="cluster gap-4">
+            <div key={product._id} className="inventory-row p-4 panel-strong glow-on-hover animate-slide" style={{ borderRadius: '24px', border: '1px solid var(--border)', background: 'linear-gradient(145deg, var(--panel-strong), var(--bg-soft))', boxShadow: 'var(--shadow-sm)', transition: 'all 0.3s ease' }}>
+              <div className="cluster gap-5">
                 <div style={{ position: 'relative' }}>
-                  <img src={product.image} alt={product.name} className="thumb large" />
+                  <div style={{ width: '72px', height: '72px', borderRadius: '16px', padding: '4px', background: 'var(--panel-strong)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
+                    <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }} />
+                  </div>
                   {product.quantityInStock <= product.reorderLevel && (
-                    <div className="animate-pulse-soft" style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'var(--danger)', color: 'white', padding: '4px', borderRadius: '50%', boxShadow: '0 0 10px var(--danger)' }}>
-                      <AlertCircle size={12} />
+                    <div className="animate-pulse-soft cluster justify-center" style={{ position: 'absolute', top: '-8px', right: '-8px', background: 'var(--danger)', color: 'white', width: '24px', height: '24px', borderRadius: '50%', boxShadow: '0 0 15px rgba(239, 68, 68, 0.5)' }}>
+                      <AlertCircle size={14} />
                     </div>
                   )}
                 </div>
                 <div className="stack gap-1">
-                  <div className="cluster gap-2">
-                    <strong style={{ fontSize: '1.1rem' }}>{product.name}</strong>
-                    <span className="code-line">{product.sku}</span>
+                  <div className="cluster gap-3">
+                    <strong style={{ fontSize: '1.2rem', color: 'var(--text)' }}>{product.name}</strong>
+                    <span className="pill neutral" style={{ background: 'var(--bg-soft)', border: '1px solid var(--border)' }}>{product.sku}</span>
                   </div>
-                  <p className="muted small">{product.category} · Barcode: {product.barcode}</p>
-                  <div className="cluster gap-3 mt-1">
-                    <div className="cluster gap-1 muted small">
-                      <Tag size={12} />
-                      <span className="font-strong">{formatCurrency(product.price)}</span>
+                  <p className="muted small" style={{ fontWeight: 500 }}>{product.category} <span style={{ opacity: 0.5 }}>|</span> Code: {product.barcode}</p>
+                  <div className="cluster gap-4 mt-2">
+                    <div className="cluster gap-1">
+                      <Tag size={14} style={{ color: 'var(--accent)' }} />
+                      <span className="font-strong" style={{ color: 'var(--accent-strong)' }}>{formatCurrency(product.price)}</span>
                     </div>
                     <div className="cluster gap-1 muted small">
-                      <Truck size={12} />
+                      <Truck size={14} />
                       <span>{product.supplier || 'General Vendor'}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="inventory-meta">
-                <div className="p-3 bg-soft" style={{ borderRadius: '12px', minWidth: '120px' }}>
-                  <span className="muted small eyebrow" style={{ fontSize: '0.6rem' }}>Current Stock</span>
-                  <div className={`font-strong ${product.quantityInStock <= product.reorderLevel ? 'accent-text' : ''}`}>
-                    {product.quantityInStock} {product.unit}
+              <div className="inventory-meta cluster gap-4">
+                <div className="stack align-center p-3" style={{ background: 'var(--bg-soft)', borderRadius: '16px', minWidth: '110px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <span className="muted small eyebrow mb-1">In Stock</span>
+                  <div className={`font-strong ${product.quantityInStock <= product.reorderLevel ? 'danger-text' : 'success-text'}`} style={{ fontSize: '1.25rem', color: product.quantityInStock <= product.reorderLevel ? 'var(--danger)' : 'var(--success)' }}>
+                    {product.quantityInStock} <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{product.unit}</span>
                   </div>
                 </div>
-                <div className="p-3 bg-soft" style={{ borderRadius: '12px', minWidth: '120px' }}>
-                  <span className="muted small eyebrow" style={{ fontSize: '0.6rem' }}>Rack Location</span>
+                <div className="stack align-center p-3" style={{ background: 'var(--bg-soft)', borderRadius: '16px', minWidth: '110px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <span className="muted small eyebrow mb-1">Rack Loc</span>
                   <div className="cluster gap-2">
-                    <Warehouse size={14} className="accent-text" />
-                    <strong className="font-strong">{product.rackLabel}</strong>
+                    <Warehouse size={16} className="accent-text" />
+                    <strong className="font-strong" style={{ fontSize: '1.1rem' }}>{product.rackLabel}</strong>
                   </div>
                 </div>
-                <button className="icon-btn glow-on-hover" onClick={() => startEditingProduct(product)}>
-                  <Edit size={18} />
+                <button className="icon-btn glow-on-hover ml-2" onClick={() => startEditingProduct(product)} style={{ width: '48px', height: '48px', borderRadius: '16px', background: 'var(--accent-soft)', color: 'var(--accent-strong)', borderColor: 'transparent' }}>
+                  <Edit size={20} />
                 </button>
               </div>
             </div>
@@ -229,18 +233,21 @@ export function Inventory({
               </label>
             </div>
 
-            <div className="stack gap-3 p-4 bg-soft" style={{ borderRadius: '16px', border: '1px solid var(--border)' }}>
-              <span className="eyebrow" style={{ fontSize: '0.65rem' }}>Shelf Allocation</span>
+            <div className="stack gap-3 p-5" style={{ borderRadius: '20px', background: 'var(--bg-soft)', border: '1px solid var(--border)', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}>
+              <div className="cluster gap-2 mb-1">
+                <Warehouse size={16} style={{ color: 'var(--accent)' }} />
+                <span className="eyebrow" style={{ fontSize: '0.7rem' }}>Shelf Allocation</span>
+              </div>
               <div className="split-fields triple">
-                <input className="input" type="number" name="rack.rowNumber" placeholder="Row" value={productForm.rack.rowNumber} onChange={handleProductFormChange} required />
-                <input className="input" type="number" name="rack.columnNumber" placeholder="Col" value={productForm.rack.columnNumber} onChange={handleProductFormChange} required />
-                <input className="input" type="number" name="rack.shelfNumber" placeholder="Shelf" value={productForm.rack.shelfNumber} onChange={handleProductFormChange} required />
+                <input className="input" type="number" name="rack.rowNumber" placeholder="Row" value={productForm.rack.rowNumber} onChange={handleProductFormChange} required style={{ textAlign: 'center' }} />
+                <input className="input" type="number" name="rack.columnNumber" placeholder="Col" value={productForm.rack.columnNumber} onChange={handleProductFormChange} required style={{ textAlign: 'center' }} />
+                <input className="input" type="number" name="rack.shelfNumber" placeholder="Shelf" value={productForm.rack.shelfNumber} onChange={handleProductFormChange} required style={{ textAlign: 'center' }} />
               </div>
             </div>
 
-            <button className="btn btn-primary w-full glow-on-hover" type="submit" disabled={busyAction === 'product-save'}>
-              {busyAction === 'product-save' ? <div className="spinner" style={{ width: '20px', height: '20px' }}></div> : editingProductId ? <Edit size={18} /> : <Plus size={18} />}
-              {busyAction === 'product-save' ? 'Syncing...' : editingProductId ? 'Update Record' : 'Create Record'}
+            <button className="btn btn-primary w-full glow-on-hover mt-2" type="submit" disabled={busyAction === 'product-save'} style={{ padding: '16px', borderRadius: '16px', fontSize: '1.05rem' }}>
+              {busyAction === 'product-save' ? <div className="spinner" style={{ width: '20px', height: '20px' }}></div> : editingProductId ? <Edit size={20} /> : <Plus size={20} />}
+              {busyAction === 'product-save' ? 'Syncing...' : editingProductId ? 'Update Inventory Record' : 'Add New Inventory Record'}
             </button>
           </div>
         </div>
@@ -256,19 +263,19 @@ export function Inventory({
             </button>
           </div>
           
-          <div className="stack gap-3">
+          <div className="stack gap-4 mt-2">
             {mockHistory.map((h, i) => (
-              <div key={i} className="between p-3 panel-strong" style={{ borderRadius: '12px' }}>
-                <div className="cluster gap-3">
-                  <div className={`icon-btn small ${h.type === 'in' ? 'success' : 'danger'}-soft`} style={{ border: 'none' }}>
-                    {h.type === 'in' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+              <div key={i} className="between p-4 panel-strong glow-on-hover" style={{ borderRadius: '16px', border: '1px solid transparent', transition: 'all 0.2s', cursor: 'default' }}>
+                <div className="cluster gap-4">
+                  <div className={`icon-btn ${h.type === 'in' ? 'success' : 'danger'}-soft`} style={{ border: 'none', background: h.type === 'in' ? 'var(--success-soft)' : 'var(--danger-soft)', color: h.type === 'in' ? 'var(--success)' : 'var(--danger)', width: '48px', height: '48px', borderRadius: '14px' }}>
+                    {h.type === 'in' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
                   </div>
-                  <div className="stack">
-                    <strong style={{ fontSize: '0.85rem' }}>{h.type === 'in' ? 'Restock' : 'Sale'} ({h.qty})</strong>
-                    <span className="muted small">{h.date}</span>
+                  <div className="stack gap-1">
+                    <strong style={{ fontSize: '0.95rem' }}>{h.type === 'in' ? 'Restock Received' : 'Retail Sale'} <span style={{ color: h.type === 'in' ? 'var(--success)' : 'var(--danger)' }}>({h.type === 'in' ? '+' : '-'}{h.qty})</span></strong>
+                    <span className="muted small" style={{ fontWeight: 500 }}>{h.date}</span>
                   </div>
                 </div>
-                <div className="pill neutral" style={{ fontSize: '0.6rem' }}>{h.user}</div>
+                <div className="pill neutral" style={{ fontSize: '0.7rem', padding: '6px 12px', background: 'var(--bg)', border: '1px solid var(--border)' }}>{h.user}</div>
               </div>
             ))}
           </div>
