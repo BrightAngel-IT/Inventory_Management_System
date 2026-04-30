@@ -1,4 +1,5 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   ShoppingCart,
   ShieldCheck,
@@ -10,10 +11,11 @@ import { MetricCard } from '../../components/MetricCard'
 import { SectionHeading } from '../../components/SectionHeading'
 import { formatCurrency, formatDate } from '../../utils'
 
-export function CashierDashboard({ overview, session, setActiveView, startTransition }) {
+export function CashierDashboard({ overview, session, startTransition }) {
+  const navigate = useNavigate()
   const quickActions = [
-    { label: 'New Bill', icon: ShoppingCart, view: 'pos', color: 'var(--accent)' },
-    { label: 'Scan Item', icon: ScanLine, view: 'pos', color: 'var(--info)' },
+    { label: 'New Bill', icon: ShoppingCart, path: '/pos', color: 'var(--accent)' },
+    { label: 'Scan Item', icon: ScanLine, path: '/pos', color: 'var(--info)' },
   ]
 
   return (
@@ -47,7 +49,7 @@ export function CashierDashboard({ overview, session, setActiveView, startTransi
               key={action.label}
               className="quick-action-card glow-on-hover"
               style={{ flex: 1, maxWidth: '240px' }}
-              onClick={() => startTransition(() => setActiveView(action.view))}
+              onClick={() => navigate(action.path)}
             >
               <div className="quick-action-icon" style={{ color: action.color }}>
                 <action.icon size={24} />

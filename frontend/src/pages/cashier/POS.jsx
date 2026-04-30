@@ -34,11 +34,27 @@ export function POS({
   barcodeValue,
   customers,
 }) {
+  const [cartPage, setCartPage] = useState(0)
+  const itemsPerPage = 6
+
+  // Reset to first page when cart changes (e.g. items added/removed)
+  React.useEffect(() => {
+    if (cart.length > 0 && cart.length <= cartPage * itemsPerPage) {
+      setCartPage(0)
+    }
+  }, [cart.length])
+
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
+  const [modalSearch, setModalSearch] = useState('')
+  const [selectedItem, setSelectedItem] = useState(null)
+  const [modalQty, setModalQty] = useState(1)
+  const [modalCategory, setModalCategory] = useState('All')
+
   const [heldBills, setHeldBills] = useState([])
   const [activeCategory, setActiveCategory] = useState('All')
 
   const categories = ['All', ...new Set(catalogProducts.map(p => p.category))]
-  const filteredProducts = catalogProducts.filter(p => 
+  const filteredProducts = catalogProducts.filter(p =>
     (activeCategory === 'All' || p.category === activeCategory)
   )
 
@@ -62,90 +78,36 @@ export function POS({
   }
 
   return (
-    <div className="pos-grid animate-fade">
-      <section className="stack gap-6">
-        <div className="panel p-6 stack gap-5 glass-panel">
-          <div className="between wrap-row gap-4 mb-4">
-            <SectionHeading
-              title="Billing Console"
-              text="Search and select items to add to the active bill."
-            />
-            <div className="input-shell compact" style={{ flexBasis: '320px' }}>
-              <Search size={18} className="muted" />
-              <input
-                className="ghost-input"
-                placeholder="SKU, Barcode or Name..."
-                value={catalogQuery}
-                onChange={(e) => setCatalogQuery(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="cluster gap-2 wrap-row" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '16px' }}>
-            {categories.map(cat => (
-              <button
-                key={cat}
-                className={`pill ${activeCategory === cat ? 'active' : 'neutral'}`}
-                style={{ cursor: 'pointer', border: 'none', padding: '6px 16px' }}
-                onClick={() => setActiveCategory(cat)}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          <div className="product-grid">
-            {filteredProducts.map((product) => (
-              <button
-                key={product._id}
-                type="button"
-                className="product-card stack glow-on-hover"
-                onClick={() => addProductToCart(product)}
-                disabled={product.quantityInStock <= 0}
-              >
-                <div style={{ position: 'relative' }}>
-                  <img src={product.image} alt={product.name} className="product-image" />
-                  <div style={{ position: 'absolute', top: '8px', right: '8px' }}>
-                    <div className="pill glass" style={{ background: 'rgba(255,255,255,0.9)', color: 'var(--text)', fontSize: '0.6rem', fontWeight: 700 }}>
-                      {product.rackLabel}
-                    </div>
-                  </div>
-                </div>
-                <div className="stack gap-1 p-1">
-                  <div className="between">
-                    <span className="eyebrow" style={{ fontSize: '0.6rem', color: 'var(--accent)' }}>{product.category}</span>
-                    <span className={`pill ${product.quantityInStock <= 5 ? 'danger' : 'success'}-soft`} style={{ fontSize: '0.6rem' }}>
-                      {product.quantityInStock} stock
-                    </span>
-                  </div>
-                  <strong style={{ fontSize: '1rem', lineHeight: 1.2 }}>{product.name}</strong>
-                  <div className="between mt-2">
-                    <span className="font-strong" style={{ fontSize: '1.1rem', color: 'var(--accent-strong)' }}>
-                      {formatCurrency(product.price)}
-                    </span>
-                    <div className="icon-btn glow-on-hover" style={{ width: '32px', height: '32px', background: 'var(--accent)', color: 'white', border: 'none' }}>
-                      <Plus size={18} />
-                    </div>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <aside className="stack gap-6 sticky-panel">
-        <div className="panel p-6 stack gap-5 glass-panel" style={{ minHeight: '400px' }}>
+    <div className="pos-grid animate-fade" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '16px', width: '100%', padding: '0 10px' }}>
+      <aside className="stack gap-4 sticky-panel">
+        <div className="panel p-4 stack gap-4 glass-panel" style={{ minHeight: '400px' }}>
           <div className="between wrap-row gap-2 mb-2">
             <SectionHeading title="Active Cart" text={`${cart.length} items`} />
             <div className="cluster gap-2">
-               <button className="icon-btn glow-on-hover" title="Hold Bill" onClick={handleHoldBill} disabled={cart.length === 0} style={{ width: '40px', height: '40px', background: 'var(--panel-strong)', borderRadius: '12px' }}>
+              <button className="icon-btn glow-on-hover" title="Hold Bill" onClick={handleHoldBill} disabled={cart.length === 0} style={{ width: '40px', height: '40px', background: 'var(--panel-strong)', borderRadius: '12px' }}>
                 <PauseCircle size={18} />
               </button>
               <button className="icon-btn glow-on-hover" title="Clear All" onClick={() => setCart([])} disabled={cart.length === 0} style={{ color: 'var(--danger)', width: '40px', height: '40px', background: 'var(--danger-soft)', borderColor: 'transparent', borderRadius: '12px' }}>
                 <Trash2 size={18} />
               </button>
             </div>
+          </div>
+
+          <div className="input-shell compact mb-4" style={{ 
+            background: 'var(--panel)', 
+            border: '1px solid var(--border)', 
+            borderRadius: '999px', 
+            cursor: 'pointer',
+            padding: '12px 24px',
+            boxShadow: 'var(--shadow-sm)'
+          }} onClick={() => setIsSearchModalOpen(true)}>
+            <Search size={18} className="muted" />
+            <input 
+              readOnly 
+              className="ghost-input" 
+              placeholder="Find item..." 
+              style={{ cursor: 'pointer', fontSize: '0.9rem' }}
+            />
           </div>
 
           <div className={`scanner-panel p-3 ${barcodeValue ? 'animate-pulse-soft' : ''}`} style={{ borderRadius: '12px', background: barcodeValue ? 'linear-gradient(145deg, var(--accent-soft), transparent)' : 'var(--bg-soft)', border: `1px solid ${barcodeValue ? 'var(--accent)' : 'var(--border)'}`, transition: 'all 0.3s ease', marginBottom: '8px' }}>
@@ -166,23 +128,40 @@ export function POS({
             )}
           </div>
 
-          <div className="stack gap-3" style={{ flex: 1, overflowY: 'auto', maxHeight: '360px' }}>
+          <div className="stack gap-0" style={{ flex: 1, overflowY: 'auto', maxHeight: '600px', border: '1px solid var(--border)', borderRadius: '12px', background: 'var(--bg-soft)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px 100px 40px', gap: '8px', padding: '8px 12px', borderBottom: '1px solid var(--border)', background: 'var(--panel)', fontSize: '0.75rem', fontWeight: 700, position: 'sticky', top: 0, zIndex: 10 }}>
+              <span>Item Description</span>
+              <span style={{ textAlign: 'center' }}>Qty</span>
+              <span style={{ textAlign: 'center' }}>Disc%</span>
+              <span style={{ textAlign: 'right' }}>Total</span>
+              <span></span>
+            </div>
             {cart.map((item) => (
-              <div key={item.productId} className="cart-row p-3 panel-strong glow-on-hover" style={{ borderRadius: '16px', border: '1px solid var(--border)' }}>
-                <img src={item.image} alt={item.name} className="thumb" style={{ width: '40px', height: '40px' }} />
-                <div className="grow stack">
-                  <strong style={{ fontSize: '0.9rem' }}>{item.name}</strong>
-                  <span className="muted small">{formatCurrency(item.price)}</span>
+              <div key={item.productId} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px 100px 40px', gap: '8px', padding: '6px 12px', borderBottom: '1px solid var(--border)', background: 'var(--panel)', alignItems: 'center', transition: 'background 0.2s' }} className="glow-on-hover">
+                <div className="stack" style={{ minWidth: 0 }}>
+                  <strong style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</strong>
+                  <span className="muted" style={{ fontSize: '0.7rem' }}>{item.sku}</span>
                 </div>
-                <div className="qty-box">
-                  <button className="qty-btn" onClick={() => changeCartQuantity(item.productId, 'decrease')}>-</button>
-                  <strong style={{ minWidth: '24px', textAlign: 'center' }}>{item.quantity}</strong>
-                  <button className="qty-btn" onClick={() => changeCartQuantity(item.productId, 'increase')}>+</button>
+                <div className="qty-box" style={{ background: 'var(--bg-soft)', borderRadius: '8px', padding: '1px', justifyContent: 'center' }}>
+                  <button className="qty-btn" type="button" style={{ width: '22px', height: '22px', fontSize: '0.8rem' }} onClick={() => changeCartQuantity(item.productId, 'decrease')}>-</button>
+                  <strong style={{ minWidth: '24px', textAlign: 'center', fontSize: '0.85rem' }}>{item.quantity}</strong>
+                  <button className="qty-btn" type="button" style={{ width: '22px', height: '22px', fontSize: '0.8rem' }} onClick={() => changeCartQuantity(item.productId, 'increase')}>+</button>
                 </div>
+                <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--success)' }}>
+                  {item.discount || 0}%
+                </div>
+                <div style={{ textAlign: 'right', fontSize: '0.85rem', fontWeight: 600 }}>{formatCurrency(item.lineTotal)}</div>
+                <button 
+                  type="button"
+                  onClick={() => setCart(cart.filter(c => c.productId !== item.productId))}
+                  style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', opacity: 0.6 }}
+                >
+                  <X size={16} />
+                </button>
               </div>
             ))}
             {cart.length === 0 && (
-              <div className="empty-state compact" style={{ padding: '60px 20px' }}>
+              <div className="empty-state compact" style={{ padding: '80px 20px' }}>
                 <ShoppingCart size={40} className="muted mb-3" style={{ opacity: 0.3 }} />
                 <p className="muted small">Cart is empty. Scan items or select from the catalog above.</p>
               </div>
@@ -217,9 +196,11 @@ export function POS({
             </div>
           </div>
         </div>
+      </aside>
 
-        <form className="panel p-6 stack gap-5 glass-panel" onSubmit={handleCheckout}>
-          <div className="stack gap-4">
+      <aside className="stack gap-4 sticky-panel">
+        <form className="panel p-4 stack gap-4 glass-panel" onSubmit={handleCheckout} style={{ position: 'sticky', top: '16px' }}>
+          <div className="stack gap-3">
             <label className="field">
               <span>Customer Identification</span>
               <div className="input-shell">
@@ -237,23 +218,6 @@ export function POS({
               </div>
             </label>
 
-            {checkoutForm.paymentMethod === 'credit' && (
-              <label className="field animate-fade">
-                <span>Link to Customer Profile</span>
-                <select 
-                  className="input"
-                  value={checkoutForm.customerId || ''}
-                  onChange={(e) => setCheckoutForm({ ...checkoutForm, customerId: e.target.value })}
-                  required
-                >
-                  <option value="">Select Account...</option>
-                  {customers.map(c => (
-                    <option key={c._id} value={c._id}>{c.name}</option>
-                  ))}
-                </select>
-              </label>
-            )}
-
             <div className="split-fields">
               <label className="field">
                 <span>Payment</span>
@@ -270,15 +234,52 @@ export function POS({
               </label>
               <label className="field">
                 <span>Discount</span>
-                <input
-                  className="input"
-                  type="number"
-                  placeholder="0.00"
-                  value={checkoutForm.discount}
-                  onChange={(e) => setCheckoutForm({ ...checkoutForm, discount: e.target.value })}
-                />
+                <div className="stack gap-2">
+                  <input
+                    className="input"
+                    type="number"
+                    placeholder="0.00"
+                    value={checkoutForm.discount}
+                    onChange={(e) => setCheckoutForm({ ...checkoutForm, discount: e.target.value })}
+                  />
+                  <div className="cluster gap-2">
+                    {[10, 50, 100].map(val => (
+                      <button
+                        key={val}
+                        type="button"
+                        className="pill neutral-soft small glow-on-hover"
+                        style={{ cursor: 'pointer', padding: '4px 10px', border: '1px solid var(--border)' }}
+                        onClick={() => setCheckoutForm({ ...checkoutForm, discount: String(val) })}
+                      >
+                        -{val}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </label>
             </div>
+
+            {checkoutForm.paymentMethod === 'cash' && (
+              <div className="stack gap-4 p-4 mt-2" style={{ borderRadius: '16px', background: 'var(--panel-strong)', border: '1px solid var(--accent-soft)' }}>
+                <div className="between">
+                  <span className="font-strong small">Received Amount</span>
+                  <input
+                    className="input ghost-input"
+                    type="number"
+                    placeholder="Enter amount..."
+                    style={{ textAlign: 'right', fontSize: '1.2rem', width: '140px', fontWeight: 700 }}
+                    value={checkoutForm.receivedAmount || ''}
+                    onChange={(e) => setCheckoutForm({ ...checkoutForm, receivedAmount: e.target.value })}
+                  />
+                </div>
+                <div className="between pt-3" style={{ borderTop: '1px dashed var(--border)' }}>
+                  <span className="font-strong small">Change to Return</span>
+                  <strong className="accent-text" style={{ fontSize: '1.4rem' }}>
+                    {formatCurrency(Math.max(0, (Number(checkoutForm.receivedAmount || 0) - cartTotal)))}
+                  </strong>
+                </div>
+              </div>
+            )}
 
             <button className="btn btn-primary w-full mt-2 glow-on-hover" type="submit" disabled={busyAction === 'checkout' || cart.length === 0}>
               {busyAction === 'checkout' ? <div className="spinner" style={{ width: '20px', height: '20px' }}></div> : <Receipt size={18} />}
@@ -287,6 +288,167 @@ export function POS({
           </div>
         </form>
       </aside>
+
+      {/* Premium Item Search Modal */}
+      {isSearchModalOpen && (
+        <div className="modal-overlay animate-fade" style={{ position: 'fixed', inset: 0, backdropFilter: 'blur(12px)', zIndex: 1000, display: 'grid', placeItems: 'center', padding: '10px' }}>
+          <div className="panel p-0 stack glass-panel animate-scale" style={{ width: '100%', maxWidth: '950px', maxHeight: '85vh', overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            
+            {/* Modal Header */}
+            <div className="p-4 between" style={{ borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.05)' }}>
+              <div className="stack gap-0">
+                <div className="cluster gap-2">
+                  <div className="icon-btn-small" style={{ background: 'var(--accent-soft)', color: 'var(--accent)', width: '32px', height: '32px' }}><ShoppingCart size={16}/></div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Quick Product Finder</h3>
+                </div>
+                <p className="muted x-small" style={{ marginLeft: '40px' }}>Search through entire inventory catalog</p>
+              </div>
+              <button className="icon-btn glow-on-hover" style={{ background: 'var(--danger-soft)', color: 'var(--danger)', borderRadius: '10px', width: '36px', height: '36px' }} onClick={() => { setIsSearchModalOpen(false); setSelectedItem(null); setModalSearch(''); setModalCategory('All'); }}><X size={18}/></button>
+            </div>
+
+            {!selectedItem ? (
+              <div className="stack gap-0 flex-1 overflow-hidden">
+                {/* Search & Filter Bar */}
+                <div className="p-3 stack gap-2" style={{ background: 'rgba(0,0,0,0.05)' }}>
+                  <div className="input-shell" style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px', boxShadow: 'var(--shadow-sm)' }}>
+                    <Search size={18} className="muted" />
+                    <input 
+                      autoFocus 
+                      className="ghost-input" 
+                      placeholder="Type name, barcode, or SKU..." 
+                      style={{ fontSize: '0.9rem' }}
+                      value={modalSearch} 
+                      onChange={e => setModalSearch(e.target.value)} 
+                    />
+                  </div>
+                  
+                  <div className="cluster gap-2 wrap-row no-scrollbar" style={{ overflowX: 'auto', paddingBottom: '2px' }}>
+                    {['All', ...new Set(catalogProducts.map(p => p.category))].map(cat => (
+                      <button 
+                        key={cat} 
+                        className={`pill ${modalCategory === cat ? 'active' : 'neutral-soft'}`} 
+                        style={{ cursor: 'pointer', border: 'none', padding: '4px 12px', fontSize: '0.7rem', fontWeight: 700, transition: 'all 0.2s' }}
+                        onClick={() => setModalCategory(cat)}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Results Grid (Box-like cards) */}
+                <div className="product-grid flex-1 p-3 custom-scrollbar" style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
+                  gap: '10px',
+                  background: 'rgba(0,0,0,0.02)',
+                  overflowY: 'scroll' 
+                }}>
+                  {catalogProducts.filter(p => {
+                    const matchesSearch = p.name.toLowerCase().includes(modalSearch.toLowerCase()) || 
+                                       p.sku.toLowerCase().includes(modalSearch.toLowerCase()) ||
+                                       p.barcode?.includes(modalSearch);
+                    const matchesCategory = modalCategory === 'All' || p.category === modalCategory;
+                    return matchesSearch && matchesCategory;
+                  }).map(product => (
+                    <div 
+                      key={product._id} 
+                      className="product-card stack glass-panel-sm glow-on-hover" 
+                      style={{ 
+                        borderRadius: '12px', 
+                        cursor: 'pointer', 
+                        border: '1px solid var(--border)',
+                        overflow: 'hidden',
+                        background: 'var(--panel)',
+                        transition: 'all 0.2s ease',
+                        position: 'relative'
+                      }}
+                      onClick={() => { setSelectedItem(product); setModalQty(1); }}
+                    >
+                      <div style={{ position: 'relative', height: '80px', overflow: 'hidden' }}>
+                        <img src={product.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        {product.quantityInStock <= product.reorderLevel && (
+                          <div style={{ position: 'absolute', top: 6, right: 6, background: 'var(--danger)', color: 'white', padding: '2px 6px', borderRadius: '6px', fontSize: '0.55rem', fontWeight: 800, boxShadow: 'var(--shadow-sm)' }}>
+                            LOW
+                          </div>
+                        )}
+                        {product.quantityInStock <= 0 && (
+                          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'grid', placeItems: 'center', color: 'white', fontWeight: 900, fontSize: '0.75rem' }}>SOLD OUT</div>
+                        )}
+                      </div>
+                      
+                      <div className="stack gap-1 p-2">
+                        <strong style={{ fontSize: '0.75rem', color: 'var(--text-strong)', height: '2.4em', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.2' }}>{product.name}</strong>
+                        <div className="between align-end mt-0">
+                          <div className="stack">
+                            <span className="muted x-small" style={{ fontSize: '0.55rem' }}>LKR</span>
+                            <strong className="accent-text" style={{ fontSize: '0.9rem' }}>{product.price.toLocaleString()}</strong>
+                          </div>
+                          <div className="icon-btn-small" style={{ width: '24px', height: '24px', background: 'var(--accent-soft)', color: 'var(--accent)', borderRadius: '6px' }}>
+                            <Plus size={12} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              /* Quantity Selector */
+              <div className="p-10 stack gap-8 align-center text-center animate-scale flex-1" style={{ justifyContent: 'center' }}>
+                <div className="stack gap-4 align-center">
+                  <img src={selectedItem.image} style={{ width: '120px', height: '120px', borderRadius: '24px', objectFit: 'cover', boxShadow: 'var(--shadow-lg)', border: '2px solid var(--accent-soft)' }} />
+                  <div className="stack gap-1">
+                    <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900 }}>{selectedItem.name}</h2>
+                    <p className="accent-text font-strong" style={{ fontSize: '1.2rem' }}>{formatCurrency(selectedItem.price)} / unit</p>
+                  </div>
+                </div>
+                
+                <div className="stack gap-3 align-center">
+                  <span className="eyebrow muted">Select Quantity</span>
+                  <div className="qty-box p-2" style={{ background: 'var(--panel-strong)', borderRadius: '20px', scale: '1.4', border: '1px solid var(--border)' }}>
+                    <button className="qty-btn glow-on-hover" style={{ width: '44px', height: '44px', fontSize: '1.2rem', background: 'var(--bg-soft)' }} onClick={() => setModalQty(q => Math.max(1, q - 1))}>-</button>
+                    <input 
+                      type="number" 
+                      className="ghost-input" 
+                      style={{ width: '70px', textAlign: 'center', fontWeight: 900, fontSize: '1.4rem', color: 'var(--text-strong)' }} 
+                      value={modalQty} 
+                      onChange={e => setModalQty(Number(e.target.value))} 
+                    />
+                    <button className="qty-btn glow-on-hover" style={{ width: '44px', height: '44px', fontSize: '1.2rem', background: 'var(--bg-soft)' }} onClick={() => setModalQty(q => q + 1)}>+</button>
+                  </div>
+                  <p className="muted x-small mt-4">Total for this item: <strong>{formatCurrency(selectedItem.price * modalQty)}</strong></p>
+                </div>
+
+                <div className="cluster gap-4 w-full mt-4" style={{ maxWidth: '500px' }}>
+                  <button 
+                    className="btn btn-outline glow-on-hover" 
+                    style={{ flex: 1, padding: '16px', borderRadius: '16px' }} 
+                    onClick={() => setSelectedItem(null)}
+                  >
+                    Back to Search
+                  </button>
+                  <button 
+                    className="btn btn-primary glow-on-hover" 
+                    style={{ flex: 2, padding: '16px', borderRadius: '16px', fontSize: '1.1rem', fontWeight: 800 }} 
+                    onClick={() => {
+                      for(let i=0; i<modalQty; i++) {
+                        addProductToCart(selectedItem);
+                      }
+                      setIsSearchModalOpen(false);
+                      setSelectedItem(null);
+                      setModalSearch('');
+                      setModalCategory('All');
+                    }}
+                  >
+                    Confirm & Add to Bill
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

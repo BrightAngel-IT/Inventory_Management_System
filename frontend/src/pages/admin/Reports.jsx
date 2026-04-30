@@ -25,7 +25,7 @@ import {
 } from 'recharts'
 import { MetricCard } from '../../components/MetricCard'
 import { SectionHeading } from '../../components/SectionHeading'
-import { formatCurrency, formatDate } from '../../utils'
+import { formatCurrency, formatDate, exportToCSV } from '../../utils'
 
 export function Reports({ report, reportRange, setReportRange }) {
   const ranges = ['daily', 'weekly', 'monthly', 'annual']
@@ -77,7 +77,11 @@ export function Reports({ report, reportRange, setReportRange }) {
               </button>
             ))}
           </div>
-          <button className="btn btn-secondary glow-on-hover" style={{ borderRadius: '14px', padding: '10px 20px' }}>
+          <button 
+            className="btn btn-secondary glow-on-hover" 
+            style={{ borderRadius: '14px', padding: '10px 20px' }}
+            onClick={() => exportToCSV(filteredSales, `Sales_Report_${reportRange}`)}
+          >
             <Download size={18} />
             Export Data
           </button>

@@ -1,9 +1,10 @@
 import {
-  startTransition,
   useDeferredValue,
   useEffect,
   useState,
+  useTransition
 } from 'react'
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import _BarcodeReader from 'react-barcode-reader'
 
@@ -28,6 +29,8 @@ import Purchases from './pages/admin/Purchases'
 import Invoices from './pages/admin/Invoices'
 import { Notifications } from './pages/admin/Notifications'
 import { PaymentAllocation } from './pages/admin/PaymentAllocation'
+import StaffManagement from './pages/admin/StaffManagement'
+import StaffForm from './pages/admin/StaffForm'
 
 // Utils
 import {
@@ -86,7 +89,13 @@ function App() {
       return null
     }
   })
-  const [activeView, setActiveView] = useState('overview')
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [isPending, startTransition] = useTransition()
+
+  // Map pathname to activeView for legacy component compatibility
+  const activeView = location.pathname === '/' ? 'overview' : location.pathname.slice(1).replace('/', '-')
+
   const [authForm, setAuthForm] = useState({
     email: demoCredentials[0].email,
     password: demoCredentials[0].password,
@@ -110,10 +119,11 @@ function App() {
   })
   const [productForm, setProductForm] = useState(emptyProductForm)
   const [editingProductId, setEditingProductId] = useState('')
+  const [editingStaff, setEditingStaff] = useState(null)
   const [pageLoading, setPageLoading] = useState(false)
   const [busyAction, setBusyAction] = useState('')
   const [notice, setNotice] = useState(null)
-  
+
   const [readNotifications, setReadNotifications] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('ims-read-notifications')) || []
@@ -149,8 +159,6 @@ function App() {
     localStorage.setItem('ims-read-notifications', JSON.stringify(allIds))
   }
 
-  const deferredCatalogQuery = useDeferredValue(catalogQuery)
-  const deferredInventoryQuery = useDeferredValue(inventoryQuery)
   const onRequestError = (error, fallback) => {
     handleRequestError(error, fallback)
   }
@@ -190,19 +198,31 @@ function App() {
     async function fetchAllData() {
       setPageLoading(true)
       try {
-        const [ov, pr, sl, rp, cs] = await Promise.all([
+        const fetchTasks = [
           api.get('/dashboard/overview', authConfig(session.token)),
           api.get('/products', authConfig(session.token)),
           api.get('/sales', authConfig(session.token)),
-          api.get('/reports/sales?range=' + reportRange, authConfig(session.token)),
           api.get('/customers', authConfig(session.token)),
-        ])
+        ]
+
+        // Only add report fetch if admin
+        const isAdmin = session.user.role === 'admin'
+        if (isAdmin) {
+          fetchTasks.push(api.get('/reports/sales?range=' + reportRange, authConfig(session.token)))
+        }
+
+        const results = await Promise.all(fetchTasks)
+
         if (isCancelled) return
-        setOverview(ov.data)
-        setProducts(pr.data.products || [])
-        setSales(sl.data.sales || [])
-        setReport(rp.data)
-        setCustomers(cs.data)
+
+        setOverview(results[0].data)
+        setProducts(results[1].data.products || [])
+        setSales(results[2].data.sales || [])
+        setCustomers(results[3].data)
+
+        if (isAdmin && results[4]) {
+          setReport(results[4].data)
+        }
       } catch (error) {
         if (isCancelled) return
         setNotice({ type: 'error', text: 'Cloud sync failed. Check connectivity.' })
@@ -236,16 +256,8 @@ function App() {
   const catalogProducts = products.filter((product) =>
     `${product.name} ${product.barcode} ${product.sku} ${product.category}`
       .toLowerCase()
-      .includes(deferredCatalogQuery.toLowerCase()),
+      .includes(catalogQuery.toLowerCase()),
   )
-
-  const inventoryProducts = products.filter((product) => {
-    const matchesSearch = `${product.name} ${product.barcode} ${product.sku} ${product.category} ${product.rackLabel}`
-      .toLowerCase()
-      .includes(deferredInventoryQuery.toLowerCase())
-    if (!onlyLowStock) return matchesSearch
-    return matchesSearch && product.quantityInStock <= product.reorderLevel
-  })
 
   const cartSubtotal = roundCurrency(
     cart.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0),
@@ -271,7 +283,8 @@ function App() {
     try {
       const response = await api.post('/auth/login', authForm)
       setSession(response.data)
-      startTransition(() => setActiveView('overview'))
+      setSession(response.data)
+      navigate('/')
       setNotice({ type: 'success', text: `Welcome back, ${response.data.user.name}.` })
     } catch (error) {
       setNotice({ type: 'error', text: readErrorMessage(error, 'Unable to sign in.') })
@@ -287,7 +300,7 @@ function App() {
     setSales([])
     setReport(null)
     setCart([])
-    setActiveView('overview')
+    navigate('/')
     setNotice({ type: 'info', text: 'Signed out.' })
   }
 
@@ -305,11 +318,17 @@ function App() {
     setCart((currentCart) => {
       const existing = currentCart.find((item) => item.productId === product._id)
       if (existing) {
-        return currentCart.map((item) =>
-          item.productId === product._id
-            ? { ...item, quantity: Math.min(item.quantity + 1, product.quantityInStock) }
-            : item,
-        )
+        return currentCart.map((item) => {
+          if (item.productId === product._id) {
+            const nextQty = Math.min(item.quantity + 1, product.quantityInStock)
+            return { 
+              ...item, 
+              quantity: nextQty,
+              lineTotal: nextQty * item.price * (1 - (item.discount || 0) / 100)
+            }
+          }
+          return item
+        })
       }
       return [
         ...currentCart,
@@ -323,6 +342,8 @@ function App() {
           rackLabel: product.rackLabel,
           available: product.quantityInStock,
           quantity: 1,
+          discount: 0,
+          lineTotal: product.price,
         },
       ]
     })
@@ -334,7 +355,12 @@ function App() {
         .map((item) => {
           if (item.productId !== productId) return item
           const nextQuantity = direction === 'increase' ? item.quantity + 1 : item.quantity - 1
-          return { ...item, quantity: Math.max(0, Math.min(nextQuantity, item.available)) }
+          const finalQty = Math.max(0, Math.min(nextQuantity, item.available))
+          return { 
+            ...item, 
+            quantity: finalQty,
+            lineTotal: finalQty * item.price * (1 - (item.discount || 0) / 100)
+          }
         })
         .filter((item) => item.quantity > 0),
     )
@@ -344,7 +370,7 @@ function App() {
     const cleanedValue = String(scannedValue || '').trim()
     if (!cleanedValue) return
     setBarcodeValue(cleanedValue)
-    startTransition(() => setActiveView('pos'))
+    navigate('/pos')
     const matchingProduct = products.find((p) => p.barcode === cleanedValue || p.sku === cleanedValue)
     if (!matchingProduct) {
       setCatalogQuery(cleanedValue)
@@ -388,7 +414,7 @@ function App() {
       },
       image: product.image,
     })
-    startTransition(() => setActiveView('inventory'))
+    navigate('/inventory')
   }
 
   function resetProductEditor() {
@@ -469,7 +495,6 @@ function App() {
       setBusyAction('')
     }
   }
-
   if (!session) {
     return (
       <Login
@@ -485,18 +510,17 @@ function App() {
     )
   }
 
+
   return (
     <div className="app-shell">
-      <BarcodeReader onError={() => {}} onScan={handleBarcodeLookup} />
-      
+      <BarcodeReader onError={() => { }} onScan={handleBarcodeLookup} />
+
       <Sidebar
         session={session}
         activeView={activeView}
-        setActiveView={setActiveView}
         theme={theme}
         setTheme={setTheme}
         handleLogout={handleLogout}
-        startTransition={startTransition}
         unreadCount={unreadCount}
       />
 
@@ -512,24 +536,24 @@ function App() {
         )}
 
         {!pageLoading && (
-          <>
-            {activeView === 'overview' && session.user.role === 'admin' && (
-              <AdminDashboard
-                overview={overview}
-                session={session}
-                setActiveView={setActiveView}
-                startTransition={startTransition}
-              />
-            )}
-            {activeView === 'overview' && session.user.role !== 'admin' && (
-              <CashierDashboard
-                overview={overview}
-                session={session}
-                setActiveView={setActiveView}
-                startTransition={startTransition}
-              />
-            )}
-            {activeView === 'pos' && (
+          <Routes>
+            <Route path="/" element={
+              session.user.role === 'admin' ? (
+                <AdminDashboard
+                  overview={overview}
+                  session={session}
+                  startTransition={startTransition}
+                />
+              ) : (
+                <CashierDashboard
+                  overview={overview}
+                  session={session}
+                  startTransition={startTransition}
+                />
+              )
+            } />
+
+            <Route path="/pos" element={
               <POS
                 catalogProducts={catalogProducts}
                 customers={customers}
@@ -548,66 +572,103 @@ function App() {
                 cartTotal={cartTotal}
                 barcodeValue={barcodeValue}
               />
-            )}
-            {activeView === 'inventory' && session.user.role === 'admin' && (
-              <Inventory
-                inventoryProducts={inventoryProducts}
-                inventoryQuery={inventoryQuery}
-                setInventoryQuery={setInventoryQuery}
-                onlyLowStock={onlyLowStock}
-                setOnlyLowStock={setOnlyLowStock}
-                productForm={productForm}
-                handleProductFormChange={handleProductFormChange}
-                handleProductSave={handleProductSave}
-                startEditingProduct={startEditingProduct}
-                resetProductEditor={resetProductEditor}
-                editingProductId={editingProductId}
-                busyAction={busyAction}
-                startTransition={startTransition}
-                setActiveView={setActiveView}
-                handleProductDelete={handleProductDelete}
-              />
-            )}
-            {activeView === 'product-manager' && session.user.role === 'admin' && (
-              <ProductManager
-                productForm={productForm}
-                handleProductFormChange={handleProductFormChange}
-                handleProductSave={handleProductSave}
-                resetProductEditor={resetProductEditor}
-                editingProductId={editingProductId}
-                busyAction={busyAction}
-              />
-            )}
-            {activeView === 'suppliers' && session.user.role === 'admin' && <Suppliers />}
-            {activeView === 'customers' && session.user.role === 'admin' && <Customers />}
-            {activeView === 'purchases' && session.user.role === 'admin' && <Purchases />}
-            {activeView === 'invoices' && session.user.role === 'admin' && <Invoices />}
-            {activeView === 'payments' && session.user.role === 'admin' && (
-              <PaymentAllocation 
-                api={api} 
-                session={session} 
-                onNotice={setNotice} 
-              />
-            )}
-            {activeView === 'notifications' && (
+            } />
+
+            <Route path="/inventory" element={
+              <AdminRoute session={session}>
+                <Inventory
+                  products={products}
+                  inventoryQuery={inventoryQuery}
+                  setInventoryQuery={setInventoryQuery}
+                  onlyLowStock={onlyLowStock}
+                  setOnlyLowStock={setOnlyLowStock}
+                  productForm={productForm}
+                  handleProductFormChange={handleProductFormChange}
+                  handleProductSave={handleProductSave}
+                  startEditingProduct={startEditingProduct}
+                  resetProductEditor={resetProductEditor}
+                  editingProductId={editingProductId}
+                  busyAction={busyAction}
+                  startTransition={startTransition}
+                  handleProductDelete={handleProductDelete}
+                />
+              </AdminRoute>
+            } />
+
+            <Route path="/product-manager" element={
+              <AdminRoute session={session}>
+                <ProductManager
+                  productForm={productForm}
+                  handleProductFormChange={handleProductFormChange}
+                  handleProductSave={handleProductSave}
+                  resetProductEditor={resetProductEditor}
+                  editingProductId={editingProductId}
+                  busyAction={busyAction}
+                />
+              </AdminRoute>
+            } />
+
+            <Route path="/suppliers" element={<AdminRoute session={session}><Suppliers api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
+            <Route path="/customers" element={<AdminRoute session={session}><Customers api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
+
+            <Route path="/staff" element={
+              <AdminRoute session={session}>
+                <StaffManagement
+                  api={api}
+                  session={session}
+                  onNotice={setNotice}
+                  setEditingStaff={setEditingStaff}
+                />
+              </AdminRoute>
+            } />
+
+            <Route path="/staff-form" element={
+              <AdminRoute session={session}>
+                <StaffForm
+                  api={api}
+                  session={session}
+                  onNotice={setNotice}
+                  editingStaff={editingStaff}
+                  setEditingStaff={setEditingStaff}
+                />
+              </AdminRoute>
+            } />
+
+            <Route path="/purchases" element={<AdminRoute session={session}><Purchases /></AdminRoute>} />
+            <Route path="/invoices" element={<AdminRoute session={session}><Invoices sales={sales} /></AdminRoute>} />
+            <Route path="/payments" element={<AdminRoute session={session}><PaymentAllocation api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
+
+            <Route path="/notifications" element={
               <Notifications
                 notifications={notifications}
                 markNotificationRead={markNotificationRead}
                 markAllNotificationsRead={markAllNotificationsRead}
               />
-            )}
-            {activeView === 'reports' && session.user.role === 'admin' && (
-              <Reports
-                report={report}
-                reportRange={reportRange}
-                setReportRange={setReportRange}
-              />
-            )}
-          </>
+            } />
+
+            <Route path="/reports" element={
+              <AdminRoute session={session}>
+                <Reports
+                  report={report}
+                  reportRange={reportRange}
+                  setReportRange={setReportRange}
+                />
+              </AdminRoute>
+            } />
+
+            {/* Catch-all */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         )}
       </main>
     </div>
   )
+}
+
+// Helper for conditional admin routes
+const AdminRoute = ({ session, children }) => {
+  if (!session || session.user.role !== 'admin') return <Navigate to="/" replace />
+  return children
 }
 
 export default App
