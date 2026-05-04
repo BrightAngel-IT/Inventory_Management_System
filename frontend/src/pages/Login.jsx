@@ -122,32 +122,6 @@ export function Login({
           </button>
         </form>
 
-        <div className="stack gap-4 mt-8">
-          <div className="between">
-            <p className="eyebrow">Quick-start Profiles</p>
-            <div className="pill neutral">Development Mode</div>
-          </div>
-          <div className="stack gap-3">
-            {demoCredentials.map((credential) => (
-              <button
-                key={credential.label}
-                type="button"
-                className="panel-strong glow-on-hover stack gap-1 p-4"
-                style={{ textAlign: 'left', cursor: 'pointer', borderRadius: '16px', border: '1px solid var(--border)', background: 'var(--bg-soft)', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
-                onClick={() =>
-                  setAuthForm({ email: credential.email, password: credential.password })
-                }
-              >
-                <div className="between">
-                  <span className="font-strong" style={{ fontSize: '1rem', color: 'var(--text)' }}>{credential.label}</span>
-                  <span className="pill neutral" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem' }}>{credential.email}</span>
-                </div>
-                <p className="muted small text-left">{credential.role}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-
         {notice ? (
           <div className="mt-6">
             <NoticeBanner notice={notice} />

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Boxes,
   Edit,
@@ -13,12 +14,13 @@ import {
   Truck,
   AlertCircle,
   Trash2,
+  Download,
 } from 'lucide-react'
 import { SectionHeading } from '../../components/SectionHeading'
-import { formatCurrency } from '../../utils'
+import { formatCurrency, exportToCSV } from '../../utils'
 
 export function Inventory({
-  inventoryProducts,
+  products,
   inventoryQuery,
   setInventoryQuery,
   onlyLowStock,
@@ -31,29 +33,39 @@ export function Inventory({
   editingProductId,
   busyAction,
   startTransition,
-  setActiveView,
   handleProductDelete,
 }) {
+  const navigate = useNavigate()
   const [activeCategory, setActiveCategory] = useState('All')
   const [activeRack, setActiveRack] = useState('All')
   const [activeColumn, setActiveColumn] = useState('All')
   const [activeStatus, setActiveStatus] = useState('All')
 
-  const categories = ['All', ...new Set(inventoryProducts.map(p => p.category))]
-  const racks = ['All', ...new Set(inventoryProducts.map(p => `Row ${p.rack.rowNumber}`))]
-  const columns = ['All', ...new Set(inventoryProducts.map(p => `Col ${p.rack.columnNumber}`))]
+  const categories = ['All', ...new Set(products.map(p => p.category))]
+  const racks = ['All', ...new Set(products.map(p => `Row ${p.rack.rowNumber}`))]
+  const columns = ['All', ...new Set(products.map(p => `Col ${p.rack.columnNumber}`))]
 
-  const filteredItems = inventoryProducts.filter(p => {
-    const matchesCategory = activeCategory === 'All' || p.category === activeCategory
-    const matchesRack = activeRack === 'All' || `Row ${p.rack.rowNumber}` === activeRack
-    const matchesColumn = activeColumn === 'All' || `Col ${p.rack.columnNumber}` === activeColumn
+  const filteredItems = products.filter(p => {
+    // Search filter
+    const searchString = `${p.name} ${p.barcode} ${p.sku} ${p.category} ${p.rackLabel}`.toLowerCase()
+    if (!searchString.includes(inventoryQuery.toLowerCase())) return false
+
+    // Category filter
+    if (activeCategory !== 'All' && p.category !== activeCategory) return false
+
+    // Rack filters
+    if (activeRack !== 'All' && `Row ${p.rack.rowNumber}` !== activeRack) return false
+    if (activeColumn !== 'All' && `Col ${p.rack.columnNumber}` !== activeColumn) return false
     
-    let matchesStatus = true
-    if (activeStatus === 'Critical') matchesStatus = p.quantityInStock === 0
-    if (activeStatus === 'Low') matchesStatus = p.quantityInStock > 0 && p.quantityInStock <= p.reorderLevel
-    if (activeStatus === 'Good') matchesStatus = p.quantityInStock > p.reorderLevel
+    // Status filters
+    if (activeStatus === 'Critical' && p.quantityInStock > 0) return false
+    if (activeStatus === 'Low' && (p.quantityInStock <= 0 || p.quantityInStock > p.reorderLevel)) return false
+    if (activeStatus === 'Good' && p.quantityInStock <= p.reorderLevel) return false
 
-    return matchesCategory && matchesRack && matchesColumn && matchesStatus
+    // Low stock toggle (global prop)
+    if (onlyLowStock && p.quantityInStock > p.reorderLevel) return false
+
+    return true
   })
 
   const totalValue = filteredItems.reduce((sum, p) => sum + (p.price * p.quantityInStock), 0)
@@ -141,14 +153,24 @@ export function Inventory({
             </div>
           </div>
 
-          <button 
-            className="btn btn-primary"
-            style={{ padding: '12px 24px', borderRadius: '14px' }}
-            onClick={() => startTransition(() => setActiveView('product-manager'))}
-          >
-            <Plus size={18} />
-            Master Catalog
-          </button>
+          <div className="cluster gap-2">
+            <button 
+              className="btn btn-outline" 
+              style={{ padding: '12px 24px', borderRadius: '14px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', display: 'flex', gap: '8px', alignItems: 'center' }}
+              onClick={() => exportToCSV(filteredItems, 'Inventory_Report')}
+            >
+              <Download size={18} />
+              Export Excel
+            </button>
+            <button 
+              className="btn btn-primary"
+              style={{ padding: '12px 24px', borderRadius: '14px' }}
+              onClick={() => navigate('/product-manager')}
+            >
+              <Plus size={18} />
+              Master Catalog
+            </button>
+          </div>
         </div>
       </div>
 
@@ -220,7 +242,7 @@ export function Inventory({
                         title="Edit Product"
                         onClick={() => {
                           startEditingProduct(product);
-                          startTransition(() => setActiveView('product-manager'));
+                          navigate('/product-manager');
                         }}
                       >
                         <Edit size={18} />

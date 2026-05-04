@@ -8,37 +8,61 @@ import {
   ArrowDownLeft, 
   CheckCircle2, 
   Clock, 
-  AlertCircle
+  AlertCircle,
+  Download
 } from 'lucide-react'
 import { SectionHeading } from '../../components/SectionHeading'
-import { authConfig, formatCurrency, formatDate } from '../../utils'
+import { authConfig, formatCurrency, formatDate, exportToCSV } from '../../utils'
 
-export default function Invoices({ api, session, onNotice }) {
+export default function Invoices({ api, session, onNotice, sales = [] }) {
   const [activeTab, setActiveTab] = useState('customer') // 'customer' or 'supplier'
   const [invoices, setInvoices] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
 
   useEffect(() => {
-    fetchInvoices()
+    if (activeTab === 'supplier') {
+      fetchSupplierInvoices()
+    }
   }, [activeTab])
 
-  async function fetchInvoices() {
+  async function fetchSupplierInvoices() {
     setLoading(true)
     try {
-      const endpoint = activeTab === 'customer' ? '/customer-invoices' : '/supplier-invoices'
-      const response = await api.get(endpoint, authConfig(session.token))
+      const response = await api.get('/supplier-invoices', authConfig(session.token))
       setInvoices(Array.isArray(response.data) ? response.data : [])
     } catch (err) {
-      onNotice({ type: 'error', text: `Failed to fetch ${activeTab} invoices.` })
+      onNotice?.({ type: 'error', text: 'Failed to fetch supplier invoices.' })
     } finally {
       setLoading(false)
     }
   }
 
-  const filtered = invoices.filter(inv => 
+  const displayData = activeTab === 'customer' 
+    ? sales.map(s => ({
+        _id: s._id,
+        invoiceNo: s.invoiceNumber,
+        customerName: s.customerName,
+        totalAmount: s.total,
+        balanceAmount: s.paymentMethod === 'credit' ? s.total : 0,
+        status: s.paymentMethod === 'credit' ? 'UNPAID' : 'PAID',
+        date: s.createdAt,
+        type: 'sale'
+      }))
+    : invoices.map(i => ({
+        _id: i._id,
+        invoiceNo: i.invoiceNo,
+        customerName: i.supplierId?.name || 'Unknown Supplier',
+        totalAmount: i.totalAmount,
+        balanceAmount: i.balanceAmount,
+        status: i.status,
+        date: i.date,
+        type: 'purchase'
+      }))
+
+  const filtered = displayData.filter(inv => 
     inv.invoiceNo.toLowerCase().includes(search.toLowerCase()) ||
-    (inv.customerId?.name || inv.supplierId?.name || '').toLowerCase().includes(search.toLowerCase())
+    inv.customerName.toLowerCase().includes(search.toLowerCase())
   )
 
   const getStatusPill = (status) => {
@@ -62,21 +86,31 @@ export default function Invoices({ api, session, onNotice }) {
             text="Manage accounts receivable and payable across the organization." 
           />
         </div>
-        <div className="range-switcher p-1" style={{ background: 'var(--bg-soft)', borderRadius: '12px' }}>
+        <div className="cluster gap-2">
           <button 
-            className={`btn ${activeTab === 'customer' ? 'btn-primary' : ''}`} 
-            style={{ borderRadius: '10px', fontSize: '0.8rem', background: activeTab === 'customer' ? '' : 'transparent', color: activeTab === 'customer' ? '' : 'var(--text-soft)', border: 'none' }}
-            onClick={() => setActiveTab('customer')}
+            className="btn btn-outline" 
+            style={{ borderRadius: '10px', fontSize: '0.8rem', display: 'flex', gap: '8px', alignItems: 'center', background: 'var(--panel)', border: '1px solid var(--border)' }}
+            onClick={() => exportToCSV(filtered, `${activeTab}_Invoices_Report`)}
           >
-            Sales Invoices
+            <Download size={14} />
+            Export Excel
           </button>
-          <button 
-            className={`btn ${activeTab === 'supplier' ? 'btn-primary' : ''}`} 
-            style={{ borderRadius: '10px', fontSize: '0.8rem', background: activeTab === 'supplier' ? '' : 'transparent', color: activeTab === 'supplier' ? '' : 'var(--text-soft)', border: 'none' }}
-            onClick={() => setActiveTab('supplier')}
-          >
-            Purchase Invoices
-          </button>
+          <div className="range-switcher p-1" style={{ background: 'var(--bg-soft)', borderRadius: '12px' }}>
+            <button 
+              className={`btn ${activeTab === 'customer' ? 'btn-primary' : ''}`} 
+              style={{ borderRadius: '10px', fontSize: '0.8rem', background: activeTab === 'customer' ? '' : 'transparent', color: activeTab === 'customer' ? '' : 'var(--text-soft)', border: 'none' }}
+              onClick={() => setActiveTab('customer')}
+            >
+              Sales Invoices
+            </button>
+            <button 
+              className={`btn ${activeTab === 'supplier' ? 'btn-primary' : ''}`} 
+              style={{ borderRadius: '10px', fontSize: '0.8rem', background: activeTab === 'supplier' ? '' : 'transparent', color: activeTab === 'supplier' ? '' : 'var(--text-soft)', border: 'none' }}
+              onClick={() => setActiveTab('supplier')}
+            >
+              Purchase Invoices
+            </button>
+          </div>
         </div>
       </div>
 
@@ -115,8 +149,8 @@ export default function Invoices({ api, session, onNotice }) {
                   </td>
                   <td>
                     <div className="stack">
-                      <strong className="small">{inv.customerId?.name || inv.supplierId?.name || 'Walk-in'}</strong>
-                      <span className="muted x-small">{inv.customerId?.phone || inv.supplierId?.phone || 'No contact'}</span>
+                      <strong className="small">{inv.customerName}</strong>
+                      <span className="muted x-small">Transaction: {inv.type}</span>
                     </div>
                   </td>
                   <td>

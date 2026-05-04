@@ -19,13 +19,14 @@ export function Topbar({ activeView, session, overview }) {
           {activeView === 'pos' && 'Billing Desk'}
           {activeView === 'inventory' && 'Warehouse Control'}
           {activeView === 'reports' && 'Revenue Analytics'}
-          {activeView === 'categories' && 'Manage Categories'}
-          {activeView === 'suppliers' && 'Manage Suppliers'}
-          {activeView === 'customers' && 'Manage Customers'}
-          {activeView === 'locations' && 'Manage Locations'}
+          {activeView === 'suppliers' && 'Supplier Management'}
+          {activeView === 'customers' && 'Customer Management'}
           {activeView === 'purchases' && 'Purchases Log'}
           {activeView === 'invoices' && 'Invoices Log'}
           {activeView === 'payments' && 'Payments Log'}
+          {activeView === 'staff' && 'Staff Management'}
+          {activeView === 'notifications' && 'Notification Management'}
+          {activeView === 'product-manager' && 'Product Management'}
         </h1>
         <div className="cluster gap-3 muted small mt-1">
           <span>Branch: <strong className="font-strong" style={{ color: 'var(--text)' }}>{session.user.branch}</strong></span>

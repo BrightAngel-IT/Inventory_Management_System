@@ -88,10 +88,27 @@ body {
   50% { opacity: 0.7; transform: scale(0.98); }
 }
 
-.glow-on-hover:hover {
-  box-shadow: var(--shadow-accent);
-  border-color: var(--accent);
+/* Scrollbars */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 12px;
+  display: block;
 }
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.08);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--accent-strong);
+  border-radius: 10px;
+  border: 3px solid rgba(255,255,255,0.1);
+  background-clip: content-box;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 .glass-panel {
   background: var(--panel);
@@ -252,7 +269,7 @@ p { margin: 0; line-height: 1.6; }
 .field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .field span {
@@ -461,6 +478,9 @@ p { margin: 0; line-height: 1.6; }
 .p-4 { padding: 16px; }
 .p-5 { padding: 20px; }
 .p-6 { padding: 24px; }
+.p-8 { padding: 32px; }
+.p-10 { padding: 40px; }
+.p-12 { padding: 48px; }
 
 .pt-4 { padding-top: 16px; }
 .pb-4 { padding-bottom: 16px; }
@@ -711,6 +731,19 @@ p { margin: 0; line-height: 1.6; }
 
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); }
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); }
+.grid-12 { display: grid; grid-template-columns: repeat(12, 1fr); }
+.grid-colspan-1 { grid-column: span 1 / span 1; }
+.grid-colspan-2 { grid-column: span 2 / span 2; }
+.grid-colspan-3 { grid-column: span 3 / span 3; }
+.grid-colspan-4 { grid-column: span 4 / span 4; }
+.grid-colspan-5 { grid-column: span 5 / span 5; }
+.grid-colspan-6 { grid-column: span 6 / span 6; }
+.grid-colspan-7 { grid-column: span 7 / span 7; }
+.grid-colspan-8 { grid-column: span 8 / span 8; }
+.grid-colspan-9 { grid-column: span 9 / span 9; }
+.grid-colspan-10 { grid-column: span 10 / span 10; }
+.grid-colspan-11 { grid-column: span 11 / span 11; }
+.grid-colspan-12 { grid-column: span 12 / span 12; }
 
 .input-with-icon {
   display: flex;

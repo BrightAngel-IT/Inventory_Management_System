@@ -799,4 +799,113 @@ module.exports = {
   initializeStore,
   loginUser,
   saveProduct,
+  getUsers,
+  saveUser,
+  deleteUser,
 };
+
+async function getUsers() {
+  if (isDatabaseReady()) {
+    const users = await User.find().sort({ name: 1 }).lean();
+    return users.map((user) => sanitizeUser(user));
+  }
+
+  return memoryStore.users.map((user) => sanitizeUser(user)).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function saveUser(payload) {
+  const userData = {
+    name: String(payload.name || '').trim(),
+    email: String(payload.email || '').trim().toLowerCase(),
+    role: ['admin', 'cashier'].includes(payload.role) ? payload.role : 'cashier',
+    branch: String(payload.branch || 'Main Branch').trim(),
+  };
+
+  if (!userData.name || !userData.email) {
+    throw createError('Name and email are required.');
+  }
+
+  if (payload.password) {
+    userData.passwordHash = await bcrypt.hash(payload.password, 10);
+  }
+
+  if (isDatabaseReady()) {
+    if (payload._id) {
+      const user = await User.findByIdAndUpdate(payload._id, userData, {
+        new: true,
+        runValidators: true,
+      }).lean();
+
+      if (!user) {
+        throw createError('User not found.', 404);
+      }
+
+      return sanitizeUser(user);
+    }
+
+    if (!payload.password) {
+      throw createError('Password is required for new users.');
+    }
+
+    const existing = await User.findOne({ email: userData.email });
+    if (existing) {
+      throw createError('User with this email already exists.');
+    }
+
+    const user = await User.create(userData);
+    return sanitizeUser(user);
+  }
+
+  if (payload._id) {
+    const index = memoryStore.users.findIndex((u) => String(u._id) === String(payload._id));
+    if (index < 0) {
+      throw createError('User not found.', 404);
+    }
+
+    memoryStore.users[index] = {
+      ...memoryStore.users[index],
+      ...userData,
+      updatedAt: new Date().toISOString(),
+    };
+
+    return sanitizeUser(memoryStore.users[index]);
+  }
+
+  const existing = memoryStore.users.find((u) => u.email === userData.email);
+  if (existing) {
+    throw createError('User with this email already exists.');
+  }
+
+  if (!payload.password) {
+    throw createError('Password is required for new users.');
+  }
+
+  const newUser = {
+    _id: generateId(),
+    ...userData,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  memoryStore.users.push(newUser);
+
+  return sanitizeUser(newUser);
+}
+
+async function deleteUser(userId) {
+  if (isDatabaseReady()) {
+    const user = await User.findByIdAndDelete(userId);
+    if (!user) {
+      throw createError('User not found.', 404);
+    }
+    return { success: true };
+  }
+
+  const index = memoryStore.users.findIndex((u) => String(u._id) === String(userId));
+  if (index < 0) {
+    throw createError('User not found.', 404);
+  }
+
+  memoryStore.users.splice(index, 1);
+  return { success: true };
+}

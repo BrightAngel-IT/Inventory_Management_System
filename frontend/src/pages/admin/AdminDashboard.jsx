@@ -1,4 +1,5 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Warehouse,
   ShoppingCart,
@@ -14,12 +15,13 @@ import { MetricCard } from '../../components/MetricCard'
 import { SectionHeading } from '../../components/SectionHeading'
 import { formatCurrency, formatDate } from '../../utils'
 
-export function AdminDashboard({ overview, session, setActiveView, startTransition }) {
+export function AdminDashboard({ overview, session, startTransition }) {
+  const navigate = useNavigate()
   const quickActions = [
-    { label: 'New Bill', icon: ShoppingCart, view: 'pos', color: 'var(--accent)' },
-    { label: 'Add SKU', icon: PackagePlus, view: 'inventory', color: 'var(--info)' },
-    { label: 'View Reports', icon: Zap, view: 'reports', color: 'var(--success)' },
-    { label: 'Manage Staff', icon: UserPlus, view: 'overview', color: 'var(--text-soft)', placeholder: true },
+    { label: 'New Bill', icon: ShoppingCart, path: '/pos', color: 'var(--accent)' },
+    { label: 'Add SKU', icon: PackagePlus, path: '/inventory', color: 'var(--info)' },
+    { label: 'View Reports', icon: Zap, path: '/reports', color: 'var(--success)' },
+    { label: 'Manage Staff', icon: UserPlus, path: '/staff', color: 'var(--text-soft)' },
   ]
 
   return (
@@ -60,13 +62,12 @@ export function AdminDashboard({ overview, session, setActiveView, startTransiti
               key={action.label}
               className="quick-action-card glow-on-hover"
               style={{ flex: 1, minWidth: '160px' }}
-              onClick={() => !action.placeholder && startTransition(() => setActiveView(action.view))}
+              onClick={() => navigate(action.path)}
             >
               <div className="quick-action-icon" style={{ color: action.color }}>
                 <action.icon size={24} />
               </div>
               <span className="font-strong" style={{ fontSize: '0.9rem' }}>{action.label}</span>
-              {action.placeholder && <span className="pill neutral" style={{ fontSize: '0.6rem' }}>Soon</span>}
             </button>
           ))}
         </div>

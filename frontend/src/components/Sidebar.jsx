@@ -15,42 +15,41 @@ import {
   User,
   Bell,
   Wallet,
+  Users,
 } from 'lucide-react'
-
+import { NavLink } from 'react-router-dom'
 export function Sidebar({
   session,
   activeView,
-  setActiveView,
   theme,
   setTheme,
   handleLogout,
-  startTransition,
   unreadCount,
 }) {
   const navigation = [
-    { key: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { key: 'pos', label: 'Billing Desk', icon: ShoppingCart },
-    { key: 'inventory', label: 'Inventory', icon: Warehouse },
-    { key: 'notifications', label: 'Notifications', icon: Bell, badge: unreadCount },
+    { path: '/', label: 'Overview', icon: LayoutDashboard },
+    { path: '/pos', label: 'Billing Desk', icon: ShoppingCart },
+    { path: '/notifications', label: 'Notifications', icon: Bell, badge: unreadCount },
     ...(session?.user?.role === 'admin'
       ? [
-          { key: 'product-manager', label: 'Product Catalog', icon: Boxes },
-          { key: 'suppliers', label: 'Suppliers', icon: User },
-          { key: 'customers', label: 'Customers', icon: User },
-          { key: 'purchases', label: 'Purchases', icon: Receipt },
-          { key: 'invoices', label: 'Invoices', icon: Receipt },
-          { key: 'payments', label: 'Settlements', icon: Wallet },
-          { key: 'reports', label: 'Sales Reports', icon: BarChart3 },
-        ]
+        { path: '/inventory', label: 'Inventory', icon: Warehouse },
+        { path: '/suppliers', label: 'Suppliers', icon: User },
+        { path: '/customers', label: 'Customers', icon: User },
+        { path: '/staff', label: 'Employees', icon: Users },
+        { path: '/purchases', label: 'Purchases', icon: Receipt },
+        { path: '/invoices', label: 'Invoices', icon: Receipt },
+        { path: '/payments', label: 'Settlements', icon: Wallet },
+        { path: '/reports', label: 'Sales Reports', icon: BarChart3 },
+      ]
       : []),
   ]
 
   return (
     <aside className="sidebar panel glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
       {/* Fixed Header */}
-      <div className="brand-lockup between" style={{ 
-        paddingBottom: '24px', 
-        marginBottom: '24px', 
+      <div className="brand-lockup between" style={{
+        paddingBottom: '24px',
+        marginBottom: '24px',
         borderBottom: '1px solid var(--border)',
         flexShrink: 0
       }}>
@@ -95,35 +94,32 @@ export function Sidebar({
         <nav className="stack gap-1">
           {navigation.map((item, index) => {
             const Icon = item.icon
-            const isActive = activeView === item.key
-            
+
             // Add a visual separator before admin items if first admin item
             const showDivider = session?.user?.role === 'admin' && index === 3
 
             return (
-              <React.Fragment key={item.key}>
-                {showDivider && (
-                  <div className="my-2 stack gap-1">
-                    <span className="eyebrow muted ml-4 mb-1" style={{ fontSize: '0.65rem' }}>Management</span>
-                    <div style={{ height: '1px', background: 'var(--border)', margin: '0 16px' }}></div>
-                  </div>
-                )}
-                <button
-                  type="button"
-                  className={`nav-link between ${isActive ? 'active glow-on-hover' : ''}`}
-                  style={isActive ? { borderLeft: '3px solid var(--accent-strong)', paddingLeft: '13px', background: 'linear-gradient(90deg, var(--accent-soft), transparent)', fontWeight: 600 } : { borderLeft: '3px solid transparent' }}
-                  onClick={() => startTransition(() => setActiveView(item.key))}
+              <React.Fragment key={item.path}>
+                
+                <NavLink
+                  to={item.path}
+                  className={({ isActive }) => `nav-link between ${isActive ? 'active glow-on-hover' : ''}`}
+                  style={({ isActive }) => isActive ? { borderLeft: '3px solid var(--accent-strong)', paddingLeft: '13px', background: 'linear-gradient(90deg, var(--accent-soft), transparent)', fontWeight: 600 } : { borderLeft: '3px solid transparent' }}
                 >
-                  <div className="cluster gap-2">
-                    <Icon size={18} style={{ color: isActive ? 'var(--accent-strong)' : 'inherit' }} />
-                    <span>{item.label}</span>
-                  </div>
-                  {item.badge > 0 && (
-                    <span className="pill" style={{ background: 'var(--danger)', color: 'white', padding: '2px 6px', fontSize: '0.65rem', minWidth: '20px', textAlign: 'center' }}>
-                      {item.badge}
-                    </span>
+                  {({ isActive }) => (
+                    <>
+                      <div className="cluster gap-2">
+                        <Icon size={18} style={{ color: isActive ? 'var(--accent-strong)' : 'inherit' }} />
+                        <span>{item.label}</span>
+                      </div>
+                      {item.badge > 0 && (
+                        <span className="pill" style={{ background: 'var(--danger)', color: 'white', padding: '2px 6px', fontSize: '0.65rem', minWidth: '20px', textAlign: 'center' }}>
+                          {item.badge}
+                        </span>
+                      )}
+                    </>
                   )}
-                </button>
+                </NavLink>
               </React.Fragment>
             )
           })}
@@ -131,27 +127,27 @@ export function Sidebar({
       </div>
 
       <div className="mt-auto pt-4" style={{ borderTop: '1px solid var(--border)' }}>
-        <button 
-          type="button" 
-          className="btn w-full cluster justify-start gap-3" 
-          style={{ 
-            padding: '12px 16px', 
-            borderRadius: '12px', 
-            color: 'var(--muted)', 
+        <button
+          type="button"
+          className="btn w-full cluster justify-start gap-3"
+          style={{
+            padding: '12px 16px',
+            borderRadius: '12px',
+            color: 'var(--muted)',
             background: 'transparent',
             border: '1px solid transparent',
             transition: 'all 0.2s ease',
             cursor: 'pointer'
-          }} 
+          }}
           onMouseEnter={(e) => {
-             e.currentTarget.style.color = 'var(--danger)';
-             e.currentTarget.style.background = 'var(--danger-soft)';
-             e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+            e.currentTarget.style.color = 'var(--danger)';
+            e.currentTarget.style.background = 'var(--danger-soft)';
+            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.2)';
           }}
           onMouseLeave={(e) => {
-             e.currentTarget.style.color = 'var(--muted)';
-             e.currentTarget.style.background = 'transparent';
-             e.currentTarget.style.borderColor = 'transparent';
+            e.currentTarget.style.color = 'var(--muted)';
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.borderColor = 'transparent';
           }}
           onClick={handleLogout}
         >
