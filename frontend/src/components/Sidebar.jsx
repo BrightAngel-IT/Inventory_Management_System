@@ -29,7 +29,6 @@ export function Sidebar({
   const navigation = [
     { path: '/', label: 'Overview', icon: LayoutDashboard },
     { path: '/pos', label: 'Billing Desk', icon: ShoppingCart },
-    { path: '/notifications', label: 'Notifications', icon: Bell, badge: unreadCount },
     ...(session?.user?.role === 'admin'
       ? [
         { path: '/inventory', label: 'Inventory', icon: Warehouse },
@@ -74,20 +73,52 @@ export function Sidebar({
       </div>
 
       {/* Scrollable Content */}
-      <div className="stack gap-4" style={{ flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
+      <div className="stack gap-2" style={{ flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
 
         <div className="user-profile panel-strong p-3 glow-on-hover" style={{ borderRadius: '16px', border: '1px solid var(--border)', background: 'linear-gradient(145deg, var(--panel-strong), var(--bg-soft))' }}>
-          <div className="cluster gap-3">
-            <div className="avatar" style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent-soft)', display: 'grid', placeItems: 'center', color: 'var(--accent-strong)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-              {session.user.role === 'admin' ? <Crown size={22} /> : <User size={22} />}
-            </div>
-            <div className="stack">
-              <strong style={{ fontSize: '0.95rem' }}>{session.user.name}</strong>
-              <div className="cluster gap-1">
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)' }}></div>
-                <span className="muted small" style={{ textTransform: 'capitalize', fontSize: '0.75rem' }}>{session.user.role} Status</span>
+          <div className="cluster between">
+            <div className="cluster gap-3">
+              <div className="avatar" style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent-soft)', display: 'grid', placeItems: 'center', color: 'var(--accent-strong)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                {session.user.role === 'admin' ? <Crown size={22} /> : <User size={22} />}
+              </div>
+              <div className="stack">
+                <strong style={{ fontSize: '0.95rem' }}>{session.user.name}</strong>
+                <div className="cluster gap-1">
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)' }}></div>
+                  <span className="muted small" style={{ textTransform: 'capitalize', fontSize: '0.75rem' }}>{session.user.role} Status</span>
+                </div>
               </div>
             </div>
+            <NavLink 
+              to="/notifications" 
+              className="icon-btn glow-on-hover"
+              style={{ 
+                color: 'var(--muted)', 
+                position: 'relative',
+                background: 'var(--bg-soft)',
+                border: '1px solid var(--border)',
+                borderRadius: '10px',
+                width: '34px',
+                height: '34px',
+                display: 'grid',
+                placeItems: 'center'
+              }}
+            >
+              <Bell size={18} />
+              {unreadCount > 0 && (
+                <span style={{ 
+                  position: 'absolute', 
+                  top: '6px', 
+                  right: '6px', 
+                  background: '#ef4444', 
+                  width: '8px', 
+                  height: '8px', 
+                  borderRadius: '50%', 
+                  border: '2px solid var(--panel-strong)',
+                  boxShadow: '0 0 8px rgba(239, 68, 68, 0.5)'
+                }}></span>
+              )}
+            </NavLink>
           </div>
         </div>
 

@@ -93,19 +93,19 @@ export function POS({
             </div>
           </div>
 
-          <div className="input-shell compact mb-4" style={{ 
-            background: 'var(--panel)', 
-            border: '1px solid var(--border)', 
-            borderRadius: '999px', 
+          <div className="input-shell compact mb-4" style={{
+            background: 'var(--panel)',
+            border: '1px solid var(--border)',
+            borderRadius: '999px',
             cursor: 'pointer',
             padding: '12px 24px',
             boxShadow: 'var(--shadow-sm)'
           }} onClick={() => setIsSearchModalOpen(true)}>
             <Search size={18} className="muted" />
-            <input 
-              readOnly 
-              className="ghost-input" 
-              placeholder="Find item..." 
+            <input
+              readOnly
+              className="ghost-input"
+              placeholder="Find item..."
               style={{ cursor: 'pointer', fontSize: '0.9rem' }}
             />
           </div>
@@ -151,7 +151,7 @@ export function POS({
                   {item.discount || 0}%
                 </div>
                 <div style={{ textAlign: 'right', fontSize: '0.85rem', fontWeight: 600 }}>{formatCurrency(item.lineTotal)}</div>
-                <button 
+                <button
                   type="button"
                   onClick={() => setCart(cart.filter(c => c.productId !== item.productId))}
                   style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', opacity: 0.6 }}
@@ -293,17 +293,17 @@ export function POS({
       {isSearchModalOpen && (
         <div className="modal-overlay animate-fade" style={{ position: 'fixed', inset: 0, backdropFilter: 'blur(12px)', zIndex: 1000, display: 'grid', placeItems: 'center', padding: '10px' }}>
           <div className="panel p-0 stack glass-panel animate-scale" style={{ width: '100%', maxWidth: '950px', maxHeight: '85vh', overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}>
-            
+
             {/* Modal Header */}
             <div className="p-4 between" style={{ borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.05)' }}>
               <div className="stack gap-0">
                 <div className="cluster gap-2">
-                  <div className="icon-btn-small" style={{ background: 'var(--accent-soft)', color: 'var(--accent)', width: '32px', height: '32px' }}><ShoppingCart size={16}/></div>
+                  <div className="icon-btn-small" style={{ background: 'var(--accent-soft)', color: 'var(--accent)', width: '32px', height: '32px' }}><ShoppingCart size={16} /></div>
                   <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Quick Product Finder</h3>
                 </div>
                 <p className="muted x-small" style={{ marginLeft: '40px' }}>Search through entire inventory catalog</p>
               </div>
-              <button className="icon-btn glow-on-hover" style={{ background: 'var(--danger-soft)', color: 'var(--danger)', borderRadius: '10px', width: '36px', height: '36px' }} onClick={() => { setIsSearchModalOpen(false); setSelectedItem(null); setModalSearch(''); setModalCategory('All'); }}><X size={18}/></button>
+              <button className="icon-btn glow-on-hover" style={{ background: 'var(--danger-soft)', color: 'var(--danger)', borderRadius: '10px', width: '36px', height: '36px' }} onClick={() => { setIsSearchModalOpen(false); setSelectedItem(null); setModalSearch(''); setModalCategory('All'); }}><X size={18} /></button>
             </div>
 
             {!selectedItem ? (
@@ -312,21 +312,21 @@ export function POS({
                 <div className="p-3 stack gap-2" style={{ background: 'rgba(0,0,0,0.05)' }}>
                   <div className="input-shell" style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px', boxShadow: 'var(--shadow-sm)' }}>
                     <Search size={18} className="muted" />
-                    <input 
-                      autoFocus 
-                      className="ghost-input" 
-                      placeholder="Type name, barcode, or SKU..." 
+                    <input
+                      autoFocus
+                      className="ghost-input"
+                      placeholder="Type name, barcode, or SKU..."
                       style={{ fontSize: '0.9rem' }}
-                      value={modalSearch} 
-                      onChange={e => setModalSearch(e.target.value)} 
+                      value={modalSearch}
+                      onChange={e => setModalSearch(e.target.value)}
                     />
                   </div>
-                  
+
                   <div className="cluster gap-2 wrap-row no-scrollbar" style={{ overflowX: 'auto', paddingBottom: '2px' }}>
                     {['All', ...new Set(catalogProducts.map(p => p.category))].map(cat => (
-                      <button 
-                        key={cat} 
-                        className={`pill ${modalCategory === cat ? 'active' : 'neutral-soft'}`} 
+                      <button
+                        key={cat}
+                        className={`pill ${modalCategory === cat ? 'active' : 'neutral-soft'}`}
                         style={{ cursor: 'pointer', border: 'none', padding: '4px 12px', fontSize: '0.7rem', fontWeight: 700, transition: 'all 0.2s' }}
                         onClick={() => setModalCategory(cat)}
                       >
@@ -337,26 +337,26 @@ export function POS({
                 </div>
 
                 {/* Results Grid (Box-like cards) */}
-                <div className="product-grid flex-1 p-3 custom-scrollbar" style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
+                <div className="product-grid flex-1 p-3 custom-scrollbar" style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
                   gap: '10px',
                   background: 'rgba(0,0,0,0.02)',
-                  overflowY: 'scroll' 
+                  overflowY: 'scroll'
                 }}>
                   {catalogProducts.filter(p => {
-                    const matchesSearch = p.name.toLowerCase().includes(modalSearch.toLowerCase()) || 
-                                       p.sku.toLowerCase().includes(modalSearch.toLowerCase()) ||
-                                       p.barcode?.includes(modalSearch);
+                    const matchesSearch = p.name.toLowerCase().includes(modalSearch.toLowerCase()) ||
+                      p.sku.toLowerCase().includes(modalSearch.toLowerCase()) ||
+                      p.barcode?.includes(modalSearch);
                     const matchesCategory = modalCategory === 'All' || p.category === modalCategory;
                     return matchesSearch && matchesCategory;
                   }).map(product => (
-                    <div 
-                      key={product._id} 
-                      className="product-card stack glass-panel-sm glow-on-hover" 
-                      style={{ 
-                        borderRadius: '12px', 
-                        cursor: 'pointer', 
+                    <div
+                      key={product._id}
+                      className="product-card stack glass-panel-sm glow-on-hover"
+                      style={{
+                        borderRadius: '12px',
+                        cursor: 'pointer',
                         border: '1px solid var(--border)',
                         overflow: 'hidden',
                         background: 'var(--panel)',
@@ -376,7 +376,7 @@ export function POS({
                           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'grid', placeItems: 'center', color: 'white', fontWeight: 900, fontSize: '0.75rem' }}>SOLD OUT</div>
                         )}
                       </div>
-                      
+
                       <div className="stack gap-1 p-2">
                         <strong style={{ fontSize: '0.75rem', color: 'var(--text-strong)', height: '2.4em', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.2' }}>{product.name}</strong>
                         <div className="between align-end mt-0">
@@ -403,17 +403,17 @@ export function POS({
                     <p className="accent-text font-strong" style={{ fontSize: '1.2rem' }}>{formatCurrency(selectedItem.price)} / unit</p>
                   </div>
                 </div>
-                
+
                 <div className="stack gap-3 align-center">
                   <span className="eyebrow muted">Select Quantity</span>
                   <div className="qty-box p-2" style={{ background: 'var(--panel-strong)', borderRadius: '20px', scale: '1.4', border: '1px solid var(--border)' }}>
                     <button className="qty-btn glow-on-hover" style={{ width: '44px', height: '44px', fontSize: '1.2rem', background: 'var(--bg-soft)' }} onClick={() => setModalQty(q => Math.max(1, q - 1))}>-</button>
-                    <input 
-                      type="number" 
-                      className="ghost-input" 
-                      style={{ width: '70px', textAlign: 'center', fontWeight: 900, fontSize: '1.4rem', color: 'var(--text-strong)' }} 
-                      value={modalQty} 
-                      onChange={e => setModalQty(Number(e.target.value))} 
+                    <input
+                      type="number"
+                      className="ghost-input"
+                      style={{ width: '70px', textAlign: 'center', fontWeight: 900, fontSize: '1.4rem', color: 'var(--text-strong)' }}
+                      value={modalQty}
+                      onChange={e => setModalQty(Number(e.target.value))}
                     />
                     <button className="qty-btn glow-on-hover" style={{ width: '44px', height: '44px', fontSize: '1.2rem', background: 'var(--bg-soft)' }} onClick={() => setModalQty(q => q + 1)}>+</button>
                   </div>
@@ -421,18 +421,18 @@ export function POS({
                 </div>
 
                 <div className="cluster gap-4 w-full mt-4" style={{ maxWidth: '500px' }}>
-                  <button 
-                    className="btn btn-outline glow-on-hover" 
-                    style={{ flex: 1, padding: '16px', borderRadius: '16px' }} 
+                  <button
+                    className="btn btn-outline glow-on-hover"
+                    style={{ flex: 1, padding: '16px', borderRadius: '16px' }}
                     onClick={() => setSelectedItem(null)}
                   >
                     Back to Search
                   </button>
-                  <button 
-                    className="btn btn-primary glow-on-hover" 
-                    style={{ flex: 2, padding: '16px', borderRadius: '16px', fontSize: '1.1rem', fontWeight: 800 }} 
+                  <button
+                    className="btn btn-primary glow-on-hover"
+                    style={{ flex: 2, padding: '16px', borderRadius: '16px', fontSize: '1.1rem', fontWeight: 800 }}
                     onClick={() => {
-                      for(let i=0; i<modalQty; i++) {
+                      for (let i = 0; i < modalQty; i++) {
                         addProductToCart(selectedItem);
                       }
                       setIsSearchModalOpen(false);
