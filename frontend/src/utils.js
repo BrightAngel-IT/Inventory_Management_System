@@ -67,14 +67,17 @@ export const printReceipt = (sale, user, receivedAmount = 0) => {
 
   const rows = sale.items
     .map(
-      (item) => `
-        <div style="margin-bottom: 8px;">
-          <div style="font-weight: 800; font-size: 14px; text-transform: uppercase;">${item.name}</div>
-          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: 2px; font-weight: 600;">
-            <span style="width: 25%;">${Number(item.quantity).toFixed(3)} Qty</span>
-            <span style="width: 25%; text-align: right;">@ ${Number(item.price).toFixed(2)}</span>
-            <span style="width: 20%; text-align: right;">Disc: 0%</span>
-            <span style="width: 30%; text-align: right; font-weight: 900;">${Number(item.lineTotal).toFixed(2)}</span>
+      (item, index) => `
+        <div style="display: flex; margin-bottom: 8px; font-size: 11px; line-height: 1.2;">
+          <div style="width: 20px; font-weight: 700;">${index + 1}</div>
+          <div style="flex: 1;">
+            <div style="font-weight: 900; text-transform: uppercase; font-size: 12px;">${item.name}</div>
+            <div style="display: flex; justify-content: space-between; margin-top: 1px; font-weight: 600;">
+              <span style="width: 30%; font-family: monospace;">${item.sku}</span>
+              <span style="width: 20%; text-align: center;">${Number(item.quantity).toFixed(3)}</span>
+              <span style="width: 25%; text-align: right;">${Number(item.price).toFixed(2)}</span>
+              <span style="width: 25%; text-align: right; font-weight: 900;">${Number(item.lineTotal).toFixed(2)}</span>
+            </div>
           </div>
         </div>
       `,
@@ -91,70 +94,67 @@ export const printReceipt = (sale, user, receivedAmount = 0) => {
         <style>
           @media print {
             @page { margin: 0; }
-            body { margin: 0.2cm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           }
           * { box-sizing: border-box; -webkit-font-smoothing: none; }
           .dashed-line { border-top: 2px dashed #000; margin: 8px 0; }
           .double-dashed-line { border-top: 4px double #000; margin: 10px 0; }
         </style>
       </head>
-      <body style="font-family: Arial, Helvetica, sans-serif; width: 300px; margin: 0 auto; color: #000; line-height: 1.3; font-smooth: never; -webkit-font-smoothing: none;">
-        <div style="text-align: center; margin-bottom: 15px;">
-          <div style="font-size: 28px; font-weight: 900; letter-spacing: 1px; margin-bottom: 4px;">BRIGHT ANGEL</div>
-          <div style="font-size: 16px; font-weight: 900;">PREMIUM STOCK FLOW</div>
-          <div style="font-size: 13px; margin-top: 6px; font-weight: 700;">No 75, Dehiwala - Mount Lavenia</div>
-          <div style="font-size: 13px; font-weight: 700;">Tel: 011-4386651 | WhatsApp: 077-XXXXXXX</div>
+      <body style="font-family: Arial, Helvetica, sans-serif; width: 300px; margin: 0 auto; color: #000; line-height: 1.2; font-smooth: never; -webkit-font-smoothing: none;">
+        <div style="text-align: center; margin-bottom: 6px; padding-top: 0; margin-top: 2px;">
+          <div style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1px;">NILMA Alliance (Pvt) Ltd</div>
+          <div style="font-size: 11px; font-weight: 800; border-top: 1px solid #000; border-bottom: 1px solid #000; display: inline-block; padding: 1px 6px; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px;">Inventory Management System</div>
+          <div style="font-size: 10px; font-weight: 700; line-height: 1.1; margin-bottom: 1px;">295, 1/1 Galle Road, Colombo – 6, Sri Lanka</div>
+          <div style="font-size: 10px; font-weight: 700;">Tel: +94-742-955-414</div>
         </div>
 
-        <div style="font-size: 12px; margin-bottom: 10px; font-weight: 700;">
+        <div style="font-size: 11px; margin-bottom: 6px; font-weight: 700;">
           <div style="display: flex; justify-content: space-between;">
             <span>DATE: ${new Date(sale.createdAt).toLocaleDateString()}</span>
             <span>TIME: ${new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
           </div>
-          <div style="display: flex; justify-content: space-between;">
+          <div style="display: flex; justify-content: space-between; margin-top: 2px;">
             <span>BILL: ${sale.invoiceNumber}</span>
             <span>CASHIER: ${user.name.toUpperCase()}</span>
           </div>
-          <div style="margin-top: 2px;">CUSTOMER: ${sale.customerName.toUpperCase()}</div>
+          <div style="margin-top: 2px; border-bottom: 1px solid #000; padding-bottom: 2px;">CUSTOMER: ${sale.customerName.toUpperCase()}</div>
+        </div>
+
+        <div style="display: flex; font-weight: 900; font-size: 10px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 0; margin-bottom: 8px; text-transform: uppercase;">
+          <span style="width: 20px;">NO</span>
+          <span style="flex: 1;">ITEM / SKU</span>
+          <span style="width: 40px; text-align: center;">QTY</span>
+          <span style="width: 55px; text-align: right;">PRICE</span>
+          <span style="width: 65px; text-align: right;">AMOUNT</span>
+        </div>
+
+        <div style="margin-bottom: 10px;">
+          ${rows}
         </div>
 
         <div class="dashed-line"></div>
-        <div style="font-size: 12px; display: flex; justify-content: space-between; font-weight: 900; text-transform: uppercase;">
-          <span style="width: 25%;">Quantity</span>
-          <span style="width: 25%; text-align: right;">Rate</span>
-          <span style="width: 20%; text-align: right;">Disc</span>
-          <span style="width: 30%; text-align: right;">Amount</span>
-        </div>
-        <div class="dashed-line"></div>
 
-        <div style="margin: 10px 0;">${rows}</div>
-
-        <div class="dashed-line"></div>
-
-        <div style="font-size: 14px; margin-left: 15%; font-weight: 700;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+        <div style="font-size: 13px; margin-left: 10%; font-weight: 700;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 1px;">
             <span>GROSS TOTAL:</span>
             <span>${subtotal.toFixed(2)}</span>
           </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 1px;">
             <span>DISCOUNT:</span>
             <span>${Number(sale.discount || 0).toFixed(2)}</span>
           </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
-            <span>TAX (8%):</span>
-            <span>${Number(sale.tax || 0).toFixed(2)}</span>
-          </div>
           
-          <div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 20px; margin-top: 8px; border-top: 2px solid #000; padding-top: 8px;">
+          <div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 18px; margin-top: 4px; border-top: 2px solid #000; padding-top: 4px;">
             <span>NET TOTAL:</span>
             <span>${Number(sale.total).toFixed(2)}</span>
           </div>
 
-          <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+          <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 12px;">
             <span>CASH PAID:</span>
             <span>${Number(receivedAmount || sale.total).toFixed(2)}</span>
           </div>
-          <div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 16px;">
+          <div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 14px;">
             <span>BALANCE:</span>
             <span>${balance.toFixed(2)}</span>
           </div>
@@ -162,13 +162,14 @@ export const printReceipt = (sale, user, receivedAmount = 0) => {
 
         <div class="double-dashed-line"></div>
 
-        <div style="font-size: 12px; text-align: center; font-weight: 700;">
-          <div style="margin-bottom: 6px;">NO OF ITEMS: ${sale.items.length} | TOTAL QTY: ${sale.items.reduce((sum, i) => sum + i.quantity, 0).toFixed(2)}</div>
-          <div style="font-weight: 900; margin: 12px 0; font-size: 14px;">*** THANK YOU - VISIT AGAIN ***</div>
-          <div style="font-size: 11px; margin-bottom: 8px;">Prices are inclusive of all taxes.</div>
-          <div style="border: 2px solid #000; padding: 6px; display: inline-block; font-weight: 900; font-size: 13px;">
-            SYSTEM BY: BRIGHTANGEL IT SOLUTIONS
+        <div style="text-align: center; font-weight: 700;">
+          <div style="font-size: 10px; margin-bottom: 6px;">ITEMS: ${sale.items.length} | QTY: ${sale.items.reduce((sum, i) => sum + i.quantity, 0).toFixed(2)}</div>
+          <div style="font-weight: 900; margin: 6px 0; font-size: 13px;">*** THANK YOU - VISIT AGAIN ***</div>
+          
+          <div style="border-top: 1px dashed #000; padding-top: 8px; font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase;">
+            System by: <strong>BrightAngel IT Solutions</strong>
           </div>
+          <div style="height: 250px;"></div>
         </div>
 
         <script>
@@ -181,3 +182,4 @@ export const printReceipt = (sale, user, receivedAmount = 0) => {
   `)
   receiptWindow.document.close()
 }
+

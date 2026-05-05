@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
   UserPlus, 
   Search, 
@@ -14,13 +15,17 @@ import {
 } from 'lucide-react'
 import { SectionHeading } from '../../components/SectionHeading'
 import { authConfig, readErrorMessage, formatCurrency } from '../../utils'
+import { Pagination } from '../../components/Pagination'
 
 export default function Customers({ api, session, onNotice }) {
+  const navigate = useNavigate()
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -84,11 +89,17 @@ export default function Customers({ api, session, onNotice }) {
       onNotice({ type: 'error', text: readErrorMessage(err) })
     }
   }
-
   const filtered = customers.filter(c => 
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     (c.phone || '').includes(search)
   )
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search])
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
+  const paginatedCustomers = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   return (
     <div className="stack gap-6 animate-fade">
@@ -160,7 +171,7 @@ export default function Customers({ api, session, onNotice }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(cus => (
+              {paginatedCustomers.map((cus) => (
                 <tr key={cus._id} className="table-row-hover">
                   <td style={{ paddingLeft: '24px' }}>
                     <div className="stack">
@@ -192,6 +203,7 @@ export default function Customers({ api, session, onNotice }) {
                   </td>
                   <td style={{ textAlign: 'right', paddingRight: '24px' }}>
                     <div className="cluster gap-2 justify-end">
+                      <button className="icon-btn ghost hover-accent" title="Statement of Account" onClick={() => navigate(`/accounts/customer/${cus._id}`)}><History size={16}/></button>
                       <button className="icon-btn ghost hover-accent" onClick={() => handleEdit(cus)}><Edit size={16}/></button>
                       <button className="icon-btn ghost hover-danger" onClick={() => handleDelete(cus._id)}><Trash2 size={16}/></button>
                     </div>
@@ -207,6 +219,14 @@ export default function Customers({ api, session, onNotice }) {
             </div>
           )}
         </div>
+
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={filtered.length}
+          itemsPerPage={itemsPerPage}
+        />
       </div>
     </div>
   )

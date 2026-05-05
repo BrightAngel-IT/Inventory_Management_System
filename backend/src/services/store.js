@@ -435,8 +435,8 @@ async function createSale(payload) {
     saleItems.reduce((sum, item) => sum + item.lineTotal, 0),
   );
   const discount = formatCurrencyAmount(Number(payload.discount || 0));
-  const tax = formatCurrencyAmount(Number(payload.tax || subtotal * 0.08));
-  const total = formatCurrencyAmount(subtotal + tax - discount);
+  const tax = 0;
+  const total = formatCurrencyAmount(subtotal - discount);
 
   const salePayload = {
     invoiceNumber: makeInvoiceNumber(),
@@ -691,11 +691,18 @@ async function getSalesReport(range = 'weekly') {
 }
 
 async function getOverviewData(user) {
-  const [products, sales, users] = await Promise.all([
+  let [products, sales, users] = await Promise.all([
     getAllProducts(),
     getAllSales(),
     getAllUsersForLookup(),
   ]);
+
+  // Role-based filtering: Cashiers only see their own sales metrics
+  if (user && user.role === 'cashier') {
+    sales = sales.filter(sale => 
+      String(sale.cashier?.userId || sale.cashierId) === String(user._id)
+    );
+  }
 
   const now = new Date();
   const weekStart = startOfWeek(now);
@@ -764,6 +771,7 @@ async function getOverviewData(user) {
       inventoryValue,
       stockCost,
       revenueToday: formatCurrencyAmount(salesToday.reduce((sum, sale) => sum + Number(sale.total), 0)),
+      totalOrdersToday: salesToday.length,
       revenueWeekly: formatCurrencyAmount(
         salesThisWeek.reduce((sum, sale) => sum + Number(sale.total), 0),
       ),
@@ -794,6 +802,7 @@ module.exports = {
   getOverviewData,
   getProducts,
   getRecentSales,
+  getSales,
   getSalesReport,
   getUserById,
   initializeStore,
@@ -909,3 +918,54 @@ async function deleteUser(userId) {
   memoryStore.users.splice(index, 1);
   return { success: true };
 }
+
+async function getSales(filters = {}) {
+  const sales = await getAllSales();
+
+  return sales.filter((sale) => {
+    const saleDate = new Date(sale.createdAt);
+    const now = new Date();
+
+    // Date filters
+    if (filters.date === 'today') {
+      if (!sameDay(sale.createdAt, now)) return false;
+    } else if (filters.date === 'this-week') {
+      const weekStart = startOfWeek(now);
+      if (new Date(sale.createdAt) < weekStart) return false;
+    } else if (filters.date === 'this-month') {
+      if (saleDate.getMonth() !== now.getMonth() || saleDate.getFullYear() !== now.getFullYear()) return false;
+    }
+
+    // Cashier filter
+    if (filters.cashierId && String(sale.cashier?.userId) !== String(filters.cashierId)) {
+      return false;
+    }
+
+    // Query filter (invoice number or customer name)
+    if (filters.query) {
+      const q = String(filters.query).toLowerCase();
+      if (!sale.invoiceNumber.toLowerCase().includes(q) && !sale.customerName.toLowerCase().includes(q)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+}
+
+module.exports = {
+  createSale,
+  deleteProduct,
+  getOverviewData,
+  getProducts,
+  getRecentSales,
+  getSales,
+  getSalesReport,
+  getUserById,
+  initializeStore,
+  loginUser,
+  saveProduct,
+  getUsers,
+  saveUser,
+  deleteUser,
+};

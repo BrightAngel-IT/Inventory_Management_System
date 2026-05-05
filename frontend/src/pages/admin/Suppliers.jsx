@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
 import { 
   Users, 
   Plus, 
@@ -11,17 +11,22 @@ import {
   Trash2, 
   X,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  FileText
 } from 'lucide-react'
 import { SectionHeading } from '../../components/SectionHeading'
 import { authConfig, readErrorMessage } from '../../utils'
+import { Pagination } from '../../components/Pagination'
 
 export default function Suppliers({ api, session, onNotice }) {
+  const navigate = useNavigate()
   const [suppliers, setSuppliers] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -87,11 +92,17 @@ export default function Suppliers({ api, session, onNotice }) {
       onNotice({ type: 'error', text: readErrorMessage(err) })
     }
   }
-
   const filtered = suppliers.filter(s => 
     s.name.toLowerCase().includes(search.toLowerCase()) ||
     (s.category || '').toLowerCase().includes(search.toLowerCase())
   )
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search])
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
+  const paginatedSuppliers = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   return (
     <div className="stack gap-6 animate-fade">
@@ -167,7 +178,7 @@ export default function Suppliers({ api, session, onNotice }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(sup => (
+              {paginatedSuppliers.map((sup) => (
                 <tr key={sup._id} className="table-row-hover">
                   <td style={{ paddingLeft: '24px' }}>
                     <div className="stack">
@@ -196,6 +207,7 @@ export default function Suppliers({ api, session, onNotice }) {
                   </td>
                   <td style={{ textAlign: 'right', paddingRight: '24px' }}>
                     <div className="cluster gap-2 justify-end">
+                      <button className="icon-btn ghost hover-accent" title="Statement of Account" onClick={() => navigate(`/accounts/supplier/${sup._id}`)}><FileText size={16}/></button>
                       <button className="icon-btn ghost hover-accent" onClick={() => handleEdit(sup)}><Edit size={16}/></button>
                       <button className="icon-btn ghost hover-danger" onClick={() => handleDelete(sup._id)}><Trash2 size={16}/></button>
                     </div>
@@ -211,6 +223,14 @@ export default function Suppliers({ api, session, onNotice }) {
             </div>
           )}
         </div>
+
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={filtered.length}
+          itemsPerPage={itemsPerPage}
+        />
       </div>
     </div>
   )

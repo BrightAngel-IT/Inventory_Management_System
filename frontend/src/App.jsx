@@ -20,6 +20,7 @@ import { Login } from './pages/Login'
 import { AdminDashboard } from './pages/admin/AdminDashboard'
 import { CashierDashboard } from './pages/cashier/CashierDashboard'
 import { POS } from './pages/cashier/POS'
+import SalesHistory from './pages/cashier/SalesHistory'
 import { Inventory } from './pages/admin/Inventory'
 import { Reports } from './pages/admin/Reports'
 import { ProductManager } from './pages/admin/ProductManager'
@@ -27,6 +28,7 @@ import Suppliers from './pages/admin/Suppliers'
 import Customers from './pages/admin/Customers'
 import Purchases from './pages/admin/Purchases'
 import Invoices from './pages/admin/Invoices'
+import AccountStatement from './pages/admin/AccountStatement'
 import { Notifications } from './pages/admin/Notifications'
 import { PaymentAllocation } from './pages/admin/PaymentAllocation'
 import StaffManagement from './pages/admin/StaffManagement'
@@ -132,6 +134,13 @@ function App() {
     }
   })
   const [hasShownPopup, setHasShownPopup] = useState(false)
+
+  // Auto-generate SKU for new products once data is loaded
+  useEffect(() => {
+    if (products.length > 0 && !editingProductId && (!productForm.sku || productForm.sku === '')) {
+      setProductForm(prev => ({ ...prev, sku: generateNextSKU() }))
+    }
+  }, [products, editingProductId])
 
   const notifications = products
     .filter((p) => p.quantityInStock <= p.reorderLevel)
@@ -262,19 +271,22 @@ function App() {
   const cartSubtotal = roundCurrency(
     cart.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0),
   )
-  const cartTax = roundCurrency(cartSubtotal * 0.08)
-  const cartTotal = roundCurrency(cartSubtotal + cartTax - Number(checkoutForm.discount || 0))
+  const discountValue = Number(checkoutForm.discount || 0)
+  const discountAmount = roundCurrency(cartSubtotal * (discountValue / 100))
+  const cartTotal = roundCurrency(cartSubtotal - discountAmount)
 
   async function refreshCoreData() {
     if (!session?.token) return
-    const [overviewResponse, productsResponse, salesResponse] = await Promise.all([
+    const [overviewResponse, productsResponse, salesResponse, customersResponse] = await Promise.all([
       api.get('/dashboard/overview', authConfig(session.token)),
       api.get('/products', authConfig(session.token)),
       api.get('/sales', authConfig(session.token)),
+      api.get('/customers', authConfig(session.token)),
     ])
     setOverview(overviewResponse.data)
     setProducts(productsResponse.data.products || [])
     setSales(salesResponse.data.sales || [])
+    setCustomers(customersResponse.data || [])
   }
 
   async function handleLogin(event) {
@@ -282,7 +294,6 @@ function App() {
     setBusyAction('login')
     try {
       const response = await api.post('/auth/login', authForm)
-      setSession(response.data)
       setSession(response.data)
       navigate('/')
       setNotice({ type: 'success', text: `Welcome back, ${response.data.user.name}.` })
@@ -417,9 +428,19 @@ function App() {
     navigate('/inventory')
   }
 
+  function generateNextSKU() {
+    if (!products || products.length === 0) return 'SKU-001'
+    const skus = products.map(p => {
+      const match = String(p.sku || '').match(/SKU-(\d+)/)
+      return match ? parseInt(match[1]) : 0
+    })
+    const maxNum = Math.max(...skus, 0)
+    return `SKU-${String(maxNum + 1).padStart(3, '0')}`
+  }
+
   function resetProductEditor() {
     setEditingProductId('')
-    setProductForm(emptyProductForm)
+    setProductForm({ ...emptyProductForm, sku: generateNextSKU() })
   }
 
   async function handleProductSave(event) {
@@ -478,7 +499,6 @@ function App() {
           customerName: checkoutForm.customerName,
           paymentMethod: checkoutForm.paymentMethod,
           discount: Number(checkoutForm.discount || 0),
-          tax: cartTax,
           notes: checkoutForm.notes,
           items: cart.map((item) => ({ productId: item.productId, quantity: item.quantity })),
         },
@@ -568,9 +588,17 @@ function App() {
                 handleCheckout={handleCheckout}
                 busyAction={busyAction}
                 cartSubtotal={cartSubtotal}
-                cartTax={cartTax}
                 cartTotal={cartTotal}
+                discountAmount={discountAmount}
                 barcodeValue={barcodeValue}
+              />
+            } />
+
+            <Route path="/sales-history" element={
+              <SalesHistory 
+                api={api} 
+                session={session} 
+                onNotice={setNotice} 
               />
             } />
 
@@ -634,9 +662,10 @@ function App() {
               </AdminRoute>
             } />
 
-            <Route path="/purchases" element={<AdminRoute session={session}><Purchases /></AdminRoute>} />
-            <Route path="/invoices" element={<AdminRoute session={session}><Invoices sales={sales} /></AdminRoute>} />
+            <Route path="/purchases" element={<AdminRoute session={session}><Purchases api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
+            <Route path="/invoices" element={<AdminRoute session={session}><Invoices api={api} session={session} onNotice={setNotice} sales={sales} customers={customers} /></AdminRoute>} />
             <Route path="/payments" element={<AdminRoute session={session}><PaymentAllocation api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
+            <Route path="/accounts/:type/:id" element={<AdminRoute session={session}><AccountStatement api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
 
             <Route path="/notifications" element={
               <Notifications

@@ -10,20 +10,37 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const purchase = new Purchase(req.body);
-  await purchase.save();
+  try {
+    const { supplier, products, total, date } = req.body;
+    
+    // 1. Create Purchase Record
+    const purchase = new Purchase({ supplier, products, total, date });
+    await purchase.save();
 
-  // Create Supplier Invoice
-  await SupplierInvoice.create({
-    invoiceNo: `PUR-${Date.now()}`,
-    supplierId: purchase.supplier,
-    date: purchase.date || new Date(),
-    totalAmount: purchase.total,
-    balanceAmount: purchase.total,
-    status: 'UNPAID'
-  });
+    // 2. Update Inventory (Increment quantityInStock)
+    const Product = require('../models/Product');
+    const updatePromises = products.map(item => 
+      Product.findByIdAndUpdate(item.product, {
+        $inc: { quantityInStock: item.quantity }
+      })
+    );
+    await Promise.all(updatePromises);
 
-  res.json(purchase);
+    // 3. Create Supplier Invoice
+    await SupplierInvoice.create({
+      invoiceNo: `PUR-${Date.now()}`,
+      supplierId: supplier,
+      date: date || new Date(),
+      totalAmount: total,
+      balanceAmount: total,
+      status: 'UNPAID'
+    });
+
+    res.status(201).json(purchase);
+  } catch (err) {
+    console.error('Purchase creation error:', err);
+    res.status(500).json({ message: 'Critical failure during procurement processing.' });
+  }
 });
 
 router.put('/:id', async (req, res) => {

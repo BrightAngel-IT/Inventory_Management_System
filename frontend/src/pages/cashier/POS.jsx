@@ -29,8 +29,8 @@ export function POS({
   handleCheckout,
   busyAction,
   cartSubtotal,
-  cartTax,
   cartTotal,
+  discountAmount,
   barcodeValue,
   customers,
 }) {
@@ -98,7 +98,7 @@ export function POS({
             border: '1px solid var(--border)',
             borderRadius: '999px',
             cursor: 'pointer',
-            padding: '12px 24px',
+            padding: '10px 24px',
             boxShadow: 'var(--shadow-sm)'
           }} onClick={() => setIsSearchModalOpen(true)}>
             <Search size={18} className="muted" />
@@ -185,12 +185,18 @@ export function POS({
             </div>
           )}
 
-          <div className="bill-summary stack gap-3 mt-auto">
+          <div className="bill-summary stack gap-2 mt-auto">
             <div className="between">
               <span className="muted small">Subtotal</span>
               <span className="font-strong small">{formatCurrency(cartSubtotal)}</span>
             </div>
-            <div className="between total-line">
+            {discountAmount > 0 && (
+              <div className="between">
+                <span className="small" style={{ color: 'var(--danger)' }}>Discount ({checkoutForm.discount}%)</span>
+                <span className="font-strong small" style={{ color: 'var(--danger)' }}>-{formatCurrency(discountAmount)}</span>
+              </div>
+            )}
+            <div className="between total-line pt-2" style={{ borderTop: '1px dashed var(--border)', marginTop: '8px' }}>
               <span style={{ fontSize: '1rem', fontWeight: 600 }}>Payable Amount</span>
               <strong>{formatCurrency(cartTotal)}</strong>
             </div>
@@ -198,12 +204,12 @@ export function POS({
         </div>
       </aside>
 
-      <aside className="stack gap-4 sticky-panel">
-        <form className="panel p-4 stack gap-4 glass-panel" onSubmit={handleCheckout} style={{ position: 'sticky', top: '16px' }}>
+      <aside className="stack gap-3 sticky-panel">
+        <form className="panel p-4 stack gap-4 glass-panel" onSubmit={handleCheckout} style={{ position: 'sticky', top: '16px', border: '1px solid var(--accent-soft)' }}>
           <div className="stack gap-3">
             <label className="field">
               <span>Customer Identification</span>
-              <div className="input-shell">
+              <div className="input-shell" style={{ height: '42px' }}>
                 <UserPlus size={16} className="muted" />
                 <input
                   className="ghost-input"
@@ -218,11 +224,12 @@ export function POS({
               </div>
             </label>
 
-            <div className="split-fields">
+            <div className="split-fields" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <label className="field">
                 <span>Payment</span>
                 <select
                   className="input"
+                  style={{ height: '42px', padding: '0 12px' }}
                   value={checkoutForm.paymentMethod}
                   onChange={(e) => setCheckoutForm({ ...checkoutForm, paymentMethod: e.target.value })}
                 >
@@ -233,55 +240,58 @@ export function POS({
                 </select>
               </label>
               <label className="field">
-                <span>Discount</span>
-                <div className="stack gap-2">
+                <span>Discount (%)</span>
+                <div className="input-shell" style={{ height: '42px', padding: '0 6px' }}>
+                  <Tag size={16} className="muted" />
                   <input
-                    className="input"
+                    className="ghost-input"
                     type="number"
-                    placeholder="0.00"
+                    placeholder="0"
                     value={checkoutForm.discount}
                     onChange={(e) => setCheckoutForm({ ...checkoutForm, discount: e.target.value })}
                   />
-                  <div className="cluster gap-2">
-                    {[10, 50, 100].map(val => (
-                      <button
-                        key={val}
-                        type="button"
-                        className="pill neutral-soft small glow-on-hover"
-                        style={{ cursor: 'pointer', padding: '4px 10px', border: '1px solid var(--border)' }}
-                        onClick={() => setCheckoutForm({ ...checkoutForm, discount: String(val) })}
-                      >
-                        -{val}
-                      </button>
-                    ))}
-                  </div>
+                  <span className="muted font-strong">%</span>
                 </div>
               </label>
             </div>
 
+            <div className="cluster gap-2 mt-1">
+              {[5, 10, 15, 20].map(val => (
+                <button
+                  key={val}
+                  type="button"
+                  className="pill neutral-soft small glow-on-hover"
+                  style={{ cursor: 'pointer', padding: '4px 12px', border: '1px solid var(--border)', fontSize: '0.7rem' }}
+                  onClick={() => setCheckoutForm({ ...checkoutForm, discount: String(val) })}
+                >
+                  {val}%
+                </button>
+              ))}
+            </div>
+
             {checkoutForm.paymentMethod === 'cash' && (
-              <div className="stack gap-4 p-4 mt-2" style={{ borderRadius: '16px', background: 'var(--panel-strong)', border: '1px solid var(--accent-soft)' }}>
+              <div className="stack gap-3 p-3 mt-1" style={{ borderRadius: '14px', background: 'var(--panel-strong)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
                 <div className="between">
-                  <span className="font-strong small">Received Amount</span>
+                  <span className="muted small font-strong">Received Amount</span>
                   <input
-                    className="input ghost-input"
+                    className="ghost-input"
                     type="number"
-                    placeholder="Enter amount..."
-                    style={{ textAlign: 'right', fontSize: '1.2rem', width: '140px', fontWeight: 700 }}
+                    placeholder="0.00"
+                    style={{ textAlign: 'right', fontSize: '1.1rem', width: '120px', fontWeight: 800, color: 'var(--text-strong)' }}
                     value={checkoutForm.receivedAmount || ''}
                     onChange={(e) => setCheckoutForm({ ...checkoutForm, receivedAmount: e.target.value })}
                   />
                 </div>
-                <div className="between pt-3" style={{ borderTop: '1px dashed var(--border)' }}>
-                  <span className="font-strong small">Change to Return</span>
-                  <strong className="accent-text" style={{ fontSize: '1.4rem' }}>
+                <div className="between pt-2" style={{ borderTop: '1px dashed var(--border)' }}>
+                  <span className="muted small font-strong">Change to Return</span>
+                  <strong className="accent-text" style={{ fontSize: '1.25rem' }}>
                     {formatCurrency(Math.max(0, (Number(checkoutForm.receivedAmount || 0) - cartTotal)))}
                   </strong>
                 </div>
               </div>
             )}
 
-            <button className="btn btn-primary w-full mt-2 glow-on-hover" type="submit" disabled={busyAction === 'checkout' || cart.length === 0}>
+            <button className="btn btn-primary w-full mt-2 glow-on-hover" type="submit" disabled={busyAction === 'checkout' || cart.length === 0} style={{ height: '48px', borderRadius: '14px' }}>
               {busyAction === 'checkout' ? <div className="spinner" style={{ width: '20px', height: '20px' }}></div> : <Receipt size={18} />}
               {busyAction === 'checkout' ? 'Processing...' : `Finalize & Pay ${formatCurrency(cartTotal)}`}
             </button>
@@ -366,7 +376,7 @@ export function POS({
                       onClick={() => { setSelectedItem(product); setModalQty(1); }}
                     >
                       <div style={{ position: 'relative', height: '80px', overflow: 'hidden' }}>
-                        <img src={product.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={product.image || null} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         {product.quantityInStock <= product.reorderLevel && (
                           <div style={{ position: 'absolute', top: 6, right: 6, background: 'var(--danger)', color: 'white', padding: '2px 6px', borderRadius: '6px', fontSize: '0.55rem', fontWeight: 800, boxShadow: 'var(--shadow-sm)' }}>
                             LOW
@@ -397,7 +407,7 @@ export function POS({
               /* Quantity Selector */
               <div className="p-10 stack gap-8 align-center text-center animate-scale flex-1" style={{ justifyContent: 'center' }}>
                 <div className="stack gap-4 align-center">
-                  <img src={selectedItem.image} style={{ width: '120px', height: '120px', borderRadius: '24px', objectFit: 'cover', boxShadow: 'var(--shadow-lg)', border: '2px solid var(--accent-soft)' }} />
+                  <img src={selectedItem.image || null} style={{ width: '120px', height: '120px', borderRadius: '24px', objectFit: 'cover', boxShadow: 'var(--shadow-lg)', border: '2px solid var(--accent-soft)' }} />
                   <div className="stack gap-1">
                     <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900 }}>{selectedItem.name}</h2>
                     <p className="accent-text font-strong" style={{ fontSize: '1.2rem' }}>{formatCurrency(selectedItem.price)} / unit</p>

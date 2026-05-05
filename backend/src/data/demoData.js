@@ -164,7 +164,7 @@ function buildDemoSales(products, users) {
       customerName: 'Walk-in customer',
       paymentMethod: 'cash',
       discount: 1.5,
-      tax: 2.18,
+      tax: 0,
       createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
       cashier: cashier,
       items: [
@@ -177,7 +177,7 @@ function buildDemoSales(products, users) {
       customerName: 'Office Pantry',
       paymentMethod: 'card',
       discount: 0,
-      tax: 1.89,
+      tax: 0,
       createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
       cashier: cashier,
       items: [
@@ -190,7 +190,7 @@ function buildDemoSales(products, users) {
       customerName: 'Home order',
       paymentMethod: 'upi',
       discount: 0.75,
-      tax: 1.64,
+      tax: 0,
       createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
       cashier: cashier,
       items: [
@@ -203,7 +203,7 @@ function buildDemoSales(products, users) {
       customerName: 'Cafe bulk desk',
       paymentMethod: 'bank-transfer',
       discount: 3.4,
-      tax: 4.42,
+      tax: 0,
       createdAt: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000),
       cashier: admin,
       items: [
@@ -216,7 +216,7 @@ function buildDemoSales(products, users) {
       customerName: 'School supply order',
       paymentMethod: 'card',
       discount: 2.2,
-      tax: 2.55,
+      tax: 0,
       createdAt: new Date(Date.now() - 48 * 24 * 60 * 60 * 1000),
       cashier: cashier,
       items: [
@@ -229,7 +229,7 @@ function buildDemoSales(products, users) {
       customerName: 'Festival shelf refill',
       paymentMethod: 'cash',
       discount: 0,
-      tax: 5.66,
+      tax: 0,
       createdAt: new Date(Date.now() - 160 * 24 * 60 * 60 * 1000),
       cashier: admin,
       items: [
@@ -259,14 +259,14 @@ function buildDemoSales(products, users) {
     });
 
     const subtotal = Number(items.reduce((sum, item) => sum + item.lineTotal, 0).toFixed(2));
-    const total = Number((subtotal + blueprint.tax - blueprint.discount).toFixed(2));
+    const total = Number((subtotal - blueprint.discount).toFixed(2));
 
     return {
       invoiceNumber: blueprint.invoiceNumber,
       customerName: blueprint.customerName,
       paymentMethod: blueprint.paymentMethod,
       discount: blueprint.discount,
-      tax: blueprint.tax,
+      tax: 0,
       subtotal,
       total,
       items,

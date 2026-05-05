@@ -18,6 +18,7 @@ import {
 import { SectionHeading } from '../../components/SectionHeading'
 import { useNavigate } from 'react-router-dom'
 import { authConfig, readErrorMessage } from '../../utils'
+import { Pagination } from '../../components/Pagination'
 
 export default function StaffManagement({ api, session, onNotice, setEditingStaff }) {
   const navigate = useNavigate()
@@ -25,6 +26,8 @@ export default function StaffManagement({ api, session, onNotice, setEditingStaf
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   useEffect(() => {
     fetchStaff()
@@ -66,13 +69,19 @@ export default function StaffManagement({ api, session, onNotice, setEditingStaf
       onNotice({ type: 'error', text: readErrorMessage(err) })
     }
   }
-
   const filtered = staff.filter(s => {
     const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
       s.email.toLowerCase().includes(search.toLowerCase())
     const matchesRole = roleFilter === 'all' || s.role === roleFilter
     return matchesSearch && matchesRole
   })
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, roleFilter])
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
+  const paginatedStaff = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   return (
     <div className="stack gap-6 animate-fade">
@@ -157,7 +166,7 @@ export default function StaffManagement({ api, session, onNotice, setEditingStaf
             </tr>
           </thead>
           <tbody>
-            {filtered.map(member => (
+            {paginatedStaff.map(member => (
               <tr key={member._id} className="table-row-hover transition-all duration-200">
                 <td style={{ paddingLeft: '32px', paddingY: '20px' }}>
                   <div className="cluster gap-4">
@@ -229,6 +238,14 @@ export default function StaffManagement({ api, session, onNotice, setEditingStaf
           </tbody>
         </table>
 
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={filtered.length}
+          itemsPerPage={itemsPerPage}
+        />
+
         {filtered.length === 0 && !loading && (
           <div className="p-20 text-center muted stack align-center gap-6 animate-fade">
             <div className="icon-btn x-large neutral opacity-20 shadow-none">
@@ -250,24 +267,7 @@ export default function StaffManagement({ api, session, onNotice, setEditingStaf
             <p className="muted small tracking-widest uppercase">Syncing Security Matrix...</p>
           </div>
         )}
-      </div>
-
-      {/* Footer Info */}
-      <div className="panel glass-panel p-6 between muted x-small border-glow-soft">
-        <div className="cluster gap-6">
-          <div className="cluster gap-2">
-            <Shield size={14} className="success-text" />
-            <span>End-to-End Encrypted Identity Storage</span>
-          </div>
-          <div className="cluster gap-2">
-            <UserCheck size={14} className="accent-text" />
-            <span>Role-Based Access Control (RBAC) Active</span>
-          </div>
-        </div>
-        <div>
-          Last Matrix Sync: {new Date().toLocaleTimeString()}
-        </div>
-      </div>
+      </div>    
     </div>
   )
 }

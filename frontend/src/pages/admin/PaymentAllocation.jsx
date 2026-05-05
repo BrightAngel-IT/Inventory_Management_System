@@ -56,7 +56,7 @@ export function PaymentAllocation({ api, session, onNotice }) {
   async function fetchCustomerInvoices(customerId) {
     setLoading(true)
     try {
-      const res = await api.get(`/customer-invoices/${customerId}`, authConfig(session.token))
+      const res = await api.get(`/customer-invoices/customer/${customerId}`, authConfig(session.token))
       setInvoices(res.data)
     } catch (err) {
       onNotice({ type: 'error', text: 'Failed to load invoices' })

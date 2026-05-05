@@ -8,6 +8,11 @@ router.get('/', async (req, res) => {
   res.json(customers);
 });
 
+router.get('/:id', async (req, res) => {
+  const customer = await Customer.findById(req.params.id);
+  res.json(customer);
+});
+
 router.post('/', async (req, res) => {
   const customer = new Customer(req.body);
   await customer.save();

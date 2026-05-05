@@ -29,6 +29,7 @@ export function Sidebar({
   const navigation = [
     { path: '/', label: 'Overview', icon: LayoutDashboard },
     { path: '/pos', label: 'Billing Desk', icon: ShoppingCart },
+    ...(session?.user?.role !== 'admin' ? [{ path: '/sales-history', label: 'Sales History', icon: Clock }] : []),
     ...(session?.user?.role === 'admin'
       ? [
         { path: '/inventory', label: 'Inventory', icon: Warehouse },
@@ -57,8 +58,8 @@ export function Sidebar({
             <Boxes size={22} />
           </div>
           <div>
-            <p className="eyebrow" style={{ fontSize: '0.65rem', color: 'var(--accent-strong)', letterSpacing: '0.05em' }}>System Node</p>
-            <h2 style={{ fontSize: '1.25rem', letterSpacing: '-0.04em', fontWeight: 800, color: 'var(--text)' }}>BrightAngel</h2>
+            <p className="eyebrow" style={{ fontSize: '0.65rem', color: 'var(--accent-strong)', letterSpacing: '0.05em' }}>Alliance Group</p>
+            <h2 style={{ fontSize: '1.1rem', letterSpacing: '-0.02em', fontWeight: 800, color: 'var(--text)' }}>NILMA Alliance</h2>
           </div>
         </div>
         <button

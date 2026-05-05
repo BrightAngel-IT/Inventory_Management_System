@@ -47,6 +47,7 @@ function createApp() {
   app.use('/api/customer-invoices', customerInvoiceRoutes);
   app.use('/api/supplier-invoices', supplierInvoiceRoutes);
   app.use('/api/payments', paymentRoutes);
+  app.use('/api/supplier-payments', require('./routes/supplierPaymentRoutes'));
   app.use('/api/users', userRoutes);
 
   app.use((error, _req, res, _next) => {

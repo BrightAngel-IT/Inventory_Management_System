@@ -1,13 +1,14 @@
 const express = require('express');
 
 const { requireAuth } = require('../middleware/auth');
-const { createSale, getRecentSales } = require('../services/store');
+const { createSale, getRecentSales, getSales } = require('../services/store');
 
 const router = express.Router();
 
-router.get('/', requireAuth, async (_req, res, next) => {
+router.get('/', requireAuth, async (req, res, next) => {
   try {
-    const sales = await getRecentSales();
+    const { date, cashierId, query } = req.query;
+    const sales = await getSales({ date, cashierId, query });
     res.json({ sales });
   } catch (error) {
     next(error);

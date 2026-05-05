@@ -49,7 +49,7 @@ export function ProductManager({
                 value={productForm.name}
                 onChange={handleProductFormChange}
                 required
-                style={{ fontSize: '1.1rem', fontWeight: 600 }}
+                style={{ fontSize: '1rem', fontWeight: 100 }}
               />
             </label>
 
@@ -79,35 +79,51 @@ export function ProductManager({
               </label>
               <label className="field">
                 <span className="muted small font-strong uppercase" style={{ fontSize: '0.6rem' }}>Unit of Measurement</span>
-                <input
+                <select
                   className="input"
                   name="unit"
-                  placeholder="e.g. kg, box, pcs"
                   value={productForm.unit}
                   onChange={handleProductFormChange}
-                />
+                >
+                  <option value="">Select a unit</option>
+                  <option value="kg">Kilogram (kg)</option>
+                  <option value="g">Gram (g)</option>
+                  <option value="ltr">Liter (ltr)</option>
+                  <option value="ml">Milliliter (ml)</option>
+                  <option value="box">Box</option>
+                  <option value="pcs">Pieces (pcs)</option>
+                  <option value="dozen">Dozen</option>
+                  <option value="pack">Pack</option>
+                  <option value="case">Case</option>
+                  <option value="bundle">Bundle</option>
+                  <option value="set">Set</option>
+                  <option value="roll">Roll</option>
+                  <option value="tube">Tube</option>
+                  <option value="meter">Meter (m)</option>
+                  <option value="sq-meter">Square Meter (m²)</option>
+                </select>
               </label>
             </div>
           </div>
 
-          <div className="stack gap-4 pt-5" style={{ borderTop: '1px solid var(--border)' }}>
+          <div className="stack gap-4 pt-525" style={{ borderTop: '3px solid var(--border)', paddingTop: '1rem' }}>
             <div className="cluster gap-2 mb-1">
               <Warehouse size={16} className="accent-text" />
               <span className="eyebrow" style={{ fontSize: '0.65rem' }}>Warehouse Logic & Placement</span>
             </div>
             
-            <div className="grid-3 gap-5">
+            <div className="grid-3 gap-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
               <label className="field">
                 <span className="muted small font-strong uppercase" style={{ fontSize: '0.6rem' }}>Row (R)</span>
-                <input className="input text-center font-mono" type="number" name="rack.rowNumber" value={productForm.rack.rowNumber} onChange={handleProductFormChange} required />
+                <input className="input text-center font-mono" style={{ width: '100%', minWidth: '0' }} type="number" name="rack.rowNumber" value={productForm.rack.rowNumber} onChange={handleProductFormChange} required />
               </label>
               <label className="field">
                 <span className="muted small font-strong uppercase" style={{ fontSize: '0.6rem' }}>Column (C)</span>
-                <input className="input text-center font-mono" type="number" name="rack.columnNumber" value={productForm.rack.columnNumber} onChange={handleProductFormChange} required />
+                <input className="input text-center font-mono" style={{ width: '100%', minWidth: '0' }} type="number" name="rack.columnNumber" value={productForm.rack.columnNumber} onChange={handleProductFormChange} required />
               </label>
               <label className="field">
                 <span className="muted small font-strong uppercase" style={{ fontSize: '0.6rem' }}>Shelf (S)</span>
-                <input className="input text-center font-mono" type="number" name="rack.shelfNumber" value={productForm.rack.shelfNumber} onChange={handleProductFormChange} required />
+                <input className="input text-center font-mono" style={{ width: '100%', minWidth: '0' }} type="number" name="rack.shelfNumber" value={productForm.rack.shelfNumber} onChange={handleProductFormChange} required />
               </label>
             </div>
             

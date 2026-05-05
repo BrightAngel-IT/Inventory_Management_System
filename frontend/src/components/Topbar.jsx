@@ -15,7 +15,7 @@ export function Topbar({ activeView, session, overview }) {
       <div className="stack gap-1">
         <p className="eyebrow" style={{ color: 'var(--accent-strong)' }}>Active Workspace</p>
         <h1 style={{ fontSize: '2.5rem' }}>
-          {activeView === 'overview' && 'Operations Command'}
+          {activeView === 'overview' && (session.user.role === 'admin' ? 'Operations Command' : 'Cashier Terminal')}
           {activeView === 'pos' && 'Billing Desk'}
           {activeView === 'inventory' && 'Warehouse Control'}
           {activeView === 'reports' && 'Revenue Analytics'}
@@ -41,16 +41,20 @@ export function Topbar({ activeView, session, overview }) {
       </div>
 
       <div className="topbar-actions cluster gap-4">
-        <div className="mini-stat panel-strong" style={{ padding: '12px 20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
-          <span className="muted eyebrow" style={{ fontSize: '0.6rem' }}>Total SKUs</span>
-          <div className="font-strong" style={{ fontSize: '1.25rem' }}>{overview?.metrics.totalProducts ?? 0}</div>
-        </div>
-        <div className="mini-stat panel-strong" style={{ padding: '12px 20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
-          <span className="muted eyebrow" style={{ fontSize: '0.6rem', color: 'var(--danger)' }}>Alerts</span>
-          <div className="font-strong" style={{ fontSize: '1.25rem', color: 'var(--danger)' }}>{overview?.metrics.lowStockCount ?? 0}</div>
-        </div>
+        {session.user.role === 'admin' && (
+          <>
+            <div className="mini-stat panel-strong" style={{ padding: '12px 20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+              <span className="muted eyebrow" style={{ fontSize: '0.6rem' }}>Total SKUs</span>
+              <div className="font-strong" style={{ fontSize: '1.25rem' }}>{overview?.metrics.totalProducts ?? 0}</div>
+            </div>
+            <div className="mini-stat panel-strong" style={{ padding: '12px 20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+              <span className="muted eyebrow" style={{ fontSize: '0.6rem', color: 'var(--danger)' }}>Alerts</span>
+              <div className="font-strong" style={{ fontSize: '1.25rem', color: 'var(--danger)' }}>{overview?.metrics.lowStockCount ?? 0}</div>
+            </div>
+          </>
+        )}
         <div className="mini-stat panel-strong" style={{ padding: '12px 20px', borderRadius: '16px', border: '1px solid var(--border)', background: 'var(--accent-soft)' }}>
-          <span className="muted eyebrow" style={{ fontSize: '0.6rem' }}>Today's Rev</span>
+          <span className="muted eyebrow" style={{ fontSize: '0.6rem' }}>{session.user.role === 'admin' ? "Today's Rev" : "My Sales"}</span>
           <div className="font-strong" style={{ fontSize: '1.25rem', color: 'var(--accent-strong)' }}>{formatCurrency(overview?.metrics.revenueToday ?? 0)}</div>
         </div>
       </div>

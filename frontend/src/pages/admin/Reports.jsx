@@ -26,11 +26,13 @@ import {
 import { MetricCard } from '../../components/MetricCard'
 import { SectionHeading } from '../../components/SectionHeading'
 import { formatCurrency, formatDate, exportToCSV } from '../../utils'
+import { Pagination } from '../../components/Pagination'
 
 export function Reports({ report, reportRange, setReportRange }) {
   const ranges = ['daily', 'weekly', 'monthly', 'annual']
   const [ledgerSearch, setLedgerSearch] = useState('')
-
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
   const filteredSales = useMemo(() => {
     const sales = report?.recentSales || []
     if (!ledgerSearch) return sales
@@ -39,6 +41,16 @@ export function Reports({ report, reportRange, setReportRange }) {
       (s.customerName || '').toLowerCase().includes(ledgerSearch.toLowerCase())
     )
   }, [report?.recentSales, ledgerSearch])
+
+  // Reset page on search or range change
+  React.useEffect(() => {
+    setCurrentPage(1)
+  }, [ledgerSearch, reportRange])
+
+  const totalPages = Math.ceil(filteredSales.length / itemsPerPage)
+  const paginatedSales = useMemo(() => {
+    return filteredSales.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  }, [filteredSales, currentPage])
 
   return (
     <div className="stack gap-6 animate-fade">
@@ -133,9 +145,9 @@ export function Reports({ report, reportRange, setReportRange }) {
               Real-time Sync
             </div>
           </div>
-          <div style={{ width: '100%', height: '380px', position: 'relative' }}>
+          <div style={{ width: '100%', height: '380px', position: 'relative', minWidth: 0 }}>
             {report?.trend?.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <AreaChart data={report.trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -213,7 +225,13 @@ export function Reports({ report, reportRange, setReportRange }) {
                 <tr key={p.productId} className="table-row-hover">
                   <td style={{ paddingLeft: '24px' }}>
                     <div className="cluster gap-3">
-                      <img src={p.image} alt="" style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'cover' }} />
+                      {p.image ? (
+                        <img src={p.image} alt="" style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--bg-soft)', display: 'grid', placeItems: 'center' }}>
+                          <Package size={14} className="muted" />
+                        </div>
+                      )}
                       <div className="stack">
                         <strong className="small">{p.name}</strong>
                         <span className="muted x-small">{p.category}</span>
@@ -284,13 +302,15 @@ export function Reports({ report, reportRange, setReportRange }) {
         </div>
 
         {/* Comprehensive Transaction Ledger */}
-        <div className="panel p-0 glass-panel overflow-hidden" style={{ gridColumn: 'span 2' }}>
-          <div className="between p-6 wrap-row gap-4">
-            <SectionHeading
-              title="Chronological Audit Trail"
-              text="Verifiable transaction stream for the active period."
-            />
-            <div className="input-shell compact" style={{ flexBasis: '300px' }}>
+        <div className="panel p-0 glass-panel overflow-hidden stack gap-0" style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column' }}>
+          <div className="between p-6 wrap-row gap-6" style={{ borderBottom: '1px solid var(--border)' }}>
+            <div style={{ flex: '1 1 400px' }}>
+              <SectionHeading
+                title="Chronological Audit Trail"
+                text="Verifiable transaction stream for the active period."
+              />
+            </div>
+            <div className="input-shell compact" style={{ flex: '0 1 320px', minWidth: '200px' }}>
               <Search size={16} className="muted" />
               <input 
                 className="ghost-input x-small" 
@@ -300,10 +320,9 @@ export function Reports({ report, reportRange, setReportRange }) {
               />
             </div>
           </div>
-          
-          <div className="overflow-auto" style={{ maxHeight: '500px' }}>
+          <div className="overflow-auto" style={{ flex: 1 }}>
             <table className="w-full professional-table">
-              <thead>
+              <thead style={{ background: 'var(--bg-soft)', position: 'sticky', top: 0, zIndex: 10 }}>
                 <tr>
                   <th style={{ paddingLeft: '24px' }}>Transaction ID</th>
                   <th>Customer Profile</th>
@@ -313,7 +332,7 @@ export function Reports({ report, reportRange, setReportRange }) {
                 </tr>
               </thead>
               <tbody>
-                {filteredSales.map((sale) => (
+                {paginatedSales.map((sale) => (
                   <tr key={sale._id} className="table-row-hover">
                     <td style={{ paddingLeft: '24px' }}>
                       <div className="cluster gap-2">
@@ -356,6 +375,14 @@ export function Reports({ report, reportRange, setReportRange }) {
               </tbody>
             </table>
           </div>
+          
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={filteredSales.length}
+            itemsPerPage={itemsPerPage}
+          />
         </div>
       </div>
     </div>

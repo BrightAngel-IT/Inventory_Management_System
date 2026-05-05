@@ -9,7 +9,12 @@ const Payment = require('../models/Payment');
 
 router.get('/', async (req, res, next) => {
   try {
-    const payments = await Payment.find().populate('customerId').populate('allocations.invoiceId');
+    const { customerId } = req.query;
+    const filter = customerId ? { customerId } : {};
+    const payments = await Payment.find(filter)
+      .populate('customerId')
+      .populate('allocations.invoiceId')
+      .sort({ paymentDate: -1 });
     res.json(payments);
   } catch (error) {
     next(error);

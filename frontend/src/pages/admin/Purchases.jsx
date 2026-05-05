@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { SectionHeading } from '../../components/SectionHeading'
 import { authConfig, readErrorMessage, formatCurrency, formatDate } from '../../utils'
+import { Pagination } from '../../components/Pagination'
 
 export default function Purchases({ api, session, onNotice }) {
   const [purchases, setPurchases] = useState([])
@@ -21,6 +22,8 @@ export default function Purchases({ api, session, onNotice }) {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
   
   const [formData, setFormData] = useState({
     supplier: '',
@@ -89,6 +92,9 @@ export default function Purchases({ api, session, onNotice }) {
       onNotice({ type: 'error', text: readErrorMessage(err) })
     }
   }
+
+  const totalPages = Math.ceil(purchases.length / itemsPerPage)
+  const paginatedPurchases = purchases.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   return (
     <div className="stack gap-6 animate-fade">
@@ -194,7 +200,7 @@ export default function Purchases({ api, session, onNotice }) {
             </tr>
           </thead>
           <tbody>
-            {purchases.map(pur => (
+            {paginatedPurchases.map(pur => (
               <tr key={pur._id} className="table-row-hover">
                 <td style={{ paddingLeft: '24px' }}>
                   <div className="cluster gap-2">
@@ -230,6 +236,14 @@ export default function Purchases({ api, session, onNotice }) {
           </tbody>
         </table>
       </div>
+
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={purchases.length}
+        itemsPerPage={itemsPerPage}
+      />
     </div>
   )
 }

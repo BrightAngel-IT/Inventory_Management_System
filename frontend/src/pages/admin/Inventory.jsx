@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { SectionHeading } from '../../components/SectionHeading'
 import { formatCurrency, exportToCSV } from '../../utils'
+import { Pagination } from '../../components/Pagination'
 
 export function Inventory({
   products,
@@ -40,6 +41,8 @@ export function Inventory({
   const [activeRack, setActiveRack] = useState('All')
   const [activeColumn, setActiveColumn] = useState('All')
   const [activeStatus, setActiveStatus] = useState('All')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   const categories = ['All', ...new Set(products.map(p => p.category))]
   const racks = ['All', ...new Set(products.map(p => `Row ${p.rack.rowNumber}`))]
@@ -67,6 +70,14 @@ export function Inventory({
 
     return true
   })
+
+  // Reset to page 1 on filter change
+  React.useEffect(() => {
+    setCurrentPage(1)
+  }, [inventoryQuery, activeCategory, activeRack, activeColumn, activeStatus, onlyLowStock])
+
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage)
+  const paginatedItems = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const totalValue = filteredItems.reduce((sum, p) => sum + (p.price * p.quantityInStock), 0)
   const totalUnits = filteredItems.reduce((sum, p) => sum + p.quantityInStock, 0)
@@ -189,7 +200,7 @@ export function Inventory({
             </tr>
           </thead>
           <tbody>
-            {filteredItems.map((product) => {
+            {paginatedItems.map((product) => {
               const isLow = product.quantityInStock <= product.reorderLevel;
               const isOut = product.quantityInStock === 0;
 
@@ -198,7 +209,7 @@ export function Inventory({
                   <td style={{ paddingLeft: '24px' }}>
                     <div className="cluster gap-3">
                       <div className="avatar small" style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--bg-soft)', padding: '2px' }}>
-                        <img src={product.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                        <img src={product.image || null} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
                       </div>
                       <div className="stack">
                         <strong style={{ fontSize: '0.95rem' }}>{product.name}</strong>
@@ -270,6 +281,14 @@ export function Inventory({
           </div>
         )}
       </div>
+
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={filteredItems.length}
+        itemsPerPage={itemsPerPage}
+      />
     </div>
   )
 }
