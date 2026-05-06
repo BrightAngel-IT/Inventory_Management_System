@@ -90,8 +90,8 @@ export default function Invoices({ api, session, onNotice, sales: initialSales =
           invoiceNo: s.invoiceNumber,
           customerName: s.customerName,
           totalAmount: s.total,
-          balanceAmount: s.paymentMethod === 'credit' ? s.total : 0,
-          status: s.paymentMethod === 'credit' ? 'UNPAID' : 'PAID',
+          balanceAmount: s.balanceAmount ?? (s.paymentMethod === 'credit' ? s.total : 0),
+          status: s.status ?? (s.paymentMethod === 'credit' ? 'UNPAID' : 'PAID'),
           date: s.createdAt,
           type: 'sale',
           raw: s

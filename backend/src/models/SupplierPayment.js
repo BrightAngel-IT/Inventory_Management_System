@@ -12,12 +12,6 @@ const supplierPaymentSchema = new mongoose.Schema(
       required: true,
     },
     chequeNumber: { type: String, default: null },
-    allocations: [
-      {
-        invoiceId: { type: mongoose.Schema.Types.ObjectId, ref: 'SupplierInvoice', required: true },
-        allocatedAmount: { type: Number, required: true, min: 0 },
-      },
-    ],
   },
   {
     timestamps: true,

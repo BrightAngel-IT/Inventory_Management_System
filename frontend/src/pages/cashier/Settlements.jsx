@@ -17,9 +17,8 @@ import {
 import { SectionHeading } from '../../components/SectionHeading'
 import { formatCurrency, authConfig } from '../../utils'
 
-export function PaymentAllocation({ api, session, onNotice }) {
-  const [settlementMode, setSettlementMode] = useState('customer') // 'customer' or 'supplier'
-  const [entities, setEntities] = useState([]) // Customers or Suppliers
+export function Settlements({ api, session, onNotice }) {
+  const [entities, setEntities] = useState([]) // Customers
   const [selectedEntityId, setSelectedEntityId] = useState('')
   const [invoices, setInvoices] = useState([])
   const [loading, setLoading] = useState(false)
@@ -34,23 +33,21 @@ export function PaymentAllocation({ api, session, onNotice }) {
 
   const [allocations, setAllocations] = useState({}) // { invoiceId: amount }
 
-  // Load Entities (Customers or Suppliers)
+  // Load Customers
   useEffect(() => {
-    async function fetchEntities() {
+    async function fetchCustomers() {
       try {
-        const endpoint = settlementMode === 'customer' ? '/customers' : '/suppliers'
-        const res = await api.get(endpoint, authConfig(session.token))
+        const res = await api.get('/customers', authConfig(session.token))
         setEntities(res.data)
-        // Reset selection when mode changes
         setSelectedEntityId('')
         setInvoices([])
         setAllocations({})
       } catch (err) {
-        onNotice({ type: 'error', text: `Failed to load ${settlementMode}s` })
+        onNotice({ type: 'error', text: 'Failed to load customers' })
       }
     }
-    fetchEntities()
-  }, [api, session.token, onNotice, settlementMode])
+    fetchCustomers()
+  }, [api, session.token, onNotice])
 
   // Load Invoices when entity is selected
   useEffect(() => {
@@ -60,18 +57,15 @@ export function PaymentAllocation({ api, session, onNotice }) {
       setInvoices([])
       setAllocations({})
     }
-  }, [selectedEntityId, settlementMode])
+  }, [selectedEntityId])
 
   async function fetchInvoices(id) {
     setLoading(true)
     try {
-      const endpoint = settlementMode === 'customer' 
-        ? `/customer-invoices/customer/${id}` 
-        : `/supplier-invoices/supplier/${id}`
-      const res = await api.get(endpoint, authConfig(session.token))
-      // Filter to show only unpaid/partially paid invoices if logic allows
-      // For now, showing all associated invoices
-      setInvoices(res.data)
+      const res = await api.get(`/customer-invoices/customer/${id}`, authConfig(session.token))
+      // Only show invoices with balance > 0
+      const outstanding = res.data.filter(inv => (inv.balanceAmount ?? inv.totalAmount) > 0)
+      setInvoices(outstanding)
     } catch (err) {
       onNotice({ type: 'error', text: 'Failed to load outstanding invoices' })
     } finally {
@@ -109,10 +103,8 @@ export function PaymentAllocation({ api, session, onNotice }) {
 
     setSubmitting(true)
     try {
-      const endpoint = settlementMode === 'customer' ? '/payments' : '/supplier-payments'
-      
       const payload = {
-        [settlementMode === 'customer' ? 'customerId' : 'supplierId']: selectedEntityId,
+        customerId: selectedEntityId,
         paymentDate: paymentForm.paymentDate,
         totalAmount: parseFloat(paymentForm.totalAmount),
         paymentMethod: paymentForm.paymentMethod,
@@ -125,8 +117,8 @@ export function PaymentAllocation({ api, session, onNotice }) {
           }))
       }
 
-      await api.post(endpoint, payload, authConfig(session.token))
-      onNotice({ type: 'success', text: `${settlementMode === 'customer' ? 'Collection' : 'Settlement'} processed successfully` })
+      await api.post('/payments', payload, authConfig(session.token))
+      onNotice({ type: 'success', text: 'Customer collection processed successfully' })
       
       // Refresh invoices for the same entity instead of resetting selection
       if (selectedEntityId) {
@@ -147,71 +139,34 @@ export function PaymentAllocation({ api, session, onNotice }) {
     }
   }
 
-  const modeAccent = settlementMode === 'customer' ? 'var(--accent)' : 'var(--accent)'
-  const modeAccentSoft = settlementMode === 'customer' ? 'var(--accent-soft)' : 'var(--accent-soft)'
-
   return (
     <div className="stack gap-6 animate-fade">
-      {/* Header with Mode Toggle */}
-      <div className="between wrap-row panel p-6 glass-panel" style={{ borderLeft: `4px solid ${modeAccent}`, borderRadius: '16px' }}>
-        <div className="cluster gap-4">
-          <div className="icon-btn" style={{ background: modeAccentSoft, color: modeAccent, border: 'none', width: '48px', height: '48px' }}>
-            <Wallet size={24} />
-          </div>
-          <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>
-              {settlementMode === 'customer' ? 'Customer Collections' : 'Supplier Settlements'}
-            </h2>
-            <p className="muted small">
-              {settlementMode === 'customer' 
-                ? 'Record payments received from clients and reconcile balances.' 
-                : 'Process outgoing payments to vendors and settle outstanding bills.'}
-            </p>
-          </div>
-        </div>
-
-        <div className="cluster p-1 panel-strong" style={{ background: 'var(--bg-soft)', borderRadius: '14px', border: '1px solid var(--border)' }}>
-          <button 
-            className={`btn sm ${settlementMode === 'customer' ? 'btn-primary' : 'btn-ghost'}`}
-            onClick={() => setSettlementMode('customer')}
-            style={{ borderRadius: '10px', minWidth: '120px' }}
-          >
-            <Users size={16} />
-            Customer
-          </button>
-          <button 
-            className={`btn sm ${settlementMode === 'supplier' ? 'btn-primary' : 'btn-ghost'}`}
-            style={{ borderRadius: '10px', minWidth: '120px', background: settlementMode === 'supplier' ? 'var(--accent)' : 'transparent' }}
-            onClick={() => setSettlementMode('supplier')}
-          >
-            <Building2 size={16} />
-            Supplier
-          </button>
-        </div>
-      </div>
+      <SectionHeading 
+        title="Customer Settlements" 
+        subtitle="Process customer payments and reconcile outstanding balances."
+        icon={Wallet}
+      />
 
       <div className="grid-2 gap-6 align-start">
         {/* Settlement Setup */}
         <section className="panel p-6 glass-panel stack gap-6" style={{ borderRadius: '20px' }}>
           <div className="cluster gap-2 mb-2">
-            <CreditCard size={18} style={{ color: modeAccent }} />
-            <span className="eyebrow">
-              {settlementMode === 'customer' ? 'Customer Payment Entry' : 'Supplier Payment Entry'}
-            </span>
+            <CreditCard size={18} style={{ color: 'var(--accent)' }} />
+            <span className="eyebrow">Payment Entry</span>
           </div>
 
           <form onSubmit={handleSubmit} className="stack gap-5">
             <label className="field">
-              <span className="muted x-small font-bold uppercase tracking-wider">Select {settlementMode === 'customer' ? 'Client' : 'Vendor'}</span>
+              <span className="muted x-small font-bold uppercase tracking-wider">Select Customer</span>
               <select 
                 className="input" 
                 value={selectedEntityId} 
                 onChange={(e) => setSelectedEntityId(e.target.value)}
                 required
               >
-                <option value="">Choose a {settlementMode}...</option>
+                <option value="">Choose a customer...</option>
                 {entities.map(e => (
-                  <option key={e._id} value={e._id}>{e.name}</option>
+                  <option key={e._id} value={e._id}>{e.name} {e.phone ? `(${e.phone})` : ''}</option>
                 ))}
               </select>
             </label>
@@ -231,9 +186,7 @@ export function PaymentAllocation({ api, session, onNotice }) {
                 </div>
               </label>
               <label className="field">
-                <span className="muted x-small font-bold uppercase tracking-wider">
-                  {settlementMode === 'customer' ? 'Amount Received' : 'Amount Paid'}
-                </span>
+                <span className="muted x-small font-bold uppercase tracking-wider">Total Received</span>
                 <div className="input-shell compact" style={{ borderRadius: '10px' }}>
                   <span className="muted x-small">$</span>
                   <input 
@@ -282,7 +235,7 @@ export function PaymentAllocation({ api, session, onNotice }) {
 
             <div className="panel-strong p-4 stack gap-3" style={{ borderRadius: '16px', background: 'var(--bg-soft)', border: '1px dashed var(--border)' }}>
               <div className="between x-small muted font-bold uppercase">
-                <span>Total {settlementMode === 'customer' ? 'Allocated' : 'Settled'}</span>
+                <span>Total Allocated</span>
                 <span style={{ color: 'var(--text)' }}>{formatCurrency(totalAllocated)}</span>
               </div>
               <div className="between x-small muted font-bold uppercase">
@@ -312,7 +265,7 @@ export function PaymentAllocation({ api, session, onNotice }) {
               ) : (
                 <div className="cluster gap-2">
                   <CheckCircle2 size={18} />
-                  Post {settlementMode === 'customer' ? 'Collection' : 'Settlement'}
+                  Record Payment
                 </div>
               )}
             </button>
@@ -323,8 +276,8 @@ export function PaymentAllocation({ api, session, onNotice }) {
         <section className="panel p-0 glass-panel overflow-hidden stack gap-0" style={{ borderRadius: '20px' }}>
           <div className="p-6">
             <div className="cluster gap-2 mb-2">
-              <Receipt size={18} style={{ color: modeAccent }} />
-              <span className="eyebrow">Pending {settlementMode === 'customer' ? 'Receivables' : 'Payables'}</span>
+              <Receipt size={18} style={{ color: 'var(--accent)' }} />
+              <span className="eyebrow">Outstanding Invoices</span>
             </div>
             <p className="muted small">Select invoices to allocate the payment amount.</p>
           </div>
@@ -381,7 +334,7 @@ export function PaymentAllocation({ api, session, onNotice }) {
                     <td colSpan="4" className="text-center p-20 muted small">
                       <div className="stack align-center gap-3">
                         <AlertCircle size={32} style={{ opacity: 0.2 }} />
-                        <p>{selectedEntityId ? `No outstanding invoices for this ${settlementMode}.` : `Select a ${settlementMode} to view pending items.`}</p>
+                        <p>{selectedEntityId ? "No outstanding invoices for this customer." : "Select a customer to view pending items."}</p>
                       </div>
                     </td>
                   </tr>

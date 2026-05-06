@@ -12,6 +12,7 @@ import {
   Tag,
   UserPlus,
   ScanLine,
+  Users,
 } from 'lucide-react'
 import { SectionHeading } from '../../components/SectionHeading'
 import { formatCurrency } from '../../utils'
@@ -52,6 +53,13 @@ export function POS({
 
   const [heldBills, setHeldBills] = useState([])
   const [activeCategory, setActiveCategory] = useState('All')
+
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false)
+  const [customerSearch, setCustomerSearch] = useState('')
+
+  const filteredCustomers = customers.filter(c =>
+    c.name.toLowerCase().includes(customerSearch.toLowerCase())
+  )
 
   const categories = ['All', ...new Set(catalogProducts.map(p => p.category))]
   const filteredProducts = catalogProducts.filter(p =>
@@ -209,19 +217,17 @@ export function POS({
           <div className="stack gap-3">
             <label className="field">
               <span>Customer Identification</span>
-              <div className="input-shell" style={{ height: '42px' }}>
-                <UserPlus size={16} className="muted" />
-                <input
-                  className="ghost-input"
-                  placeholder="Walk-in Customer"
-                  value={checkoutForm.customerName}
-                  onChange={(e) => setCheckoutForm({ ...checkoutForm, customerName: e.target.value })}
-                  list="customer-list"
-                />
-                <datalist id="customer-list">
-                  {customers.map(c => <option key={c._id} value={c.name} />)}
-                </datalist>
-              </div>
+              <button
+                type="button"
+                className="input-shell" style={{ height: '42px', justifyContent: 'space-between', cursor: 'pointer', border: '1px solid var(--border)', background: checkoutForm.customerName ? 'var(--panel)' : 'var(--bg-soft)', display: 'flex', alignItems: 'center' }}
+                onClick={() => setIsCustomerModalOpen(true)}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <UserPlus size={16} className="muted" />
+                  <span style={{ color: checkoutForm.customerName ? 'var(--text)' : 'var(--text-soft)' }}>{checkoutForm.customerName || 'Walk-in Customer'}</span>
+                </div>
+                <Users size={16} className="muted" />
+              </button>
             </label>
 
             <div className="split-fields" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -459,6 +465,117 @@ export function POS({
           </div>
         </div>
       )}
+
+      {/* Customer Selection Modal */}
+      {isCustomerModalOpen && (
+        <div className="modal-overlay animate-fade" style={{ position: 'fixed', inset: 0, backdropFilter: 'blur(12px)', zIndex: 1000, display: 'grid', placeItems: 'center', padding: '10px' }}>
+          <div className="panel p-0 stack glass-panel animate-scale" style={{ width: '100%', maxWidth: '450px', maxHeight: '80vh', overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}>
+
+            {/* Modal Header */}
+            <div className="p-4 between" style={{ borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.05)' }}>
+              <div className="stack gap-0">
+                <div className="cluster gap-2">
+                  <div className="icon-btn-small" style={{ background: 'var(--accent-soft)', color: 'var(--accent)', width: '32px', height: '32px' }}><Users size={16} /></div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Select Customer</h3>
+                </div>
+                <p className="muted x-small" style={{ marginLeft: '40px' }}>Choose or add customer for this bill</p>
+              </div>
+              <button className="icon-btn glow-on-hover" style={{ background: 'var(--danger-soft)', color: 'var(--danger)', borderRadius: '10px', width: '36px', height: '36px' }} onClick={() => { setIsCustomerModalOpen(false); setCustomerSearch(''); }}><X size={18} /></button>
+            </div>
+
+            {/* Search Bar */}
+            <div className="p-3" style={{ background: 'rgba(0,0,0,0.05)', borderBottom: '1px solid var(--border)' }}>
+              <div className="input-shell" style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px', boxShadow: 'var(--shadow-sm)' }}>
+                <Search size={18} className="muted" />
+                <input
+                  autoFocus
+                  className="ghost-input"
+                  placeholder="Search by customer name..."
+                  style={{ fontSize: '0.9rem' }}
+                  value={customerSearch}
+                  onChange={e => setCustomerSearch(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Customer List */}
+            <div style={{ flex: 1, overflowY: 'auto', minHeight: '200px' }}>
+              {/* Walk-in Option */}
+              <button
+                type="button"
+                onClick={() => {
+                  setCheckoutForm({ ...checkoutForm, customerName: 'Walk-in Customer', customerId: '' })
+                  setIsCustomerModalOpen(false)
+                  setCustomerSearch('')
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: 'none',
+                  background: checkoutForm.customerName === 'Walk-in Customer' ? 'var(--accent-soft)' : 'transparent',
+                  borderBottom: '1px solid var(--border)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  transition: 'background 0.2s'
+                }}
+                className="glow-on-hover"
+              >
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--neutral-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Users size={18} style={{ color: 'var(--text-soft)' }} />
+                </div>
+                <div style={{ textAlign: 'left' }}>
+                  <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text)' }}>Walk-in Customer</strong>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-soft)' }}>No customer details</span>
+                </div>
+              </button>
+
+              {/* Customer List */}
+              {filteredCustomers.length > 0 ? (
+                filteredCustomers.map(customer => (
+                  <button
+                    key={customer._id}
+                    type="button"
+                    onClick={() => {
+                      setCheckoutForm({ ...checkoutForm, customerName: customer.name, customerId: customer._id })
+                      setIsCustomerModalOpen(false)
+                      setCustomerSearch('')
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      border: 'none',
+                      background: checkoutForm.customerName === customer.name ? 'var(--accent-soft)' : 'transparent',
+                      borderBottom: '1px solid var(--border)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      transition: 'background 0.2s'
+                    }}
+                    className="glow-on-hover"
+                  >
+                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--neutral-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)' }}>
+                      {customer.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ textAlign: 'left', flex: 1 }}>
+                      <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text)' }}>{customer.name}</strong>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-soft)' }}>{customer.phone || 'No phone'}</span>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-soft)' }}>
+                  <Users size={32} style={{ opacity: 0.2, marginBottom: '10px' }} />
+                  <p>No customers found</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+

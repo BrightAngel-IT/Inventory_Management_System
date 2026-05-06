@@ -205,7 +205,9 @@ export default function Customers({ api, session, onNotice }) {
                     <div className="cluster gap-2 justify-end">
                       <button className="icon-btn ghost hover-accent" title="Statement of Account" onClick={() => navigate(`/accounts/customer/${cus._id}`)}><History size={16}/></button>
                       <button className="icon-btn ghost hover-accent" onClick={() => handleEdit(cus)}><Edit size={16}/></button>
-                      <button className="icon-btn ghost hover-danger" onClick={() => handleDelete(cus._id)}><Trash2 size={16}/></button>
+                      {session.user.role === 'admin' && (
+                        <button className="icon-btn ghost hover-danger" onClick={() => handleDelete(cus._id)}><Trash2 size={16}/></button>
+                      )}
                     </div>
                   </td>
                 </tr>

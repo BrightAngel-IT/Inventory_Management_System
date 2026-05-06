@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const CustomerInvoice = require('../models/CustomerInvoice');
-const Payment = require('../models/Payment');
+const CustomerPayment = require('../models/CustomerPayment');
+const Allocation = require('../models/Allocation');
 
 async function getUnpaidInvoices(customerId) {
   return await CustomerInvoice.find({
@@ -35,19 +36,18 @@ async function createPaymentWithAllocations(paymentData) {
 
     // 1. Create Payment
     const paymentNo = `PAY-${Date.now()}`;
-    const payment = new Payment({
+    const payment = new CustomerPayment({
       paymentNo,
       customerId,
       paymentDate,
       totalAmount,
       paymentMethod,
       chequeNumber,
-      allocations,
     });
 
     await payment.save({ session });
 
-    // 2. Update Invoices
+    // 2. Update Invoices and create Allocations
     for (const alloc of allocations) {
       const invoice = await CustomerInvoice.findById(alloc.invoiceId).session(session);
       if (!invoice) {
@@ -57,6 +57,17 @@ async function createPaymentWithAllocations(paymentData) {
       if (alloc.allocatedAmount > invoice.balanceAmount) {
         throw new Error(`Cannot allocate more than balance for invoice ${invoice.invoiceNo}.`);
       }
+
+      // Create Allocation record
+      const allocation = new Allocation({
+        paymentId: payment._id,
+        paymentType: 'CustomerPayment',
+        invoiceId: alloc.invoiceId,
+        invoiceType: 'CustomerInvoice',
+        allocatedAmount: alloc.allocatedAmount,
+        allocationDate: paymentDate || new Date(),
+      });
+      await allocation.save({ session });
 
       invoice.balanceAmount = Number((invoice.balanceAmount - alloc.allocatedAmount).toFixed(2));
       
@@ -80,13 +91,33 @@ async function createPaymentWithAllocations(paymentData) {
 }
 
 async function getPaymentDetails(paymentId) {
-  return await Payment.findById(paymentId)
+  const payment = await CustomerPayment.findById(paymentId).populate('customerId').lean();
+  if (!payment) return null;
+
+  const allocations = await Allocation.find({ paymentId }).populate('invoiceId').lean();
+  return { ...payment, allocations };
+}
+
+async function getPaymentsWithAllocations(filter = {}) {
+  const payments = await CustomerPayment.find(filter)
     .populate('customerId')
-    .populate('allocations.invoiceId');
+    .sort({ paymentDate: -1 })
+    .lean();
+
+  const paymentIds = payments.map(p => p._id);
+  const allAllocations = await Allocation.find({ paymentId: { $in: paymentIds } })
+    .populate('invoiceId')
+    .lean();
+
+  return payments.map(p => ({
+    ...p,
+    allocations: allAllocations.filter(a => String(a.paymentId) === String(p._id))
+  }));
 }
 
 module.exports = {
   getUnpaidInvoices,
   createPaymentWithAllocations,
   getPaymentDetails,
+  getPaymentsWithAllocations,
 };

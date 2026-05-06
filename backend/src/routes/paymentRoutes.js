@@ -1,27 +1,26 @@
 const express = require('express');
 const router = express.Router();
+const { requireAuth } = require('../middleware/auth');
 const { 
   createPaymentWithAllocations, 
   getPaymentDetails,
+  getPaymentsWithAllocations,
   getUnpaidInvoices 
 } = require('../services/paymentAllocationService');
-const Payment = require('../models/Payment');
+const CustomerPayment = require('../models/CustomerPayment');
 
-router.get('/', async (req, res, next) => {
+router.get('/', requireAuth, async (req, res, next) => {
   try {
     const { customerId } = req.query;
     const filter = customerId ? { customerId } : {};
-    const payments = await Payment.find(filter)
-      .populate('customerId')
-      .populate('allocations.invoiceId')
-      .sort({ paymentDate: -1 });
+    const payments = await getPaymentsWithAllocations(filter);
     res.json(payments);
   } catch (error) {
     next(error);
   }
 });
 
-router.post('/', async (req, res, next) => {
+router.post('/', requireAuth, async (req, res, next) => {
   try {
     const payment = await createPaymentWithAllocations(req.body);
     res.status(201).json(payment);
@@ -30,7 +29,7 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', requireAuth, async (req, res, next) => {
   try {
     const payment = await getPaymentDetails(req.params.id);
     if (!payment) {

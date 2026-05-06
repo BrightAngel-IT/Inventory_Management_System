@@ -29,7 +29,13 @@ export function Sidebar({
   const navigation = [
     { path: '/', label: 'Overview', icon: LayoutDashboard },
     { path: '/pos', label: 'Billing Desk', icon: ShoppingCart },
-    ...(session?.user?.role !== 'admin' ? [{ path: '/sales-history', label: 'Sales History', icon: Clock }] : []),
+    ...(session?.user?.role !== 'admin' 
+      ? [
+          { path: '/sales-history', label: 'Sales History', icon: Clock },
+          { path: '/customers', label: 'Customers', icon: User },
+          { path: '/settlements', label: 'Settlements', icon: Wallet }
+        ] 
+      : []),
     ...(session?.user?.role === 'admin'
       ? [
         { path: '/inventory', label: 'Inventory', icon: Warehouse },

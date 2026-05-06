@@ -3,6 +3,7 @@ const router = express.Router();
 const { 
   createSupplierPaymentWithAllocations, 
   getSupplierPaymentDetails,
+  getSupplierPaymentsWithAllocations,
   getUnpaidSupplierInvoices 
 } = require('../services/supplierPaymentService');
 const SupplierPayment = require('../models/SupplierPayment');
@@ -12,10 +13,7 @@ router.get('/', requireAuth, async (req, res, next) => {
   try {
     const { supplierId } = req.query;
     const filter = supplierId ? { supplierId } : {};
-    const payments = await SupplierPayment.find(filter)
-      .populate('supplierId')
-      .populate('allocations.invoiceId')
-      .sort({ paymentDate: -1 });
+    const payments = await getSupplierPaymentsWithAllocations(filter);
     res.json(payments);
   } catch (error) {
     next(error);

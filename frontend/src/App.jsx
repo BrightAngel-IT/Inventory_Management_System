@@ -33,6 +33,8 @@ import { Notifications } from './pages/admin/Notifications'
 import { PaymentAllocation } from './pages/admin/PaymentAllocation'
 import StaffManagement from './pages/admin/StaffManagement'
 import StaffForm from './pages/admin/StaffForm'
+import { Settlements } from './pages/cashier/Settlements'
+
 
 // Utils
 import {
@@ -115,6 +117,7 @@ function App() {
   const [cart, setCart] = useState([])
   const [checkoutForm, setCheckoutForm] = useState({
     customerName: 'Walk-in customer',
+    customerId: '',
     paymentMethod: 'cash',
     discount: '0',
     notes: '',
@@ -497,6 +500,7 @@ function App() {
         '/sales',
         {
           customerName: checkoutForm.customerName,
+          customerId: checkoutForm.customerId,
           paymentMethod: checkoutForm.paymentMethod,
           discount: Number(checkoutForm.discount || 0),
           notes: checkoutForm.notes,
@@ -506,7 +510,7 @@ function App() {
       )
       await refreshCoreData()
       setCart([])
-      setCheckoutForm({ customerName: 'Walk-in customer', paymentMethod: 'cash', discount: '0', notes: '' })
+      setCheckoutForm({ customerName: 'Walk-in customer', customerId: '', paymentMethod: 'cash', discount: '0', notes: '' })
       printReceipt(response.data.sale, session.user)
       setNotice({ type: 'success', text: 'Sale completed.' })
     } catch (error) {
@@ -602,6 +606,15 @@ function App() {
               />
             } />
 
+            <Route path="/settlements" element={
+              <Settlements 
+                api={api} 
+                session={session} 
+                onNotice={setNotice} 
+              />
+            } />
+
+
             <Route path="/inventory" element={
               <AdminRoute session={session}>
                 <Inventory
@@ -637,7 +650,8 @@ function App() {
             } />
 
             <Route path="/suppliers" element={<AdminRoute session={session}><Suppliers api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
-            <Route path="/customers" element={<AdminRoute session={session}><Customers api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
+            <Route path="/customers" element={<Customers api={api} session={session} onNotice={setNotice} />} />
+
 
             <Route path="/staff" element={
               <AdminRoute session={session}>
@@ -665,7 +679,7 @@ function App() {
             <Route path="/purchases" element={<AdminRoute session={session}><Purchases api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
             <Route path="/invoices" element={<AdminRoute session={session}><Invoices api={api} session={session} onNotice={setNotice} sales={sales} customers={customers} /></AdminRoute>} />
             <Route path="/payments" element={<AdminRoute session={session}><PaymentAllocation api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
-            <Route path="/accounts/:type/:id" element={<AdminRoute session={session}><AccountStatement api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
+            <Route path="/accounts/:type/:id" element={<AccountStatement api={api} session={session} onNotice={setNotice} />} />
 
             <Route path="/notifications" element={
               <Notifications

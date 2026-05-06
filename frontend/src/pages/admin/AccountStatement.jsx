@@ -197,7 +197,9 @@ export default function AccountStatement({ api, session, onNotice }) {
               </div>
             </div>
             <div className="document-info text-right">
-              <h2 className="doc-type">Account Statement</h2>
+              <h2 className="doc-type">
+                {type === 'customer' ? 'Customer Statement' : 'Supplier Statement'}
+              </h2>
               <span className="doc-id">REF: {entity._id.slice(-8).toUpperCase()}</span>
               <span className="doc-date">Generated: {new Date().toLocaleDateString()}</span>
             </div>
@@ -205,7 +207,9 @@ export default function AccountStatement({ api, session, onNotice }) {
           
           <div className="document-meta-grid">
             <div className="meta-box">
-              <span className="meta-label">Billed To:</span>
+              <span className="meta-label">
+                {type === 'customer' ? 'Billed To (Customer):' : 'Payments To (Vendor):'}
+              </span>
               <h3 className="meta-value">{entity.name}</h3>
               <div className="meta-details">
                 {entity.email && <span><Mail size={12}/> {entity.email}</span>}
@@ -216,7 +220,7 @@ export default function AccountStatement({ api, session, onNotice }) {
             <div className="meta-box summary-box">
               <span className="meta-label">Financial Summary</span>
               <div className="summary-row">
-                <span>Total Billing</span>
+                <span>Total {type === 'customer' ? 'Purchases' : 'Procurement'}</span>
                 <strong>{formatCurrency(stats.totalInvoiced)}</strong>
               </div>
               <div className="summary-row">
@@ -393,14 +397,96 @@ export default function AccountStatement({ api, session, onNotice }) {
         .empty-state { padding: 60px; text-align: center; color: #ccc; }
 
         @media print {
-          body { margin: 0; background: #fff !important; }
-          .no-print { display: none !important; }
-          .document-container { border-radius: 0; box-shadow: none !important; }
-          .document-header { background: #fff !important; border-bottom: 2px solid #000; }
-          .summary-box { border: 1px solid #000 !important; }
-          .statement-table th { border-bottom: 2px solid #000 !important; color: #000; }
-          .allocation-details { background: #fff !important; border: 1px solid #ccc !important; }
-          .document-footer { background: #fff !important; border-top: 1px solid #000; }
+          @page { size: portrait; margin: 0; }
+          
+          /* Force hide all UI elements */
+          .sidebar, .topbar, .notice-banner, .no-print, .btn, button, .v-divider, .icon-btn, .brand-lockup, nav { 
+            display: none !important; 
+            width: 0 !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+          }
+
+          /* Reset all containers to be full width and static */
+          html, body, #root, .app-shell, .workspace, .account-statement-page {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            display: block !important; /* Break the grid */
+            position: static !important;
+            background: #fff !important;
+            overflow: visible !important;
+            box-shadow: none !important;
+          }
+
+          .document-container { 
+            width: 210mm !important; /* Standard A4 width */
+            max-width: 100% !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            display: block !important;
+            position: static !important;
+            background: #fff !important;
+          }
+
+          /* Optimize document internal spacing for print */
+          .document-header { 
+            padding: 40px !important; 
+            margin-bottom: 0 !important;
+            border-bottom: 2px solid #000 !important;
+            background: #fff !important;
+          }
+
+          .document-body {
+            padding: 0 40px !important;
+          }
+
+          .statement-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+          }
+
+          .statement-table th, .statement-table td {
+            border-bottom: 1px solid #eee !important;
+            padding: 12px 8px !important;
+          }
+
+          .statement-table th {
+            border-bottom: 2px solid #000 !important;
+            color: #000 !important;
+            text-transform: uppercase !important;
+          }
+
+          .summary-box { 
+            border: 1px solid #000 !important; 
+            padding: 20px !important;
+            background: #fff !important;
+          }
+
+          .document-footer { 
+            margin-top: 50px !important;
+            padding: 40px !important;
+            border-top: 1px solid #000 !important;
+            background: #fff !important;
+          }
+
+          /* Ensure colors and backgrounds are printed */
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            background-color: transparent !important;
+          }
+          
+          .document-container, .document-container *, .summary-box, .summary-box * {
+            background-color: #fff !important;
+          }
         }
       `}</style>
     </div>

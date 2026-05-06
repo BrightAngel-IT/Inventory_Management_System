@@ -243,14 +243,25 @@ async function getAllProducts() {
 async function getAllSales() {
   if (isDatabaseReady()) {
     const sales = await Sale.find().sort({ createdAt: -1 }).lean();
-    return sales.map((sale) => ({
-      ...sale,
-      _id: String(sale._id),
-      items: sale.items.map((item) => ({
-        ...item,
-        productId: String(item.productId),
-      })),
-    }));
+    
+    // Fetch related invoices to get actual balances
+    const invoiceNos = sales.map(s => s.invoiceNumber);
+    const invoices = await CustomerInvoice.find({ invoiceNo: { $in: invoiceNos } }).lean();
+    const invoiceMap = new Map(invoices.map(i => [i.invoiceNo, i]));
+
+    return sales.map((sale) => {
+      const inv = invoiceMap.get(sale.invoiceNumber);
+      return {
+        ...sale,
+        _id: String(sale._id),
+        balanceAmount: inv ? inv.balanceAmount : (sale.paymentMethod === 'credit' ? sale.total : 0),
+        status: inv ? inv.status : (sale.paymentMethod === 'credit' ? 'UNPAID' : 'PAID'),
+        items: sale.items.map((item) => ({
+          ...item,
+          productId: String(item.productId),
+        })),
+      };
+    });
   }
 
   return clonePlain(memoryStore.sales).sort(

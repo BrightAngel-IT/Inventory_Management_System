@@ -38,6 +38,7 @@ const saleSchema = new mongoose.Schema(
       name: { type: String, required: true },
       email: { type: String, required: true },
     },
+    customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer' },
     notes: { type: String, default: '' },
   },
   {

@@ -15,7 +15,7 @@
   --warning: #f59e0b;
   --danger: #ef4444;
   --danger-soft: rgba(239, 68, 68, 0.1);
-  --info: #3b82f6;
+  --info: #f59e0b;
   --info-soft: rgba(59, 130, 246, 0.1);
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -70,7 +70,7 @@ body {
   font-family: var(--font-body);
   color: var(--text);
   background: var(--bg);
-  transition: background 0.3s ease;
+  transition: 0.3s ease;
   overflow-x: hidden;
 }
 
@@ -999,7 +999,7 @@ textarea {
 .professional-table td {
   padding: 16px;
   border-bottom: 1px solid var(--border);
-  transition: background 0.2s ease;
+  transition: 0.2s ease;
 }
 
 .table-row-hover:hover td {
