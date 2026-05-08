@@ -60,8 +60,8 @@ export function Sidebar({
         flexShrink: 0
       }}>
         <div className="cluster gap-3">
-          <div className="brand-badge glow-on-hover" style={{ boxShadow: '0 4px 12px rgba(245, 158, 11, 0.25)', width: '42px', height: '42px', borderRadius: '12px' }}>
-            <Boxes size={22} />
+          <div className="brand-badge glow-on-hover" style={{ boxShadow: '0 4px 12px rgba(245, 158, 11, 0.25)', width: '42px', height: '42px', borderRadius: '12px', background: 'white', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
+            <img src="/logo.png" alt="Logo" style={{ width: '85%', height: '85%', objectFit: 'contain' }} />
           </div>
           <div>
             <p className="eyebrow" style={{ fontSize: '0.65rem', color: 'var(--accent-strong)', letterSpacing: '0.05em' }}>Alliance Group</p>

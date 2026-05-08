@@ -35,7 +35,7 @@ async function createSupplierPaymentWithAllocations(paymentData) {
     }
 
     // 1. Create Payment
-    const paymentNo = `SPAY-${Date.now()}`;
+    const paymentNo = `S-PAY-${Date.now()}`;
     const payment = new SupplierPayment({
       paymentNo,
       supplierId,

@@ -52,7 +52,7 @@ function makeInvoiceNumber() {
     String(now.getDate()).padStart(2, '0'),
   ];
   const suffix = String(Date.now()).slice(-4);
-  return `INV-${parts.join('')}-${suffix}`;
+  return `C-INV-${parts.join('')}-${suffix}`;
 }
 
 function getRackLabel(rack) {

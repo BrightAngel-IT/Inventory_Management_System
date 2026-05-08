@@ -69,8 +69,8 @@ export function Login({
         <div className="between mb-6">
           <div className="stack gap-1">
             <div className="cluster gap-2 mb-2">
-              <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'var(--accent)', color: 'white', display: 'grid', placeItems: 'center', boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)' }}>
-                <Boxes size={18} />
+              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'white', display: 'grid', placeItems: 'center', boxShadow: 'var(--shadow-lg)', overflow: 'hidden' }}>
+                <img src="/logo.png" alt="NILMA Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
               <p className="eyebrow">Enterprise Access</p>
             </div>
@@ -93,7 +93,7 @@ export function Login({
             <input
               className="input"
               type="email"
-              placeholder="e.g. admin@brightangel.local"
+              placeholder="e.g. admin@nilma.lk"
               value={authForm.email}
               onChange={(event) =>
                 setAuthForm((current) => ({ ...current, email: event.target.value }))

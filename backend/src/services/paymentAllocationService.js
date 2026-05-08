@@ -35,7 +35,7 @@ async function createPaymentWithAllocations(paymentData) {
     }
 
     // 1. Create Payment
-    const paymentNo = `PAY-${Date.now()}`;
+    const paymentNo = `C-PAY-${Date.now()}`;
     const payment = new CustomerPayment({
       paymentNo,
       customerId,

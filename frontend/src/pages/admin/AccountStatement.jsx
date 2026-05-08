@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { 
-  ArrowLeft, 
-  FileText, 
-  Wallet, 
-  ArrowUpRight, 
-  ArrowDownLeft, 
+import {
+  ArrowLeft,
+  FileText,
+  Wallet,
+  ArrowUpRight,
+  ArrowDownLeft,
   Search,
   Download,
   Calendar,
@@ -32,14 +32,14 @@ import { SectionHeading } from '../../components/SectionHeading'
 export default function AccountStatement({ api, session, onNotice }) {
   const { type, id } = useParams()
   const navigate = useNavigate()
-  
+
   const [entity, setEntity] = useState(null)
   const [invoices, setInvoices] = useState([])
   const [payments, setPayments] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showAllocations, setShowAllocations] = useState(null) // ID of payment to show allocations for
-  
+
   // Date range filters for user friendliness
   const [dateRange, setDateRange] = useState({
     start: '',
@@ -110,11 +110,11 @@ export default function AccountStatement({ api, session, onNotice }) {
   const filteredData = useMemo(() => {
     return statementData.filter(t => {
       const matchesSearch = String(t.reference || t._id || '').toLowerCase().includes(search.toLowerCase())
-      
+
       const tDate = new Date(t.date)
       const matchesStart = !dateRange.start || tDate >= new Date(dateRange.start)
       const matchesEnd = !dateRange.end || tDate <= new Date(dateRange.end)
-      
+
       return matchesSearch && matchesStart && matchesEnd
     })
   }, [statementData, search, dateRange])
@@ -159,19 +159,19 @@ export default function AccountStatement({ api, session, onNotice }) {
           <div className="cluster gap-3">
             <div className="input-shell compact" style={{ width: '200px' }}>
               <Calendar size={14} className="muted" />
-              <input type="date" className="ghost-input x-small" value={dateRange.start} onChange={e => setDateRange({...dateRange, start: e.target.value})} />
+              <input type="date" className="ghost-input x-small" value={dateRange.start} onChange={e => setDateRange({ ...dateRange, start: e.target.value })} />
             </div>
             <span className="muted small">to</span>
             <div className="input-shell compact" style={{ width: '200px' }}>
               <Calendar size={14} className="muted" />
-              <input type="date" className="ghost-input x-small" value={dateRange.end} onChange={e => setDateRange({...dateRange, end: e.target.value})} />
+              <input type="date" className="ghost-input x-small" value={dateRange.end} onChange={e => setDateRange({ ...dateRange, end: e.target.value })} />
             </div>
             {(dateRange.start || dateRange.end) && (
-              <button className="btn btn-sm btn-ghost danger-text" onClick={() => setDateRange({start: '', end: ''})}>Clear Filters</button>
+              <button className="btn btn-sm btn-ghost danger-text" onClick={() => setDateRange({ start: '', end: '' })}>Clear Filters</button>
             )}
           </div>
         </div>
-        
+
         <div className="cluster gap-3">
           <button className="btn btn-outline" onClick={handlePrint}>
             <Printer size={16} />
@@ -186,54 +186,85 @@ export default function AccountStatement({ api, session, onNotice }) {
 
       {/* Official Statement Document */}
       <div className="document-container shadow-2xl">
-        {/* Document Header (PDF Optimized) */}
-        <div className="document-header">
-          <div className="document-branding">
-            <div className="document-logo">
-              <Receipt size={32} />
-              <div className="stack">
-                <span className="logo-text">NILMA Alliance <span className="accent-text">(Pvt) Ltd</span></span>
-                <span className="logo-subtext">Inventory Management Solutions</span>
+        {/* Official Letterhead Watermark */}
+        <div className="document-watermark">NILMA</div>
+
+        {/* Document Header (Custom Layout) */}
+        <div className="custom-document-header">
+          {/* Left Column: Company Identity & Supplier Details */}
+          <div className="parties-col">
+            <div className="company-branding-custom left-align">
+              <div className="logo-vertical-stack">
+                <img src="/logo1.png" alt="NILMA Logo" className="header-logo-img large-logo" />
+                <div className="brand-text-group">
+                  <h1 className="brand-name">NILMA Alliance <span className="pvt-ltd">(Pvt) Ltd</span></h1>
+                  <p className="brand-slogan">INVENTORY MANAGEMENT SOLUTIONS</p>
+                </div>
+              </div>
+              <div className="company-address-minimal">
+                <p>295, 1/1 Galle Road, Colombo – 06, Sri Lanka</p>
+                <p>+94 11 234 5678 | info@nilmaalliance.com</p>
               </div>
             </div>
-            <div className="document-info text-right">
-              <h2 className="doc-type">
-                {type === 'customer' ? 'Customer Statement' : 'Supplier Statement'}
-              </h2>
-              <span className="doc-id">REF: {entity._id.slice(-8).toUpperCase()}</span>
-              <span className="doc-date">Generated: {new Date().toLocaleDateString()}</span>
+
+            <div className="branding-divider"></div>
+
+            <div className="billed-to-col">
+              <span className="col-label">{type === 'customer' ? 'BILLED TO (CUSTOMER):' : 'REMIT TO (SUPPLIER):'}</span>
+              <h2 className="billed-party-name">{entity.name}</h2>
+              <div className="billed-contact-list">
+                {entity.email && (
+                  <div className="contact-row">
+                    <Mail size={12} className="muted" />
+                    <span>{entity.email}</span>
+                  </div>
+                )}
+                {entity.phone && (
+                  <div className="contact-row">
+                    <Phone size={12} className="muted" />
+                    <span>{entity.phone}</span>
+                  </div>
+                )}
+                {entity.address && (
+                  <div className="contact-row">
+                    <MapPin size={12} className="muted" />
+                    <span>{entity.address}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-          
-          <div className="document-meta-grid">
-            <div className="meta-box">
-              <span className="meta-label">
-                {type === 'customer' ? 'Billed To (Customer):' : 'Payments To (Vendor):'}
-              </span>
-              <h3 className="meta-value">{entity.name}</h3>
-              <div className="meta-details">
-                {entity.email && <span><Mail size={12}/> {entity.email}</span>}
-                {entity.phone && <span><Phone size={12}/> {entity.phone}</span>}
-                {entity.address && <span><MapPin size={12}/> {entity.address}</span>}
+
+          {/* Right Column: Title & Summary */}
+          <div className="branding-meta-col">
+            <div className="statement-title-section">
+              <h1 className="doc-title-large">
+                {type === 'customer' ? 'CUSTOMER STATEMENT' : 'SUPPLIER STATEMENT'}
+              </h1>
+              <div className="doc-meta-minimal">
+                <p>REF: {entity._id.slice(-8).toUpperCase()}</p>
+                <p>Generated: {new Date().toLocaleDateString('en-GB')}</p>
               </div>
             </div>
-            <div className="meta-box summary-box">
-              <span className="meta-label">Financial Summary</span>
+
+            <div className="financial-summary-box">
+              <h3 className="summary-box-label">FINANCIAL SUMMARY</h3>
               <div className="summary-row">
-                <span>Total {type === 'customer' ? 'Purchases' : 'Procurement'}</span>
+                <span>{type === 'customer' ? 'Total Invoiced' : 'Total Purchases'}</span>
                 <strong>{formatCurrency(stats.totalInvoiced)}</strong>
               </div>
               <div className="summary-row">
-                <span>Total Payments</span>
-                <strong className="success-text">{formatCurrency(stats.totalPaid)}</strong>
+                <span>{type === 'customer' ? 'Total Payments' : 'Total Credits'}</span>
+                <strong>{formatCurrency(stats.totalPaid)}</strong>
               </div>
               <div className="summary-divider"></div>
-              <div className="summary-row total">
+              <div className="summary-row balance-row">
                 <span>Balance Due</span>
-                <strong className={stats.outstanding > 0 ? 'danger-text' : 'success-text'}>
-                  {formatCurrency(stats.outstanding)}
+                <strong className="balance-value">
+                  {stats.outstanding < 0 ? `(${formatCurrency(Math.abs(stats.outstanding))})` : formatCurrency(stats.outstanding)}
                 </strong>
               </div>
+              <div className="balance-underline"></div>
             </div>
           </div>
         </div>
@@ -271,17 +302,17 @@ export default function AccountStatement({ api, session, onNotice }) {
                       </div>
                     </td>
                     <td>
-                      <span className={`pill x-small ${row.status === 'PAID' ? 'success' : 'warning'}`}>
-                        {row.status}
+                      <span className={`pill x-small ${row.status === 'PAID' ? 'success' : (row.status === 'PARTIAL' ? 'warning' : 'danger')}`}>
+                        {row.status === 'PAID' ? 'Settled' : (row.status === 'PARTIAL' ? 'Partial' : 'Outstanding')}
                       </span>
                     </td>
                     <td className="text-right">{row.billing > 0 ? formatCurrency(row.billing) : '-'}</td>
                     <td className="text-right success-text">{row.payment > 0 ? formatCurrency(row.payment) : '-'}</td>
                     <td className="text-right font-strong">
-                      {formatCurrency(row.balance)}
+                      {row.balance < 0 ? `(${formatCurrency(Math.abs(row.balance))})` : formatCurrency(row.balance)}
                     </td>
                   </tr>
-                  
+
                   {/* Allocation breakdown (Optional in Web, Mandatory in Print if active) */}
                   {(showAllocations === row._id || window.matchMedia('print').matches) && row.type === 'Payment' && row.raw.allocations.length > 0 && (
                     <tr className="allocation-row no-hover">
@@ -314,13 +345,23 @@ export default function AccountStatement({ api, session, onNotice }) {
 
         {/* Official Footer */}
         <div className="document-footer">
-          <div className="footer-sign">
-            <div className="sign-line"></div>
-            <span>Authorized Signature</span>
-          </div>
-          <div className="footer-disclaimer">
-            <p>This is a system-generated document. For any discrepancies, please contact our support team at info@nilmaalliance.com within 7 business days.</p>
-            <span>NILMA Alliance (Pvt) Ltd | 295, 1/1 Galle Road, Colombo – 6, Sri Lanka</span>
+          <div className="footer-content-wrapper">
+            <div className="footer-signature-block">
+              <div className="signature-line"></div>
+              <div className="signature-meta">
+                <span className="signature-label">AUTHORIZED SIGNATURE & STAMP</span>
+              </div>
+            </div>
+            
+            <div className="footer-info-block">
+              <p className="system-disclaimer">
+                This is a computer-generated statement and does not require a physical signature. 
+                For any discrepancies, please notify us within 7 business days.
+              </p>
+              <div className="footer-pagination">
+                <span>Page 01 of 01</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -328,164 +369,253 @@ export default function AccountStatement({ api, session, onNotice }) {
       <style>{`
         .document-container {
           background: #fff;
-          color: #1a1a1a;
-          border-radius: 8px;
+          color: #1a202c;
+          border-radius: 12px;
           overflow: hidden;
-          font-family: 'Inter', sans-serif;
-        }
-        
-        .document-header {
-          padding: 40px;
-          border-bottom: 2px solid #f0f0f0;
-          background: #fafafa;
+          font-family: 'Inter', system-ui, sans-serif;
+          border: 1px solid #e2e8f0;
+          box-shadow: 0 20px 40px -10px rgba(0,0,0,0.08);
+          position: relative;
         }
 
-        .document-branding {
+        .document-watermark {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%) rotate(-45deg);
+          font-size: 180px;
+          font-weight: 900;
+          color: rgba(15, 23, 42, 0.015);
+          pointer-events: none;
+          z-index: 0;
+          user-select: none;
+        }
+
+        .custom-document-header {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 60px;
+          padding: 20px 50px 30px 50px;
+          background: #ffffff;
+          position: relative;
+          z-index: 1;
+        }
+
+        .col-label { font-size: 9px; font-weight: 800; color: #94a3b8; letter-spacing: 1.5px; display: block; margin-bottom: 12px; text-transform: uppercase; }
+        .billed-party-name { font-size: 28px; font-weight: 900; color: #0f172a; margin-bottom: 15px; letter-spacing: -0.5px; }
+        .billed-contact-list { display: flex; flex-direction: column; gap: 6px; }
+        .contact-row { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #475569; font-weight: 500; }
+
+        .company-branding-custom { margin-bottom: 25px; }
+        .company-branding-custom.left-align { text-align: left; }
+        .logo-vertical-stack { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+        .brand-text-group { display: flex; flex-direction: column; gap: 2px; }
+        .header-logo-img.large-logo { height: 95px; width: auto; object-fit: contain; }
+        .brand-name { font-size: 24px; font-weight: 900; color: #0f172a; margin: 0; line-height: 1.1; letter-spacing: -0.5px; }
+        .brand-name .pvt-ltd { color: var(--accent); opacity: 0.8; }
+        .brand-slogan { font-size: 10px; font-weight: 800; color: #64748b; letter-spacing: 1.5px; margin-top: 2px; }
+        
+        .company-address-minimal { font-size: 11px; color: #64748b; margin-top: 8px; line-height: 1.4; font-weight: 500; }
+
+        .branding-divider { height: 1.5px; background: #e2e8f0; width: 100%; margin: 15px 0; }
+
+        .branding-meta-col { padding-top: 15px; }
+        .statement-title-section { text-align: right; margin-bottom: 25px; overflow: hidden; }
+        .doc-title-large { 
+          font-size: 32px; 
+          font-weight: 900; 
+          color: #0f172a; 
+          margin-bottom: 6px; 
+          letter-spacing: -1px; 
+          line-height: 1; 
+          white-space: nowrap;
+        }
+        .doc-meta-minimal { font-size: 11px; font-weight: 700; color: #94a3b8; line-height: 1.5; text-transform: uppercase; }
+
+        .financial-summary-box {
+          background: #fdfdfd;
+          border: 1px solid #0f172a;
+          border-radius: 10px;
+          padding: 12px 15px;
+          margin-left: auto;
+          width: 260px;
+          position: relative;
+        }
+
+        .summary-box-label { font-size: 8px; font-weight: 800; color: #94a3b8; letter-spacing: 1px; margin-bottom: 8px; }
+        .summary-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; color: #475569; font-weight: 600; }
+        .summary-row strong { color: #0f172a; font-weight: 800; font-family: 'Inter', monospace; }
+        .summary-divider { height: 1px; background: #e2e8f0; margin: 8px 0; }
+        .balance-row { font-size: 13px; margin-bottom: 2px; }
+        .balance-value { font-size: 15px; font-weight: 900; color: #0f172a; }
+        .balance-underline { height: 2px; border-bottom: 1px solid #0f172a; border-top: 1px solid #0f172a; width: 100%; margin-top: 3px; opacity: 0.3; }
+
+        .document-toolbar { padding: 15px 50px; background: #fff; border-bottom: 1px solid #f1f5f9; }
+
+        .document-body { padding: 0 50px 40px 50px; position: relative; z-index: 1; }
+        .statement-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .statement-table thead { position: sticky; top: 0; z-index: 10; }
+        .statement-table th { 
+          padding: 12px; 
+          text-align: left; 
+          font-size: 9px; 
+          font-weight: 900; 
+          color: #ffffff; 
+          text-transform: uppercase; 
+          letter-spacing: 1.2px;
+          background: #0f172a;
+          border: none;
+        }
+        .statement-table th:first-child { border-top-left-radius: 4px; }
+        .statement-table th:last-child { border-top-right-radius: 4px; }
+
+        .statement-table td { 
+          padding: 10px 12px; 
+          border-bottom: 1px solid #f1f5f9; 
+          font-size: 12px;
+          color: #334155;
+          font-weight: 500;
+        }
+        .statement-row:hover { background: #f8fafc; }
+
+        .formal-status { font-size: 9px; font-weight: 900; letter-spacing: 1px; padding: 2px 0; border-bottom: 2px solid transparent; }
+        .formal-status.settled { color: #059669; border-color: #059669; }
+        .formal-status.pending { color: #d97706; border-color: #d97706; }
+
+        .allocation-details { 
+          padding: 15px; 
+          background: #f8fafc; 
+          border-radius: 12px; 
+          margin: 10px 0; 
+          border: 1px solid #f1f5f9; 
+        }
+        .allocation-label { display: block; font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin-bottom: 12px; }
+        .allocation-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+        .allocation-item { 
+          display: flex; 
+          justify-content: space-between; 
+          font-size: 12px; 
+          padding: 10px; 
+          background: #fff; 
+          border: 1px solid #e2e8f0; 
+          border-radius: 8px;
+        }
+
+        .document-footer { 
+          padding: 40px 50px; 
+          background: #ffffff; 
+          border-top: 2px solid #0f172a; 
+          page-break-inside: avoid;
+          position: relative;
+          z-index: 1;
+        }
+
+        .footer-content-wrapper {
           display: flex;
           justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 40px;
+          align-items: flex-end;
         }
 
-        .document-logo {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
+        .footer-signature-block { text-align: left; flex-shrink: 0; }
+        .signature-line { width: 220px; height: 1.5px; background: #0f172a; margin-bottom: 8px; }
+        .signature-meta { display: flex; flex-direction: column; gap: 4px; }
+        .signature-label { font-size: 8px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; }
+        .signature-date { font-size: 8px; font-weight: 700; color: #cbd5e1; letter-spacing: 1px; margin-top: 2px; }
         
-        .logo-text { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
-        .logo-subtext { font-size: 11px; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .footer-info-block { text-align: right; max-width: 420px; flex-shrink: 0; }
+        .system-disclaimer { font-size: 8.5px; color: #94a3b8; line-height: 1.4; margin-bottom: 12px; font-weight: 500; font-style: italic; }
+        .footer-company-details { display: flex; align-items: center; justify-content: flex-end; gap: 10px; font-size: 9.5px; color: #475569; font-weight: 700; margin-bottom: 8px; }
+        .footer-brand-name { color: #0f172a; text-transform: uppercase; letter-spacing: 0.8px; }
+        .footer-separator { color: #e2e8f0; font-weight: 400; }
+        .footer-pagination { font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.2px; }
 
-        .doc-type { font-size: 28px; font-weight: 900; color: #000; text-transform: uppercase; margin-bottom: 4px; }
-        .doc-id, .doc-date { display: block; font-size: 12px; font-weight: 700; color: #666; }
-
-        .document-meta-grid {
-          display: grid;
-          grid-template-columns: 1fr 300px;
-          gap: 40px;
-        }
-
-        .meta-label { display: block; font-size: 10px; font-weight: 800; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-        .meta-value { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
-        .meta-details span { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #444; margin-bottom: 4px; }
-
-        .summary-box { background: #fff; padding: 20px; border: 1px solid #eee; border-radius: 12px; }
-        .summary-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; }
-        .summary-divider { height: 1px; border-top: 1px dashed #eee; margin: 12px 0; }
-        .summary-row.total { font-size: 16px; border-top: 1px solid #000; padding-top: 12px; margin-top: 4px; }
-
-        .document-toolbar { padding: 20px 40px; background: #fff; border-bottom: 1px solid #f0f0f0; }
-
-        .document-body { padding: 0 40px; }
-        .statement-table { width: 100%; border-collapse: collapse; }
-        .statement-table th { padding: 16px 8px; text-align: left; font-size: 11px; font-weight: 800; color: #999; text-transform: uppercase; border-bottom: 2px solid #000; }
-        .statement-table td { padding: 16px 8px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
-        .statement-row:hover { background: #fcfcfc; }
-
-        .allocation-details { padding: 16px; background: #f9f9f9; border-radius: 8px; margin: 8px 0; border: 1px solid #eee; }
-        .allocation-label { display: block; font-size: 10px; font-weight: 800; color: #999; text-transform: uppercase; margin-bottom: 12px; }
-        .allocation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .allocation-item { display: flex; justify-content: space-between; font-size: 12px; padding: 8px; background: #fff; border: 1px solid #eee; border-radius: 6px; }
-
-        .document-footer { padding: 40px; display: flex; justify-content: space-between; align-items: flex-end; background: #fafafa; border-top: 1px solid #f0f0f0; }
-        .footer-sign span { font-size: 11px; font-weight: 800; color: #999; text-transform: uppercase; }
-        .sign-line { width: 180px; height: 1px; background: #000; margin-bottom: 8px; }
-        .footer-disclaimer { text-align: right; max-width: 400px; }
-        .footer-disclaimer p { font-size: 10px; color: #999; line-height: 1.4; margin-bottom: 8px; }
-        .footer-disclaimer span { font-size: 11px; font-weight: 800; color: #000; }
-
-        .empty-state { padding: 60px; text-align: center; color: #ccc; }
+        .empty-state { padding: 80px; text-align: center; color: #94a3b8; }
 
         @media print {
-          @page { size: portrait; margin: 0; }
+          @page { size: A4; margin: 0; }
           
-          /* Force hide all UI elements */
-          .sidebar, .topbar, .notice-banner, .no-print, .btn, button, .v-divider, .icon-btn, .brand-lockup, nav { 
-            display: none !important; 
-            width: 0 !important;
-            height: 0 !important;
+          /* Force parent containers to be visible and non-flex */
+          html, body, #root, .app-shell, .workspace, .account-statement-page {
+            height: auto !important;
+            overflow: visible !important;
+            background: #fff !important;
+            width: auto !important;
             margin: 0 !important;
             padding: 0 !important;
-            overflow: hidden !important;
+            display: block !important;
           }
 
-          /* Reset all containers to be full width and static */
-          html, body, #root, .app-shell, .workspace, .account-statement-page {
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            height: auto !important;
-            min-height: 0 !important;
-            display: block !important; /* Break the grid */
-            position: static !important;
-            background: #fff !important;
-            overflow: visible !important;
-            box-shadow: none !important;
+          /* Hide UI elements */
+          .sidebar, .topbar, .notice-banner, .no-print, .btn, button, .v-divider, .icon-btn, .brand-lockup, nav { 
+            display: none !important; 
           }
 
           .document-container { 
-            width: 210mm !important; /* Standard A4 width */
-            max-width: 100% !important;
-            margin: 0 auto !important;
-            padding: 0 !important;
             border: none !important;
             box-shadow: none !important;
-            display: block !important;
-            position: static !important;
-            background: #fff !important;
+            width: 210mm !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            visibility: visible !important;
           }
 
-          /* Optimize document internal spacing for print */
-          .document-header { 
-            padding: 40px !important; 
-            margin-bottom: 0 !important;
-            border-bottom: 2px solid #000 !important;
-            background: #fff !important;
+          .document-watermark {
+            display: none !important;
           }
 
+          .custom-document-header { 
+            padding: 8mm 15mm 10mm 15mm !important; 
+            gap: 15mm !important;
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+          }
+          
           .document-body {
-            padding: 0 40px !important;
+            padding: 0 15mm 10mm 15mm !important;
+          }
+
+          .financial-summary-box {
+            border: 1.5px solid #000 !important;
+            background: #fff !important;
+            width: 100% !important;
+            margin-top: 5mm !important;
           }
 
           .statement-table {
             width: 100% !important;
-            border-collapse: collapse !important;
+            page-break-inside: auto;
+          }
+          
+          .statement-table thead {
+            display: table-header-group !important;
           }
 
-          .statement-table th, .statement-table td {
-            border-bottom: 1px solid #eee !important;
-            padding: 12px 8px !important;
+          .statement-row {
+            page-break-inside: avoid;
+            page-break-after: auto;
           }
 
           .statement-table th {
-            border-bottom: 2px solid #000 !important;
+            background: #000 !important;
+            color: #fff !important;
+            padding: 3mm 2mm !important;
+            -webkit-print-color-adjust: exact;
+          }
+
+          .statement-table td {
+            padding: 2.5mm 2mm !important;
+          }
+
+          .formal-status {
+            border-bottom: 1.5px solid #000 !important;
             color: #000 !important;
-            text-transform: uppercase !important;
           }
 
-          .summary-box { 
-            border: 1px solid #000 !important; 
-            padding: 20px !important;
-            background: #fff !important;
-          }
-
-          .document-footer { 
-            margin-top: 50px !important;
-            padding: 40px !important;
-            border-top: 1px solid #000 !important;
-            background: #fff !important;
-          }
-
-          /* Ensure colors and backgrounds are printed */
-          * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            background-color: transparent !important;
-          }
-          
-          .document-container, .document-container *, .summary-box, .summary-box * {
-            background-color: #fff !important;
+          .document-footer {
+            padding: 10mm 15mm 15mm 15mm !important;
+            border-top: 1.5px solid #000 !important;
+            margin-top: auto !important;
           }
         }
       `}</style>

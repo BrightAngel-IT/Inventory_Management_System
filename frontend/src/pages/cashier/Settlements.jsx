@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { 
-  CreditCard, 
-  Search, 
-  Plus, 
-  X, 
-  AlertCircle, 
-  CheckCircle2, 
+import {
+  CreditCard,
+  Search,
+  Plus,
+  X,
+  AlertCircle,
+  CheckCircle2,
   ArrowRight,
   Wallet,
   Receipt,
@@ -63,7 +63,6 @@ export function Settlements({ api, session, onNotice }) {
     setLoading(true)
     try {
       const res = await api.get(`/customer-invoices/customer/${id}`, authConfig(session.token))
-      // Only show invoices with balance > 0
       const outstanding = res.data.filter(inv => (inv.balanceAmount ?? inv.totalAmount) > 0)
       setInvoices(outstanding)
     } catch (err) {
@@ -90,7 +89,7 @@ export function Settlements({ api, session, onNotice }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (totalAllocated === 0) {
       onNotice({ type: 'error', text: 'Allocation required to process settlement' })
       return
@@ -119,7 +118,7 @@ export function Settlements({ api, session, onNotice }) {
 
       await api.post('/payments', payload, authConfig(session.token))
       onNotice({ type: 'success', text: 'Customer collection processed successfully' })
-      
+
       // Refresh invoices for the same entity instead of resetting selection
       if (selectedEntityId) {
         fetchInvoices(selectedEntityId)
@@ -141,8 +140,8 @@ export function Settlements({ api, session, onNotice }) {
 
   return (
     <div className="stack gap-6 animate-fade">
-      <SectionHeading 
-        title="Customer Settlements" 
+      <SectionHeading
+        title="Customer Settlements"
         subtitle="Process customer payments and reconcile outstanding balances."
         icon={Wallet}
       />
@@ -158,9 +157,9 @@ export function Settlements({ api, session, onNotice }) {
           <form onSubmit={handleSubmit} className="stack gap-5">
             <label className="field">
               <span className="muted x-small font-bold uppercase tracking-wider">Select Customer</span>
-              <select 
-                className="input" 
-                value={selectedEntityId} 
+              <select
+                className="input"
+                value={selectedEntityId}
                 onChange={(e) => setSelectedEntityId(e.target.value)}
                 required
               >
@@ -176,9 +175,9 @@ export function Settlements({ api, session, onNotice }) {
                 <span className="muted x-small font-bold uppercase tracking-wider">Payment Date</span>
                 <div className="input-shell compact" style={{ borderRadius: '10px' }}>
                   <Calendar size={14} className="muted" />
-                  <input 
-                    type="date" 
-                    className="ghost-input small" 
+                  <input
+                    type="date"
+                    className="ghost-input small"
                     value={paymentForm.paymentDate}
                     onChange={(e) => setPaymentForm({ ...paymentForm, paymentDate: e.target.value })}
                     required
@@ -189,9 +188,9 @@ export function Settlements({ api, session, onNotice }) {
                 <span className="muted x-small font-bold uppercase tracking-wider">Total Received</span>
                 <div className="input-shell compact" style={{ borderRadius: '10px' }}>
                   <span className="muted x-small">$</span>
-                  <input 
-                    type="number" 
-                    className="ghost-input small font-strong" 
+                  <input
+                    type="number"
+                    className="ghost-input small font-strong"
                     placeholder="0.00"
                     value={paymentForm.totalAmount}
                     onChange={(e) => setPaymentForm({ ...paymentForm, totalAmount: e.target.value })}
@@ -204,8 +203,8 @@ export function Settlements({ api, session, onNotice }) {
             <div className="grid-2 gap-4">
               <label className="field">
                 <span className="muted x-small font-bold uppercase tracking-wider">Method</span>
-                <select 
-                  className="input small" 
+                <select
+                  className="input small"
                   value={paymentForm.paymentMethod}
                   onChange={(e) => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value })}
                 >
@@ -220,9 +219,9 @@ export function Settlements({ api, session, onNotice }) {
                   <span className="muted x-small font-bold uppercase tracking-wider">Cheque #</span>
                   <div className="input-shell compact" style={{ borderRadius: '10px' }}>
                     <Hash size={14} className="muted" />
-                    <input 
-                      type="text" 
-                      className="ghost-input small font-mono" 
+                    <input
+                      type="text"
+                      className="ghost-input small font-mono"
                       placeholder="CHQ-001"
                       value={paymentForm.chequeNumber}
                       onChange={(e) => setPaymentForm({ ...paymentForm, chequeNumber: e.target.value })}
@@ -246,13 +245,13 @@ export function Settlements({ api, session, onNotice }) {
               </div>
             </div>
 
-            <button 
-              className="btn btn-primary large-btn" 
-              type="submit" 
+            <button
+              className="btn btn-primary large-btn"
+              type="submit"
               disabled={submitting}
-              style={{ 
-                borderRadius: '12px', 
-                padding: '16px', 
+              style={{
+                borderRadius: '12px',
+                padding: '16px',
                 fontSize: '1rem',
                 background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))'
               }}
@@ -305,7 +304,7 @@ export function Settlements({ api, session, onNotice }) {
                   invoices.map(inv => {
                     const balance = inv.balanceAmount ?? inv.totalAmount
                     const isFullyAllocated = (parseFloat(allocations[inv._id]) || 0) >= balance
-                    
+
                     return (
                       <tr key={inv._id} className="table-row-hover">
                         <td style={{ paddingLeft: '24px' }}>
@@ -316,8 +315,8 @@ export function Settlements({ api, session, onNotice }) {
                         <td className="text-right font-strong small">{formatCurrency(balance)}</td>
                         <td className="text-right" style={{ paddingRight: '24px', width: '150px' }}>
                           <div className="input-shell compact" style={{ borderRadius: '8px', border: isFullyAllocated ? '1px solid var(--success)' : '1px solid var(--border)' }}>
-                            <input 
-                              type="number" 
+                            <input
+                              type="number"
                               className="ghost-input x-small text-right font-bold"
                               placeholder="0.00"
                               value={allocations[inv._id] || ''}

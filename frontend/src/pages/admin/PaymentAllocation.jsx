@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { 
-  CreditCard, 
-  Search, 
-  Plus, 
-  X, 
-  AlertCircle, 
-  CheckCircle2, 
+import {
+  CreditCard,
+  Search,
+  Plus,
+  X,
+  AlertCircle,
+  CheckCircle2,
   ArrowRight,
   Wallet,
   Receipt,
@@ -65,13 +65,13 @@ export function PaymentAllocation({ api, session, onNotice }) {
   async function fetchInvoices(id) {
     setLoading(true)
     try {
-      const endpoint = settlementMode === 'customer' 
-        ? `/customer-invoices/customer/${id}` 
+      const endpoint = settlementMode === 'customer'
+        ? `/customer-invoices/customer/${id}`
         : `/supplier-invoices/supplier/${id}`
       const res = await api.get(endpoint, authConfig(session.token))
-      // Filter to show only unpaid/partially paid invoices if logic allows
-      // For now, showing all associated invoices
-      setInvoices(res.data)
+      // Filter to show only unpaid/partially paid invoices
+      const outstanding = res.data.filter(inv => (inv.balanceAmount ?? inv.totalAmount) > 0)
+      setInvoices(outstanding)
     } catch (err) {
       onNotice({ type: 'error', text: 'Failed to load outstanding invoices' })
     } finally {
@@ -96,7 +96,7 @@ export function PaymentAllocation({ api, session, onNotice }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (totalAllocated === 0) {
       onNotice({ type: 'error', text: 'Allocation required to process settlement' })
       return
@@ -110,7 +110,7 @@ export function PaymentAllocation({ api, session, onNotice }) {
     setSubmitting(true)
     try {
       const endpoint = settlementMode === 'customer' ? '/payments' : '/supplier-payments'
-      
+
       const payload = {
         [settlementMode === 'customer' ? 'customerId' : 'supplierId']: selectedEntityId,
         paymentDate: paymentForm.paymentDate,
@@ -127,7 +127,7 @@ export function PaymentAllocation({ api, session, onNotice }) {
 
       await api.post(endpoint, payload, authConfig(session.token))
       onNotice({ type: 'success', text: `${settlementMode === 'customer' ? 'Collection' : 'Settlement'} processed successfully` })
-      
+
       // Refresh invoices for the same entity instead of resetting selection
       if (selectedEntityId) {
         fetchInvoices(selectedEntityId)
@@ -163,15 +163,15 @@ export function PaymentAllocation({ api, session, onNotice }) {
               {settlementMode === 'customer' ? 'Customer Collections' : 'Supplier Settlements'}
             </h2>
             <p className="muted small">
-              {settlementMode === 'customer' 
-                ? 'Record payments received from clients and reconcile balances.' 
+              {settlementMode === 'customer'
+                ? 'Record payments received from clients and reconcile balances.'
                 : 'Process outgoing payments to vendors and settle outstanding bills.'}
             </p>
           </div>
         </div>
 
         <div className="cluster p-1 panel-strong" style={{ background: 'var(--bg-soft)', borderRadius: '14px', border: '1px solid var(--border)' }}>
-          <button 
+          <button
             className={`btn sm ${settlementMode === 'customer' ? 'btn-primary' : 'btn-ghost'}`}
             onClick={() => setSettlementMode('customer')}
             style={{ borderRadius: '10px', minWidth: '120px' }}
@@ -179,7 +179,7 @@ export function PaymentAllocation({ api, session, onNotice }) {
             <Users size={16} />
             Customer
           </button>
-          <button 
+          <button
             className={`btn sm ${settlementMode === 'supplier' ? 'btn-primary' : 'btn-ghost'}`}
             style={{ borderRadius: '10px', minWidth: '120px', background: settlementMode === 'supplier' ? 'var(--accent)' : 'transparent' }}
             onClick={() => setSettlementMode('supplier')}
@@ -203,9 +203,9 @@ export function PaymentAllocation({ api, session, onNotice }) {
           <form onSubmit={handleSubmit} className="stack gap-5">
             <label className="field">
               <span className="muted x-small font-bold uppercase tracking-wider">Select {settlementMode === 'customer' ? 'Client' : 'Vendor'}</span>
-              <select 
-                className="input" 
-                value={selectedEntityId} 
+              <select
+                className="input"
+                value={selectedEntityId}
                 onChange={(e) => setSelectedEntityId(e.target.value)}
                 required
               >
@@ -221,9 +221,9 @@ export function PaymentAllocation({ api, session, onNotice }) {
                 <span className="muted x-small font-bold uppercase tracking-wider">Payment Date</span>
                 <div className="input-shell compact" style={{ borderRadius: '10px' }}>
                   <Calendar size={14} className="muted" />
-                  <input 
-                    type="date" 
-                    className="ghost-input small" 
+                  <input
+                    type="date"
+                    className="ghost-input small"
                     value={paymentForm.paymentDate}
                     onChange={(e) => setPaymentForm({ ...paymentForm, paymentDate: e.target.value })}
                     required
@@ -236,9 +236,9 @@ export function PaymentAllocation({ api, session, onNotice }) {
                 </span>
                 <div className="input-shell compact" style={{ borderRadius: '10px' }}>
                   <span className="muted x-small">$</span>
-                  <input 
-                    type="number" 
-                    className="ghost-input small font-strong" 
+                  <input
+                    type="number"
+                    className="ghost-input small font-strong"
                     placeholder="0.00"
                     value={paymentForm.totalAmount}
                     onChange={(e) => setPaymentForm({ ...paymentForm, totalAmount: e.target.value })}
@@ -251,8 +251,8 @@ export function PaymentAllocation({ api, session, onNotice }) {
             <div className="grid-2 gap-4">
               <label className="field">
                 <span className="muted x-small font-bold uppercase tracking-wider">Method</span>
-                <select 
-                  className="input small" 
+                <select
+                  className="input small"
                   value={paymentForm.paymentMethod}
                   onChange={(e) => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value })}
                 >
@@ -267,9 +267,9 @@ export function PaymentAllocation({ api, session, onNotice }) {
                   <span className="muted x-small font-bold uppercase tracking-wider">Cheque #</span>
                   <div className="input-shell compact" style={{ borderRadius: '10px' }}>
                     <Hash size={14} className="muted" />
-                    <input 
-                      type="text" 
-                      className="ghost-input small font-mono" 
+                    <input
+                      type="text"
+                      className="ghost-input small font-mono"
                       placeholder="CHQ-001"
                       value={paymentForm.chequeNumber}
                       onChange={(e) => setPaymentForm({ ...paymentForm, chequeNumber: e.target.value })}
@@ -293,13 +293,13 @@ export function PaymentAllocation({ api, session, onNotice }) {
               </div>
             </div>
 
-            <button 
-              className="btn btn-primary large-btn" 
-              type="submit" 
+            <button
+              className="btn btn-primary large-btn"
+              type="submit"
               disabled={submitting}
-              style={{ 
-                borderRadius: '12px', 
-                padding: '16px', 
+              style={{
+                borderRadius: '12px',
+                padding: '16px',
                 fontSize: '1rem',
                 background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))'
               }}
@@ -352,7 +352,7 @@ export function PaymentAllocation({ api, session, onNotice }) {
                   invoices.map(inv => {
                     const balance = inv.balanceAmount ?? inv.totalAmount
                     const isFullyAllocated = (parseFloat(allocations[inv._id]) || 0) >= balance
-                    
+
                     return (
                       <tr key={inv._id} className="table-row-hover">
                         <td style={{ paddingLeft: '24px' }}>
@@ -363,8 +363,8 @@ export function PaymentAllocation({ api, session, onNotice }) {
                         <td className="text-right font-strong small">{formatCurrency(balance)}</td>
                         <td className="text-right" style={{ paddingRight: '24px', width: '150px' }}>
                           <div className="input-shell compact" style={{ borderRadius: '8px', border: isFullyAllocated ? '1px solid var(--success)' : '1px solid var(--border)' }}>
-                            <input 
-                              type="number" 
+                            <input
+                              type="number"
                               className="ghost-input x-small text-right font-bold"
                               placeholder="0.00"
                               value={allocations[inv._id] || ''}
