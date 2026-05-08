@@ -16,6 +16,7 @@ import {
   Bell,
   Wallet,
   Users,
+  RotateCcw
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 export function Sidebar({
@@ -44,6 +45,7 @@ export function Sidebar({
         { path: '/staff', label: 'Employees', icon: Users },
         { path: '/purchases', label: 'Purchases', icon: Receipt },
         { path: '/invoices', label: 'Invoices', icon: Receipt },
+        { path: '/returns', label: 'Returns', icon: RotateCcw },
         { path: '/payments', label: 'Settlements', icon: Wallet },
         { path: '/reports', label: 'Sales Reports', icon: BarChart3 },
       ]

@@ -17,6 +17,7 @@ const customerInvoiceRoutes = require('./routes/customerInvoiceRoutes');
 const supplierInvoiceRoutes = require('./routes/supplierInvoiceRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const userRoutes = require('./routes/userRoutes');
+const returnRoutes = require('./routes/returnRoutes');
 
 function createApp() {
   const app = express();
@@ -60,6 +61,7 @@ function createApp() {
   app.use('/api/payments', paymentRoutes);
   app.use('/api/supplier-payments', require('./routes/supplierPaymentRoutes'));
   app.use('/api/users', userRoutes);
+  app.use('/api/returns', returnRoutes);
 
   app.use((error, _req, res, _next) => {
     console.error(error);

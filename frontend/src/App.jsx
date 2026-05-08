@@ -29,6 +29,7 @@ import Customers from './pages/admin/Customers'
 import Purchases from './pages/admin/Purchases'
 import Invoices from './pages/admin/Invoices'
 import AccountStatement from './pages/admin/AccountStatement'
+import Returns from './pages/admin/Returns'
 import { Notifications } from './pages/admin/Notifications'
 import { PaymentAllocation } from './pages/admin/PaymentAllocation'
 import StaffManagement from './pages/admin/StaffManagement'
@@ -382,6 +383,7 @@ function App() {
   }
 
   function handleBarcodeLookup(scannedValue) {
+    if (location.pathname === '/returns') return
     const cleanedValue = String(scannedValue || '').trim()
     if (!cleanedValue) return
     setBarcodeValue(cleanedValue)
@@ -709,6 +711,7 @@ function App() {
             <Route path="/invoices" element={<AdminRoute session={session}><Invoices api={api} session={session} onNotice={setNotice} sales={sales} customers={customers} /></AdminRoute>} />
             <Route path="/payments" element={<AdminRoute session={session}><PaymentAllocation api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
             <Route path="/accounts/:type/:id" element={<AccountStatement api={api} session={session} onNotice={setNotice} />} />
+            <Route path="/returns" element={<AdminRoute session={session}><Returns api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
 
             <Route path="/notifications" element={
               <Notifications

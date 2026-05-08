@@ -8,12 +8,17 @@ const Product = require('../models/Product');
 const Sale = require('../models/Sale');
 const User = require('../models/User');
 const CustomerInvoice = require('../models/CustomerInvoice');
+const SupplierInvoice = require('../models/SupplierInvoice');
+const Customer = require('../models/Customer');
+const Supplier = require('../models/Supplier');
+const Return = require('../models/Return');
 
 const memoryStore = {
   ready: false,
   users: [],
   products: [],
   sales: [],
+  returns: [],
 };
 
 function clonePlain(value) {
@@ -519,6 +524,102 @@ async function createSale(payload) {
   return clonePlain(sale);
 }
 
+async function createReturn(payload) {
+  const { type, entityId, referenceNo, items, refundMethod, reason, processedBy } = payload;
+
+  if (!items || items.length === 0) {
+    throw createError('At least one item must be returned.');
+  }
+
+  // 1. Verify and Process Stock
+  for (const item of items) {
+    const product = await Product.findById(item.productId);
+    if (!product) throw createError(`Product not found: ${item.name}`, 404);
+
+    // If customer return, add back to stock. If supplier return, remove from stock.
+    const qtyChange = type === 'customer' ? item.quantity : -item.quantity;
+    await Product.findByIdAndUpdate(item.productId, { $inc: { quantityInStock: qtyChange } });
+  }
+
+  // 2. Calculate Total
+  const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+
+  // 3. Update Financials
+  if (type === 'customer') {
+    const customer = await Customer.findById(entityId);
+    if (!customer) throw createError('Customer not found', 404);
+
+    if (refundMethod === 'credit-note') {
+      await Customer.findByIdAndUpdate(entityId, { $inc: { balance: -totalAmount } });
+      
+      // If there's a specific invoice, try to update it too
+      if (referenceNo) {
+        const inv = await CustomerInvoice.findOne({ invoiceNo: referenceNo, customerId: entityId });
+        if (inv) {
+          await CustomerInvoice.findByIdAndUpdate(inv._id, { $inc: { balanceAmount: -totalAmount } });
+        }
+      }
+    }
+  } else {
+    const supplier = await Supplier.findById(entityId);
+    if (!supplier) throw createError('Supplier not found', 404);
+
+    if (refundMethod === 'credit-note') {
+      await Supplier.findByIdAndUpdate(entityId, { $inc: { balance: -totalAmount } });
+      
+      if (referenceNo) {
+        const inv = await SupplierInvoice.findOne({ invoiceNo: referenceNo, supplierId: entityId });
+        if (inv) {
+          await SupplierInvoice.findByIdAndUpdate(inv._id, { $inc: { balanceAmount: -totalAmount } });
+        }
+      }
+    }
+  }
+
+  // 4. Create Return Document
+  const returnNo = `RET-${Date.now().toString().slice(-6)}`;
+  const returnPayload = {
+    returnNo,
+    type,
+    entityId,
+    entityName: payload.entityName,
+    referenceNo,
+    items,
+    totalAmount,
+    reason,
+    refundMethod,
+    processedBy
+  };
+
+  if (isDatabaseReady()) {
+    return Return.create(returnPayload);
+  }
+
+  const returnDoc = {
+    _id: generateId(),
+    ...returnPayload,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  memoryStore.returns.unshift(returnDoc);
+  return clonePlain(returnDoc);
+}
+
+async function getReturns(filters = {}) {
+  if (isDatabaseReady()) {
+    const query = {};
+    if (filters.type) query.type = filters.type;
+    if (filters.entityId) query.entityId = filters.entityId;
+    
+    return Return.find(query).sort({ createdAt: -1 }).lean();
+  }
+
+  return clonePlain(memoryStore.returns).sort(
+    (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+  );
+}
+
 async function getRecentSales(limit = 8) {
   const sales = await getAllSales();
   return sales.slice(0, limit);
@@ -979,4 +1080,6 @@ module.exports = {
   getUsers,
   saveUser,
   deleteUser,
+  createReturn,
+  getReturns
 };
