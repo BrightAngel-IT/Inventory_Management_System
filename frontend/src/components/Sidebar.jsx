@@ -29,12 +29,12 @@ export function Sidebar({
   const navigation = [
     { path: '/', label: 'Overview', icon: LayoutDashboard },
     { path: '/pos', label: 'Billing Desk', icon: ShoppingCart },
-    ...(session?.user?.role !== 'admin' 
+    ...(session?.user?.role !== 'admin'
       ? [
-          { path: '/sales-history', label: 'Sales History', icon: Clock },
-          { path: '/customers', label: 'Customers', icon: User },
-          { path: '/settlements', label: 'Settlements', icon: Wallet }
-        ] 
+        { path: '/sales-history', label: 'Sales History', icon: Clock },
+        { path: '/customers', label: 'Customers', icon: User },
+        { path: '/settlements', label: 'Settlements', icon: Wallet }
+      ]
       : []),
     ...(session?.user?.role === 'admin'
       ? [
@@ -96,11 +96,11 @@ export function Sidebar({
                 </div>
               </div>
             </div>
-            <NavLink 
-              to="/notifications" 
+            <NavLink
+              to="/notifications"
               className="icon-btn glow-on-hover"
-              style={{ 
-                color: 'var(--muted)', 
+              style={{
+                color: 'var(--muted)',
                 position: 'relative',
                 background: 'var(--bg-soft)',
                 border: '1px solid var(--border)',
@@ -113,14 +113,14 @@ export function Sidebar({
             >
               <Bell size={18} />
               {unreadCount > 0 && (
-                <span style={{ 
-                  position: 'absolute', 
-                  top: '6px', 
-                  right: '6px', 
-                  background: '#ef4444', 
-                  width: '8px', 
-                  height: '8px', 
-                  borderRadius: '50%', 
+                <span style={{
+                  position: 'absolute',
+                  top: '6px',
+                  right: '6px',
+                  background: '#ef4444',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
                   border: '2px solid var(--panel-strong)',
                   boxShadow: '0 0 8px rgba(239, 68, 68, 0.5)'
                 }}></span>
@@ -138,7 +138,7 @@ export function Sidebar({
 
             return (
               <React.Fragment key={item.path}>
-                
+
                 <NavLink
                   to={item.path}
                   className={({ isActive }) => `nav-link between ${isActive ? 'active glow-on-hover' : ''}`}

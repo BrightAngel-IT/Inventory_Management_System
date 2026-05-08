@@ -2,6 +2,7 @@ const express = require('express');
 
 const { requireAuth, requireRole } = require('../middleware/auth');
 const { getProducts, saveProduct, deleteProduct } = require('../services/store');
+const upload = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -19,18 +20,52 @@ router.get('/', requireAuth, async (req, res, next) => {
   }
 });
 
-router.post('/', requireAuth, requireRole(['admin']), async (req, res, next) => {
+router.post('/', requireAuth, requireRole(['admin']), upload.single('image'), async (req, res, next) => {
   try {
-    const product = await saveProduct(req.body);
+    const payload = { ...req.body };
+    
+    // Handle nested rack object if sent as flattened FormData
+    if (req.body['rack.rowNumber']) {
+      payload.rack = {
+        rowNumber: req.body['rack.rowNumber'],
+        columnNumber: req.body['rack.columnNumber'],
+        shelfNumber: req.body['rack.shelfNumber']
+      };
+    } else if (typeof req.body.rack === 'string') {
+      try { payload.rack = JSON.parse(req.body.rack); } catch(e) {}
+    }
+
+    if (req.file) {
+      payload.image = `/uploads/${req.file.filename}`;
+    }
+
+    const product = await saveProduct(payload);
     res.status(201).json({ product, message: 'Product created successfully.' });
   } catch (error) {
     next(error);
   }
 });
 
-router.patch('/:id', requireAuth, requireRole(['admin']), async (req, res, next) => {
+router.patch('/:id', requireAuth, requireRole(['admin']), upload.single('image'), async (req, res, next) => {
   try {
-    const product = await saveProduct({ ...req.body, _id: req.params.id });
+    const payload = { ...req.body };
+    
+    // Handle nested rack object if sent as flattened FormData
+    if (req.body['rack.rowNumber']) {
+      payload.rack = {
+        rowNumber: req.body['rack.rowNumber'],
+        columnNumber: req.body['rack.columnNumber'],
+        shelfNumber: req.body['rack.shelfNumber']
+      };
+    } else if (typeof req.body.rack === 'string') {
+      try { payload.rack = JSON.parse(req.body.rack); } catch(e) {}
+    }
+
+    if (req.file) {
+      payload.image = `/uploads/${req.file.filename}`;
+    }
+
+    const product = await saveProduct({ ...payload, _id: req.params.id });
     res.json({ product, message: 'Product updated successfully.' });
   } catch (error) {
     next(error);

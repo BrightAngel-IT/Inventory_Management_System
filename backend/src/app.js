@@ -1,5 +1,7 @@
 const cors = require('cors');
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
 
 
 const authRoutes = require('./routes/authRoutes');
@@ -25,6 +27,15 @@ function createApp() {
     }),
   );
   app.use(express.json({ limit: '1mb' }));
+  
+  // Ensure uploads directory exists
+  const uploadsDir = path.join(__dirname, '../uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  
+  // Static serving for images
+  app.use('/uploads', express.static(uploadsDir));
 
   app.get('/api/health', (_req, res) => {
     res.json({

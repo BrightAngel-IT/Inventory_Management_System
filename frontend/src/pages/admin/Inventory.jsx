@@ -208,8 +208,12 @@ export function Inventory({
                 <tr key={product._id} className="table-row-hover animate-slide">
                   <td style={{ paddingLeft: '24px' }}>
                     <div className="cluster gap-3">
-                      <div className="avatar small" style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--bg-soft)', padding: '2px' }}>
-                        <img src={product.image || null} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                      <div className="avatar small" style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--bg-soft)', padding: '2px', overflow: 'hidden' }}>
+                        <img 
+                          src={product.image?.startsWith('/uploads') ? `${window.location.origin.replace(':5173', ':5000')}${product.image}` : product.image} 
+                          alt="" 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        />
                       </div>
                       <div className="stack">
                         <strong style={{ fontSize: '0.95rem' }}>{product.name}</strong>

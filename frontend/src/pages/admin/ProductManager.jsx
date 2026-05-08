@@ -140,6 +140,55 @@ export function ProductManager({
         <div className="stack gap-5">
           <div className="panel p-5 glass-panel stack gap-4" style={{ borderRadius: '20px' }}>
             <div className="cluster gap-2">
+              <ImageIcon size={16} className="accent-text" />
+              <span className="eyebrow" style={{ fontSize: '0.65rem' }}>Media & Assets</span>
+            </div>
+            
+            <div className="stack gap-3">
+              <div 
+                className="panel-strong" 
+                style={{ 
+                  height: '160px', 
+                  borderRadius: '16px', 
+                  border: '2px dashed var(--border)', 
+                  display: 'grid', 
+                  placeItems: 'center',
+                  overflow: 'hidden',
+                  background: 'var(--bg-soft)',
+                  position: 'relative'
+                }}
+              >
+                {productForm.imageFile || productForm.image ? (
+                  <img 
+                    src={productForm.imageFile ? URL.createObjectURL(productForm.imageFile) : (productForm.image?.startsWith('/uploads') ? `${window.location.origin.replace(':5173', ':5000')}${productForm.image}` : productForm.image)} 
+                    alt="Preview" 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  />
+                ) : (
+                  <div className="stack align-center gap-2 muted">
+                    <ImageIcon size={32} strokeWidth={1} />
+                    <span className="small">No image selected</span>
+                  </div>
+                )}
+              </div>
+              
+              <label className="btn btn-secondary w-full" style={{ cursor: 'pointer', padding: '10px' }}>
+                <Plus size={16} />
+                {productForm.imageFile || productForm.image ? 'Change Image' : 'Upload Product Photo'}
+                <input 
+                  type="file" 
+                  name="image" 
+                  accept="image/*" 
+                  onChange={handleProductFormChange} 
+                  style={{ display: 'none' }} 
+                />
+              </label>
+              <p className="muted x-small text-center">Optional: Max size 5MB. PNG, JPG supported.</p>
+            </div>
+          </div>
+
+          <div className="panel p-5 glass-panel stack gap-4" style={{ borderRadius: '20px' }}>
+            <div className="cluster gap-2">
               <Barcode size={16} className="accent-text" />
               <span className="eyebrow" style={{ fontSize: '0.65rem' }}>Identification</span>
             </div>

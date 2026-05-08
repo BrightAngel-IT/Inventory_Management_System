@@ -81,6 +81,7 @@ const emptyProductForm = {
     shelfNumber: '1',
   },
   image: '',
+  imageFile: null,
 }
 
 function App() {
@@ -396,7 +397,13 @@ function App() {
   }
 
   function handleProductFormChange(event) {
-    const { name, value } = event.target
+    const { name, value, type, files } = event.target
+    
+    if (type === 'file' && files?.[0]) {
+      setProductForm((current) => ({ ...current, imageFile: files[0] }))
+      return
+    }
+
     if (name.startsWith('rack.')) {
       const rackField = name.split('.')[1]
       setProductForm((current) => ({
@@ -450,23 +457,45 @@ function App() {
     event.preventDefault()
     setBusyAction('product-save')
     try {
-      const payload = {
-        ...productForm,
-        price: Number(productForm.price),
-        costPrice: Number(productForm.costPrice),
-        quantityInStock: Number(productForm.quantityInStock),
-        reorderLevel: Number(productForm.reorderLevel),
-        rack: {
-          rowNumber: Number(productForm.rack.rowNumber),
-          columnNumber: Number(productForm.rack.columnNumber),
-          shelfNumber: Number(productForm.rack.shelfNumber),
-        },
-      }
-      if (editingProductId) {
-        await api.patch(`/products/${editingProductId}`, payload, authConfig(session.token))
+      const formData = new FormData();
+      
+      // Basic fields
+      formData.append('name', productForm.name);
+      formData.append('sku', productForm.sku);
+      formData.append('barcode', productForm.barcode);
+      formData.append('category', productForm.category);
+      formData.append('description', productForm.description);
+      formData.append('unit', productForm.unit);
+      formData.append('price', productForm.price);
+      formData.append('costPrice', productForm.costPrice);
+      formData.append('quantityInStock', productForm.quantityInStock);
+      formData.append('reorderLevel', productForm.reorderLevel);
+      
+      // Nested rack fields
+      formData.append('rack.rowNumber', productForm.rack.rowNumber);
+      formData.append('rack.columnNumber', productForm.rack.columnNumber);
+      formData.append('rack.shelfNumber', productForm.rack.shelfNumber);
+
+      // Handle image file or existing URL
+      if (productForm.imageFile) {
+        formData.append('image', productForm.imageFile);
       } else {
-        await api.post('/products', payload, authConfig(session.token))
+        formData.append('image', productForm.image);
       }
+
+      const config = {
+        headers: {
+          ...authConfig(session.token).headers,
+          'Content-Type': 'multipart/form-data',
+        }
+      };
+
+      if (editingProductId) {
+        await api.patch(`/products/${editingProductId}`, formData, config);
+      } else {
+        await api.post('/products', formData, config);
+      }
+      
       await refreshCoreData()
       resetProductEditor()
       setNotice({ type: 'success', text: 'Product saved successfully.' })
