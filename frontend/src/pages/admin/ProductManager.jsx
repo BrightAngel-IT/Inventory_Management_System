@@ -11,9 +11,9 @@ export function ProductManager({
   busyAction,
 }) {
   return (
-    <div className="stack gap-5 animate-fade">
-      {/* Premium Header */}
-      <div className="between wrap-row panel p-5 glass-panel" style={{ borderLeft: '4px solid var(--accent)', borderRadius: '16px' }}>
+    <div className="stack gap-4 animate-fade">
+      {/* Compact Header */}
+      <div className="between wrap-row panel p-4 glass-panel" style={{ borderLeft: '4px solid var(--accent)', borderRadius: '14px' }}>
         <div className="cluster gap-4">
           <div className="icon-btn" style={{ background: 'var(--accent-soft)', color: 'var(--accent)', border: 'none', width: '42px', height: '42px' }}>
             <Package size={20} />
@@ -31,15 +31,80 @@ export function ProductManager({
         )}
       </div>
 
-      <form onSubmit={handleProductSave} className="grid-3 gap-5 align-start">
-        {/* Main Attributes Panel */}
-        <div className="panel p-6 glass-panel stack gap-6" style={{ gridColumn: 'span 2', borderRadius: '20px' }}>
-          <div className="stack gap-4">
-            <div className="cluster gap-2 mb-1">
-              <FileText size={16} className="accent-text" />
-              <span className="eyebrow" style={{ fontSize: '0.65rem' }}>Primary Attributes</span>
-            </div>
+      <form onSubmit={handleProductSave} className="grid-2 gap-4 align-start">
+        <div className="stack gap-4">
+          {/* Main Attributes & Media Panel */}
+          <div className="panel p-5 glass-panel stack gap-4" style={{ gridColumn: 'span 2', borderRadius: '16px' }}>
             
+            {/* New Media Section on Left */}
+            <div className="stack gap-4">
+              <div className="cluster gap-2 mb-1">
+                <ImageIcon size={16} className="accent-text" />
+                <span className="eyebrow" style={{ fontSize: '0.65rem' }}>Media & Assets</span>
+              </div>
+              
+              <div className="grid-2 gap-4 align-center" style={{ gridTemplateColumns: '140px 1fr' }}>
+                <div 
+                  className="panel-strong glow-on-hover" 
+                  style={{ 
+                    height: '110px', 
+                    borderRadius: '14px', 
+                    border: '2px dashed var(--border)', 
+                    display: 'grid', 
+                    placeItems: 'center',
+                    overflow: 'hidden',
+                    background: 'var(--bg-soft)',
+                    position: 'relative'
+                  }}
+                >
+                  {productForm.imageFile || productForm.image ? (
+                    <img 
+                      src={productForm.imageFile ? URL.createObjectURL(productForm.imageFile) : (productForm.image?.startsWith('/uploads') ? `${window.location.origin.replace(':5173', ':5000')}${productForm.image}` : productForm.image)} 
+                      alt="Preview" 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    />
+                  ) : (
+                    <div className="stack align-center gap-2 muted">
+                      <ImageIcon size={32} strokeWidth={1} />
+                      <span className="small">No image</span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="stack gap-3">
+                  <label className="btn btn-secondary w-fit" style={{ cursor: 'pointer', padding: '10px 20px' }}>
+                    <Plus size={16} />
+                    {productForm.imageFile || productForm.image ? 'Change Media' : 'Upload Product Photo'}
+                    <input 
+                      type="file" 
+                      name="image" 
+                      accept="image/*" 
+                      onChange={handleProductFormChange} 
+                      style={{ display: 'none' }} 
+                    />
+                  </label>
+                  <p className="muted small">Recommended: 800x800px or larger. Max 5MB.</p>
+                  {(productForm.imageFile || productForm.image) && (
+                    <button 
+                      type="button"
+                      className="btn btn-outline small w-fit" 
+                      style={{ color: 'var(--danger)' }}
+                      onClick={() => handleProductFormChange({ target: { name: 'image', type: 'file', files: null } })}
+                    >
+                      <X size={14} />
+                      Remove Asset
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="stack gap-3 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
+              <div className="cluster gap-2 mb-1">
+                <FileText size={16} className="accent-text" />
+                <span className="eyebrow" style={{ fontSize: '0.65rem' }}>Primary Attributes</span>
+              </div>
+
             <label className="field">
               <span className="muted small font-strong uppercase" style={{ fontSize: '0.6rem' }}>Full Product Name</span>
               <input
@@ -106,12 +171,12 @@ export function ProductManager({
             </div>
           </div>
 
-          <div className="stack gap-4 pt-525" style={{ borderTop: '3px solid var(--border)', paddingTop: '1rem' }}>
+          <div className="stack gap-3 pt-3" style={{ borderTop: '1px solid var(--border)', marginTop: '0.5rem' }}>
             <div className="cluster gap-2 mb-1">
               <Warehouse size={16} className="accent-text" />
               <span className="eyebrow" style={{ fontSize: '0.65rem' }}>Warehouse Logic & Placement</span>
             </div>
-            
+
             <div className="grid-3 gap-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
               <label className="field">
                 <span className="muted small font-strong uppercase" style={{ fontSize: '0.6rem' }}>Row (R)</span>
@@ -126,7 +191,7 @@ export function ProductManager({
                 <input className="input text-center font-mono" style={{ width: '100%', minWidth: '0' }} type="number" name="rack.shelfNumber" value={productForm.rack.shelfNumber} onChange={handleProductFormChange} required />
               </label>
             </div>
-            
+
             <div className="cluster gap-3 p-3 panel-strong" style={{ borderRadius: '12px', border: '1px dashed var(--border)', background: 'var(--bg-soft)' }}>
               <CheckCircle2 size={16} className="success-text" />
               <p className="muted small">
@@ -134,65 +199,17 @@ export function ProductManager({
               </p>
             </div>
           </div>
+          </div>
         </div>
 
         {/* Right Sidebar: Identification & Pricing */}
-        <div className="stack gap-5">
-          <div className="panel p-5 glass-panel stack gap-4" style={{ borderRadius: '20px' }}>
-            <div className="cluster gap-2">
-              <ImageIcon size={16} className="accent-text" />
-              <span className="eyebrow" style={{ fontSize: '0.65rem' }}>Media & Assets</span>
-            </div>
-            
-            <div className="stack gap-3">
-              <div 
-                className="panel-strong" 
-                style={{ 
-                  height: '160px', 
-                  borderRadius: '16px', 
-                  border: '2px dashed var(--border)', 
-                  display: 'grid', 
-                  placeItems: 'center',
-                  overflow: 'hidden',
-                  background: 'var(--bg-soft)',
-                  position: 'relative'
-                }}
-              >
-                {productForm.imageFile || productForm.image ? (
-                  <img 
-                    src={productForm.imageFile ? URL.createObjectURL(productForm.imageFile) : (productForm.image?.startsWith('/uploads') ? `${window.location.origin.replace(':5173', ':5000')}${productForm.image}` : productForm.image)} 
-                    alt="Preview" 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                  />
-                ) : (
-                  <div className="stack align-center gap-2 muted">
-                    <ImageIcon size={32} strokeWidth={1} />
-                    <span className="small">No image selected</span>
-                  </div>
-                )}
-              </div>
-              
-              <label className="btn btn-secondary w-full" style={{ cursor: 'pointer', padding: '10px' }}>
-                <Plus size={16} />
-                {productForm.imageFile || productForm.image ? 'Change Image' : 'Upload Product Photo'}
-                <input 
-                  type="file" 
-                  name="image" 
-                  accept="image/*" 
-                  onChange={handleProductFormChange} 
-                  style={{ display: 'none' }} 
-                />
-              </label>
-              <p className="muted x-small text-center">Optional: Max size 5MB. PNG, JPG supported.</p>
-            </div>
-          </div>
-
-          <div className="panel p-5 glass-panel stack gap-4" style={{ borderRadius: '20px' }}>
+        <div className="stack gap-4">
+          <div className="panel p-4 glass-panel stack gap-4" style={{ borderRadius: '16px' }}>
             <div className="cluster gap-2">
               <Barcode size={16} className="accent-text" />
               <span className="eyebrow" style={{ fontSize: '0.65rem' }}>Identification</span>
             </div>
-            
+
             <label className="field">
               <span className="muted small font-strong uppercase" style={{ fontSize: '0.6rem' }}>System SKU</span>
               <input
@@ -221,12 +238,12 @@ export function ProductManager({
             </label>
           </div>
 
-          <div className="panel p-5 glass-panel stack gap-5" style={{ borderRadius: '20px' }}>
+          <div className="panel p-4 glass-panel stack gap-4" style={{ borderRadius: '16px' }}>
             <div className="cluster gap-2">
               <DollarSign size={16} className="accent-text" />
               <span className="eyebrow" style={{ fontSize: '0.65rem' }}>Pricing & Stock</span>
             </div>
-            
+
             <div className="grid-2 gap-4">
               <label className="field">
                 <span className="muted small font-strong uppercase" style={{ fontSize: '0.6rem' }}>Cost</span>
@@ -254,7 +271,7 @@ export function ProductManager({
                 <input className="input small font-strong" type="number" name="reorderLevel" value={productForm.reorderLevel} onChange={handleProductFormChange} />
               </label>
             </div>
-            
+
             <div className="text-center">
               <span className="pill success-soft" style={{ fontSize: '0.65rem', padding: '4px 12px' }}>
                 Est. Margin: <strong style={{ color: 'var(--success)' }}>{(((productForm.price - productForm.costPrice) / (productForm.price || 1)) * 100).toFixed(0)}%</strong>
@@ -262,10 +279,10 @@ export function ProductManager({
             </div>
           </div>
 
-          <button 
-            className="btn btn-primary w-full glow-on-hover" 
-            type="submit" 
-            disabled={busyAction === 'product-save'} 
+          <button
+            className="btn btn-primary w-full glow-on-hover"
+            type="submit"
+            disabled={busyAction === 'product-save'}
             style={{ padding: '16px', borderRadius: '16px', fontSize: '0.9rem', fontWeight: 700 }}
           >
             {busyAction === 'product-save' ? (

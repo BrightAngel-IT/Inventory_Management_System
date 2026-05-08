@@ -24,6 +24,11 @@ router.put('/:id', async (req, res) => {
   res.json(supplier);
 });
 
+router.patch('/:id', async (req, res) => {
+  const supplier = await Supplier.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  res.json(supplier);
+});
+
 router.delete('/:id', async (req, res) => {
   await Supplier.findByIdAndDelete(req.params.id);
   res.json({ success: true });

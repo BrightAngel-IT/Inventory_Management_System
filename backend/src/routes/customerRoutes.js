@@ -25,6 +25,11 @@ router.put('/:id', requireAuth, async (req, res) => {
   res.json(customer);
 });
 
+router.patch('/:id', requireAuth, async (req, res) => {
+  const customer = await Customer.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  res.json(customer);
+});
+
 router.delete('/:id', requireAuth, async (req, res) => {
   await Customer.findByIdAndDelete(req.params.id);
   res.json({ success: true });

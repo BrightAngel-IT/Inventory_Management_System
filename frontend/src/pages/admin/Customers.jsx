@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { 
-  UserPlus, 
-  Search, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Edit, 
-  Trash2, 
+import {
+  UserPlus,
+  Search,
+  Mail,
+  Phone,
+  MapPin,
+  Edit,
+  Trash2,
   X,
   CreditCard,
   History,
@@ -89,7 +89,7 @@ export default function Customers({ api, session, onNotice }) {
       onNotice({ type: 'error', text: readErrorMessage(err) })
     }
   }
-  const filtered = customers.filter(c => 
+  const filtered = customers.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     (c.phone || '').includes(search)
   )
@@ -108,9 +108,9 @@ export default function Customers({ api, session, onNotice }) {
           <div className="icon-btn" style={{ background: 'var(--success-soft)', color: 'var(--success)', border: 'none' }}>
             <UserPlus size={24} />
           </div>
-          <SectionHeading 
-            title="Customer Base" 
-            text="Manage retail clients, account balances, and profiles." 
+          <SectionHeading
+            title="Customer Base"
+            text="Manage retail clients, account balances, and profiles."
           />
         </div>
         <button className="btn btn-primary glow-on-hover" onClick={() => setShowForm(true)}>
@@ -129,19 +129,19 @@ export default function Customers({ api, session, onNotice }) {
             <div className="grid-2 gap-6">
               <label className="field">
                 <span>Customer Name</span>
-                <input className="input" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="e.g. John Doe" />
+                <input className="input" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required placeholder="e.g. John Doe" />
               </label>
               <label className="field">
                 <span>Phone Number</span>
-                <input className="input" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+1 234 567 890" />
+                <input className="input" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="+1 234 567 890" />
               </label>
               <label className="field">
                 <span>Email Address</span>
-                <input className="input" type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="john@example.com" />
+                <input className="input" type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="john@example.com" />
               </label>
               <label className="field">
                 <span>Business Address</span>
-                <input className="input" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="123 Main St, NY" />
+                <input className="input" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} placeholder="123 Main St, NY" />
               </label>
             </div>
             <button className="btn btn-primary w-full" type="submit">
@@ -203,10 +203,10 @@ export default function Customers({ api, session, onNotice }) {
                   </td>
                   <td style={{ textAlign: 'right', paddingRight: '24px' }}>
                     <div className="cluster gap-2 justify-end">
-                      <button className="icon-btn ghost hover-accent" title="Statement of Account" onClick={() => navigate(`/accounts/customer/${cus._id}`)}><History size={16}/></button>
-                      <button className="icon-btn ghost hover-accent" onClick={() => handleEdit(cus)}><Edit size={16}/></button>
+                      <button className="icon-btn ghost hover-accent" title="Statement of Account" onClick={() => navigate(`/accounts/customer/${cus._id}`)}><History size={16} /></button>
+                      <button className="icon-btn ghost hover-accent" onClick={() => handleEdit(cus)}><Edit size={16} /></button>
                       {session.user.role === 'admin' && (
-                        <button className="icon-btn ghost hover-danger" onClick={() => handleDelete(cus._id)}><Trash2 size={16}/></button>
+                        <button className="icon-btn ghost hover-danger" onClick={() => handleDelete(cus._id)}><Trash2 size={16} /></button>
                       )}
                     </div>
                   </td>
@@ -222,7 +222,7 @@ export default function Customers({ api, session, onNotice }) {
           )}
         </div>
 
-        <Pagination 
+        <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}

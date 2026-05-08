@@ -284,10 +284,8 @@ export default function AccountStatement({ api, session, onNotice }) {
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Type</th>
                 <th>Ref No</th>
                 <th>Method</th>
-                <th>Status</th>
                 <th className="text-right">Debit (Dr)</th>
                 <th className="text-right">Credit (Cr)</th>
                 <th className="text-right">Balance</th>
@@ -299,18 +297,10 @@ export default function AccountStatement({ api, session, onNotice }) {
                   <tr className="statement-row">
                     <td>{new Date(row.date).toLocaleDateString()}</td>
                     <td>
-                      <span className="muted x-small uppercase font-bold">{row.type}</span>
-                    </td>
-                    <td>
                       <strong style={{ fontSize: '12px' }}>{row.reference}</strong>
                     </td>
                     <td>
                       <span className="muted x-small uppercase">{row.method || '-'}</span>
-                    </td>
-                    <td>
-                      <span className={`pill x-small ${row.status === 'PAID' ? 'success' : (row.status === 'PARTIAL' ? 'warning' : 'danger')}`}>
-                        {row.status === 'PAID' ? 'Settled' : (row.status === 'PARTIAL' ? 'Partial' : 'Outstanding')}
-                      </span>
                     </td>
                     <td className="text-right">{row.billing > 0 ? formatCurrency(row.billing) : '-'}</td>
                     <td className="text-right success-text">{row.payment > 0 ? formatCurrency(row.payment) : '-'}</td>
@@ -322,7 +312,7 @@ export default function AccountStatement({ api, session, onNotice }) {
                   {/* Allocation breakdown (Optional in Web, Mandatory in Print if active) */}
                   {(showAllocations === row._id || window.matchMedia('print').matches) && row.type === 'Payment' && row.raw.allocations.length > 0 && (
                     <tr className="allocation-row no-hover">
-                      <td colSpan="8">
+                      <td colSpan="6">
                         <div className="allocation-details">
                           <span className="allocation-label">Settlement Breakdown:</span>
                           <div className="allocation-grid">
@@ -376,11 +366,11 @@ export default function AccountStatement({ api, session, onNotice }) {
         .document-container {
           background: var(--panel-strong);
           color: var(--text);
-          border-radius: 12px;
+          border-radius: 24px;
           overflow: hidden;
           font-family: 'Inter', system-ui, sans-serif;
-          border: 1px solid #e2e8f0;
-          box-shadow: 0 20px 40px -10px rgba(0,0,0,0.08);
+          border: 1px solid var(--border);
+          box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1);
           position: relative;
         }
 
@@ -391,7 +381,8 @@ export default function AccountStatement({ api, session, onNotice }) {
           transform: translate(-50%, -50%) rotate(-45deg);
           font-size: 180px;
           font-weight: 900;
-          color: rgba(15, 23, 42, 0.015);
+          color: var(--text);
+          opacity: 0.02;
           pointer-events: none;
           z-index: 0;
           user-select: none;
@@ -401,114 +392,112 @@ export default function AccountStatement({ api, session, onNotice }) {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 60px;
-          padding: 20px 50px 30px 50px;
+          padding: 40px 50px;
           background: transparent;
           position: relative;
           z-index: 1;
         }
 
-        .col-label { font-size: 9px; font-weight: 800; color: #94a3b8; letter-spacing: 1.5px; display: block; margin-bottom: 12px; text-transform: uppercase; }
-        .billed-party-name { font-size: 28px; font-weight: 900; color: #0f172a; margin-bottom: 15px; letter-spacing: -0.5px; }
+        .col-label { font-size: 9px; font-weight: 800; color: var(--text-soft); opacity: 0.7; letter-spacing: 1.5px; display: block; margin-bottom: 12px; text-transform: uppercase; }
+        .billed-party-name { font-size: 28px; font-weight: 900; color: var(--text); margin-bottom: 15px; letter-spacing: -0.5px; }
         .billed-contact-list { display: flex; flex-direction: column; gap: 6px; }
-        .contact-row { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #475569; font-weight: 500; }
+        .contact-row { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-soft); font-weight: 500; }
 
         .company-branding-custom { margin-bottom: 25px; }
         .company-branding-custom.left-align { text-align: left; }
-        .logo-vertical-stack { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+        .logo-vertical-stack { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
         .brand-text-group { display: flex; flex-direction: column; gap: 2px; }
-        .header-logo-img.large-logo { height: 95px; width: auto; object-fit: contain; }
-        .brand-name { font-size: 24px; font-weight: 900; color: #0f172a; margin: 0; line-height: 1.1; letter-spacing: -0.5px; }
-        .brand-name .pvt-ltd { color: var(--accent); opacity: 0.8; }
-        .brand-slogan { font-size: 10px; font-weight: 800; color: #64748b; letter-spacing: 1.5px; margin-top: 2px; }
+        .header-logo-img.large-logo { height: 100px; width: auto; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        .brand-name { font-size: 26px; font-weight: 900; color: var(--text); margin: 0; line-height: 1.1; letter-spacing: -0.5px; white-space: nowrap; }
+        .brand-name .pvt-ltd { color: var(--accent); }
+        .brand-slogan { font-size: 10px; font-weight: 800; color: var(--text-soft); opacity: 0.6; letter-spacing: 2px; margin-top: 4px; }
         
-        .company-address-minimal { font-size: 11px; color: #64748b; margin-top: 8px; line-height: 1.4; font-weight: 500; }
+        .company-address-minimal { font-size: 11px; color: var(--text-soft); margin-top: 12px; line-height: 1.5; font-weight: 500; }
 
-        .branding-divider { height: 1.5px; background: #e2e8f0; width: 100%; margin: 15px 0; }
+        .branding-divider { height: 2px; background: var(--border); width: 100%; margin: 20px 0; opacity: 0.5; }
 
         .branding-meta-col { padding-top: 15px; }
-        .statement-title-section { text-align: right; margin-bottom: 25px; overflow: hidden; }
+        .statement-title-section { text-align: right; margin-bottom: 30px; }
         .doc-title-large { 
-          font-size: 32px; 
+          font-size: 34px; 
           font-weight: 900; 
           color: var(--text); 
-          margin-bottom: 6px; 
-          letter-spacing: -1px; 
+          margin-bottom: 8px; 
+          letter-spacing: -1.5px; 
           line-height: 1; 
           white-space: nowrap;
         }
-        .doc-meta-minimal { font-size: 11px; font-weight: 700; color: #94a3b8; line-height: 1.5; text-transform: uppercase; }
+        .doc-meta-minimal { font-size: 11px; font-weight: 700; color: var(--text-soft); opacity: 0.6; line-height: 1.6; text-transform: uppercase; }
 
         .financial-summary-box {
           background: var(--panel);
           border: 1px solid var(--accent-soft);
-          border-radius: 10px;
-          padding: 12px 15px;
+          border-radius: 16px;
+          padding: 15px 20px;
           margin-left: auto;
-          width: 260px;
+          width: 280px;
           position: relative;
+          box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
         }
 
-        .summary-box-label { font-size: 8px; font-weight: 800; color: #94a3b8; letter-spacing: 1px; margin-bottom: 8px; }
-        .summary-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; color: var(--text-soft); font-weight: 600; }
-        .summary-row strong { color: var(--text); font-weight: 800; font-family: 'Inter', monospace; }
-        .summary-divider { height: 1px; background: var(--border); margin: 8px 0; }
-        .balance-row { font-size: 13px; margin-bottom: 2px; }
-        .balance-value { font-size: 15px; font-weight: 900; color: var(--text); }
-        .balance-underline { height: 2px; border-bottom: 1px solid var(--text); border-top: 1px solid var(--text); width: 100%; margin-top: 3px; opacity: 0.3; }
+        .summary-box-label { font-size: 8px; font-weight: 800; color: var(--text-soft); opacity: 0.7; letter-spacing: 1.2px; margin-bottom: 12px; text-transform: uppercase; }
+        .summary-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; color: var(--text-soft); font-weight: 600; }
+        .summary-row strong { color: var(--text); font-weight: 800; }
+        .summary-divider { height: 1px; background: var(--border); margin: 10px 0; }
+        .balance-row { font-size: 14px; margin-bottom: 4px; }
+        .balance-value { font-size: 18px; font-weight: 900; color: var(--text); }
+        .balance-underline { height: 2px; border-bottom: 1.5px solid var(--text); border-top: 1.5px solid var(--text); width: 100%; margin-top: 4px; opacity: 0.2; }
 
         .document-toolbar { padding: 15px 50px; background: transparent; border-bottom: 1px solid var(--border); }
 
         .document-body { padding: 0 50px 40px 50px; position: relative; z-index: 1; }
         .statement-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        .statement-table thead { position: sticky; top: 0; z-index: 10; }
         .statement-table th { 
-          padding: 12px; 
+          padding: 10px 8px; 
           text-align: left; 
           font-size: 9px; 
           font-weight: 900; 
           color: #ffffff; 
           background: var(--accent); 
           text-transform: uppercase; 
-          letter-spacing: 1.2px;
+          letter-spacing: 1.5px;
           border: none;
         }
-        .statement-table th:first-child { border-top-left-radius: 4px; }
-        .statement-table th:last-child { border-top-right-radius: 4px; }
+        .statement-table th:first-child { border-top-left-radius: 8px; padding-left: 20px; }
+        .statement-table th:last-child { border-top-right-radius: 8px; padding-right: 20px; }
 
         .statement-row td { 
-          padding: 10px 12px; 
+          padding: 8px; 
           border-bottom: 1px solid var(--border); 
           font-size: 12px;
           color: var(--text);
           font-weight: 500;
         }
-        .statement-row:hover { background: var(--panel-hover); }
-
-        .formal-status { font-size: 9px; font-weight: 900; letter-spacing: 1px; padding: 2px 0; border-bottom: 2px solid transparent; }
-        .formal-status.settled { color: #059669; border-color: #059669; }
-        .formal-status.pending { color: #d97706; border-color: #d97706; }
+        .statement-row td:first-child { padding-left: 20px; }
+        .statement-row td:last-child { padding-right: 20px; }
+        .statement-row:hover { background: var(--bg-soft); }
 
         .allocation-details { 
-          padding: 15px; 
-          background: #f8fafc; 
-          border-radius: 12px; 
+          padding: 20px; 
+          background: var(--bg-soft); 
+          border-radius: 16px; 
           margin: 10px 0; 
-          border: 1px solid #f1f5f9; 
+          border: 1px solid var(--border); 
         }
-        .allocation-label { display: block; font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; margin-bottom: 12px; }
-        .allocation-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+        .allocation-label { display: block; font-size: 10px; font-weight: 900; color: var(--text-soft); opacity: 0.7; text-transform: uppercase; margin-bottom: 15px; }
+        .allocation-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
         .allocation-item { 
           display: flex; 
           justify-content: space-between; 
           font-size: 12px; 
-          padding: 10px; 
-          background: #fff; 
-          border: 1px solid #e2e8f0; 
-          border-radius: 8px;
+          padding: 12px; 
+          background: var(--panel); 
+          border: 1px solid var(--border); 
+          border-radius: 10px;
         }
 
         .document-footer { 
-          padding: 40px 50px; 
+          padding: 50px; 
           background: transparent; 
           border-top: 2px solid var(--accent-soft); 
           page-break-inside: avoid;
@@ -523,37 +512,39 @@ export default function AccountStatement({ api, session, onNotice }) {
         }
 
         .footer-signature-block { text-align: left; flex-shrink: 0; }
-        .signature-line { width: 220px; height: 1.5px; background: #0f172a; margin-bottom: 8px; }
+        .signature-line { width: 240px; height: 2px; background: var(--text); margin-bottom: 12px; }
         .signature-meta { display: flex; flex-direction: column; gap: 4px; }
-        .signature-label { font-size: 8px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; }
-        .signature-date { font-size: 8px; font-weight: 700; color: #cbd5e1; letter-spacing: 1px; margin-top: 2px; }
+        .signature-label { font-size: 9px; font-weight: 900; color: var(--text-soft); opacity: 0.7; text-transform: uppercase; letter-spacing: 1.5px; }
         
-        .footer-info-block { text-align: right; max-width: 420px; flex-shrink: 0; }
-        .system-disclaimer { font-size: 8.5px; color: #94a3b8; line-height: 1.4; margin-bottom: 12px; font-weight: 500; font-style: italic; }
-        .footer-company-details { display: flex; align-items: center; justify-content: flex-end; gap: 10px; font-size: 9.5px; color: #475569; font-weight: 700; margin-bottom: 8px; }
-        .footer-brand-name { color: #0f172a; text-transform: uppercase; letter-spacing: 0.8px; }
-        .footer-separator { color: #e2e8f0; font-weight: 400; }
-        .footer-pagination { font-size: 9px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.2px; }
+        .footer-info-block { text-align: right; max-width: 450px; flex-shrink: 0; }
+        .system-disclaimer { font-size: 9px; color: var(--text-soft); opacity: 0.6; line-height: 1.6; margin-bottom: 15px; font-weight: 500; font-style: italic; }
+        .footer-pagination { font-size: 10px; font-weight: 800; color: var(--text-soft); opacity: 0.7; text-transform: uppercase; letter-spacing: 1.2px; }
 
-        .empty-state { padding: 80px; text-align: center; color: #94a3b8; }
+        .empty-state { padding: 100px; text-align: center; color: var(--text-soft); opacity: 0.5; }
 
         @media print {
           @page { size: A4; margin: 0; }
           
-          /* Force parent containers to be visible and non-flex */
+          /* Force White theme for printing regardless of app theme */
           html, body, #root, .app-shell, .workspace, .account-statement-page {
             height: auto !important;
             overflow: visible !important;
-            background: #fff !important;
+            background: #ffffff !important;
             width: auto !important;
             margin: 0 !important;
             padding: 0 !important;
             display: block !important;
           }
 
-          /* Hide UI elements */
-          .sidebar, .topbar, .notice-banner, .no-print, .btn, button, .v-divider, .icon-btn, .brand-lockup, nav { 
+          /* Explicitly Hide UI elements that leak into print */
+          .sidebar, .topbar, .notice-banner, .no-print, .btn, button, .icon-btn, .v-divider, nav { 
             display: none !important; 
+            width: 0 !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            position: absolute !important;
+            left: -9999px !important;
           }
 
           .document-container { 
@@ -566,73 +557,49 @@ export default function AccountStatement({ api, session, onNotice }) {
             visibility: visible !important;
             background: #ffffff !important;
             color: #000000 !important;
+            position: relative !important;
+            left: 0 !important;
+            top: 0 !important;
           }
 
-          .document-watermark {
-            display: none !important;
+          /* Print Overrides to ensure dark text on white */
+          .document-container { color: #000000 !important; }
+          .billed-party-name, .brand-name, .doc-title-large, .summary-row strong, .balance-value, .statement-row td, .footer-brand-name { 
+            color: #000000 !important; 
           }
-
-          .custom-document-header { 
-            padding: 8mm 15mm 10mm 15mm !important; 
-            gap: 15mm !important;
-            display: grid !important;
-            grid-template-columns: 1fr 1fr !important;
+          .col-label, .contact-row, .brand-slogan, .company-address-minimal, .doc-meta-minimal, .summary-box-label, .summary-row, .system-disclaimer, .footer-pagination, .signature-label {
+            color: #444444 !important;
+          }
+          
+          .financial-summary-box {
+            border: 1px solid #000 !important;
             background: #fff !important;
           }
           
-          .document-body {
-            padding: 0 15mm 10mm 15mm !important;
-          }
-
-          .financial-summary-box {
-            border: 1.5px solid #000 !important;
-            background: #ffffff !important;
-            width: 100% !important;
-            margin-top: 5mm !important;
-            color: #000000 !important;
-          }
-          .summary-row { color: #444 !important; }
-          .summary-row strong, .balance-value { color: #000 !important; }
-
-          .statement-table {
-            width: 100% !important;
-            page-break-inside: auto;
-          }
-          
-          .statement-table thead {
-            display: table-header-group !important;
-          }
-
-          .statement-row {
-            page-break-inside: avoid;
-            page-break-after: auto;
-          }
-
           .statement-table th {
-            background: #f1f5f9 !important;
-            color: #000000 !important;
+            background: #1e293b !important;
+            color: #ffffff !important;
             padding: 3mm 2mm !important;
             border-bottom: 1px solid #000 !important;
             -webkit-print-color-adjust: exact;
           }
+          
+          .statement-row td {
+            border-bottom: 0.5pt solid #eee !important;
+          }
 
-          .statement-table td {
-            padding: 2.5mm 2mm !important;
+          .signature-line {
+            background: #000 !important;
+          }
+
+          .branding-divider {
+            background: #eee !important;
+          }
+
+          .document-watermark {
+            display: block !important;
+            opacity: 0.08 !important;
             color: #000000 !important;
-            background: #ffffff !important;
-          }
-
-          .formal-status {
-            border-bottom: 1.5px solid #000 !important;
-            color: #000 !important;
-          }
-
-          .document-footer {
-            padding: 10mm 15mm 15mm 15mm !important;
-            border-top: 1.5px solid #000 !important;
-            margin-top: auto !important;
-            background: #fff !important;
-            color: #000 !important;
           }
         }
       `}</style>

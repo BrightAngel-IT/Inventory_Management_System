@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { 
-  Users, 
-  Plus, 
-  Search, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Edit, 
-  Trash2, 
+import {
+  Users,
+  Plus,
+  Search,
+  Mail,
+  Phone,
+  MapPin,
+  Edit,
+  Trash2,
   X,
   CheckCircle2,
   AlertCircle,
@@ -92,7 +92,7 @@ export default function Suppliers({ api, session, onNotice }) {
       onNotice({ type: 'error', text: readErrorMessage(err) })
     }
   }
-  const filtered = suppliers.filter(s => 
+  const filtered = suppliers.filter(s =>
     s.name.toLowerCase().includes(search.toLowerCase()) ||
     (s.category || '').toLowerCase().includes(search.toLowerCase())
   )
@@ -111,9 +111,9 @@ export default function Suppliers({ api, session, onNotice }) {
           <div className="icon-btn" style={{ background: 'var(--accent-soft)', color: 'var(--accent)', border: 'none' }}>
             <Users size={24} />
           </div>
-          <SectionHeading 
-            title="Supplier Network" 
-            text="Manage procurement partners and supply chain sources." 
+          <SectionHeading
+            title="Supplier Network"
+            text="Manage procurement partners and supply chain sources."
           />
         </div>
         <button className="btn btn-primary glow-on-hover" onClick={() => setShowForm(true)}>
@@ -132,24 +132,24 @@ export default function Suppliers({ api, session, onNotice }) {
             <div className="grid-2 gap-6">
               <label className="field">
                 <span>Company Name</span>
-                <input className="input" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="e.g. Global Tech Solutions" />
+                <input className="input" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required placeholder="e.g. Global Tech Solutions" />
               </label>
               <label className="field">
                 <span>Supply Category</span>
-                <input className="input" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} placeholder="e.g. Electronics, Furniture" />
+                <input className="input" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} placeholder="e.g. Electronics, Furniture" />
               </label>
               <label className="field">
                 <span>Email Address</span>
-                <input className="input" type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="partner@company.com" />
+                <input className="input" type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="partner@company.com" />
               </label>
               <label className="field">
                 <span>Phone Number</span>
-                <input className="input" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+1 234 567 890" />
+                <input className="input" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="+1 234 567 890" />
               </label>
             </div>
             <label className="field">
               <span>Business Address</span>
-              <textarea className="input" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Warehouse 42, Silicon Valley..." />
+              <textarea className="input" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} placeholder="Warehouse 42, Silicon Valley..." />
             </label>
             <button className="btn btn-primary w-full" type="submit">
               {editingId ? 'Update Partner' : 'Confirm Registration'}
@@ -207,9 +207,9 @@ export default function Suppliers({ api, session, onNotice }) {
                   </td>
                   <td style={{ textAlign: 'right', paddingRight: '24px' }}>
                     <div className="cluster gap-2 justify-end">
-                      <button className="icon-btn ghost hover-accent" title="Statement of Account" onClick={() => navigate(`/accounts/supplier/${sup._id}`)}><FileText size={16}/></button>
-                      <button className="icon-btn ghost hover-accent" onClick={() => handleEdit(sup)}><Edit size={16}/></button>
-                      <button className="icon-btn ghost hover-danger" onClick={() => handleDelete(sup._id)}><Trash2 size={16}/></button>
+                      <button className="icon-btn ghost hover-accent" title="Statement of Account" onClick={() => navigate(`/accounts/supplier/${sup._id}`)}><FileText size={16} /></button>
+                      <button className="icon-btn ghost hover-accent" onClick={() => handleEdit(sup)}><Edit size={16} /></button>
+                      <button className="icon-btn ghost hover-danger" onClick={() => handleDelete(sup._id)}><Trash2 size={16} /></button>
                     </div>
                   </td>
                 </tr>
@@ -224,7 +224,7 @@ export default function Suppliers({ api, session, onNotice }) {
           )}
         </div>
 
-        <Pagination 
+        <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}
