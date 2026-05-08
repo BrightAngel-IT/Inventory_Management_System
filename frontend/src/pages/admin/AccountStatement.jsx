@@ -89,6 +89,7 @@ export default function AccountStatement({ api, session, onNotice }) {
         date: pay.paymentDate,
         type: 'Payment',
         reference: pay.paymentNo,
+        method: pay.paymentMethod || 'N/A',
         billing: 0,
         payment: pay.totalAmount,
         status: 'PAID',
@@ -283,7 +284,9 @@ export default function AccountStatement({ api, session, onNotice }) {
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Description</th>
+                <th>Type</th>
+                <th>Ref No</th>
+                <th>Method</th>
                 <th>Status</th>
                 <th className="text-right">Debit (Dr)</th>
                 <th className="text-right">Credit (Cr)</th>
@@ -296,10 +299,13 @@ export default function AccountStatement({ api, session, onNotice }) {
                   <tr className="statement-row">
                     <td>{new Date(row.date).toLocaleDateString()}</td>
                     <td>
-                      <div className="stack">
-                        <strong>{row.reference}</strong>
-                        <span className="muted x-small uppercase">{row.type}</span>
-                      </div>
+                      <span className="muted x-small uppercase font-bold">{row.type}</span>
+                    </td>
+                    <td>
+                      <strong style={{ fontSize: '12px' }}>{row.reference}</strong>
+                    </td>
+                    <td>
+                      <span className="muted x-small uppercase">{row.method || '-'}</span>
                     </td>
                     <td>
                       <span className={`pill x-small ${row.status === 'PAID' ? 'success' : (row.status === 'PARTIAL' ? 'warning' : 'danger')}`}>
@@ -316,7 +322,7 @@ export default function AccountStatement({ api, session, onNotice }) {
                   {/* Allocation breakdown (Optional in Web, Mandatory in Print if active) */}
                   {(showAllocations === row._id || window.matchMedia('print').matches) && row.type === 'Payment' && row.raw.allocations.length > 0 && (
                     <tr className="allocation-row no-hover">
-                      <td colSpan="6">
+                      <td colSpan="8">
                         <div className="allocation-details">
                           <span className="allocation-label">Settlement Breakdown:</span>
                           <div className="allocation-grid">
@@ -352,10 +358,10 @@ export default function AccountStatement({ api, session, onNotice }) {
                 <span className="signature-label">AUTHORIZED SIGNATURE & STAMP</span>
               </div>
             </div>
-            
+
             <div className="footer-info-block">
               <p className="system-disclaimer">
-                This is a computer-generated statement and does not require a physical signature. 
+                This is a computer-generated statement and does not require a physical signature.
                 For any discrepancies, please notify us within 7 business days.
               </p>
               <div className="footer-pagination">
@@ -368,8 +374,8 @@ export default function AccountStatement({ api, session, onNotice }) {
 
       <style>{`
         .document-container {
-          background: #fff;
-          color: #1a202c;
+          background: var(--panel-strong);
+          color: var(--text);
           border-radius: 12px;
           overflow: hidden;
           font-family: 'Inter', system-ui, sans-serif;
@@ -396,7 +402,7 @@ export default function AccountStatement({ api, session, onNotice }) {
           grid-template-columns: 1fr 1fr;
           gap: 60px;
           padding: 20px 50px 30px 50px;
-          background: #ffffff;
+          background: transparent;
           position: relative;
           z-index: 1;
         }
@@ -424,7 +430,7 @@ export default function AccountStatement({ api, session, onNotice }) {
         .doc-title-large { 
           font-size: 32px; 
           font-weight: 900; 
-          color: #0f172a; 
+          color: var(--text); 
           margin-bottom: 6px; 
           letter-spacing: -1px; 
           line-height: 1; 
@@ -433,8 +439,8 @@ export default function AccountStatement({ api, session, onNotice }) {
         .doc-meta-minimal { font-size: 11px; font-weight: 700; color: #94a3b8; line-height: 1.5; text-transform: uppercase; }
 
         .financial-summary-box {
-          background: #fdfdfd;
-          border: 1px solid #0f172a;
+          background: var(--panel);
+          border: 1px solid var(--accent-soft);
           border-radius: 10px;
           padding: 12px 15px;
           margin-left: auto;
@@ -443,14 +449,14 @@ export default function AccountStatement({ api, session, onNotice }) {
         }
 
         .summary-box-label { font-size: 8px; font-weight: 800; color: #94a3b8; letter-spacing: 1px; margin-bottom: 8px; }
-        .summary-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; color: #475569; font-weight: 600; }
-        .summary-row strong { color: #0f172a; font-weight: 800; font-family: 'Inter', monospace; }
-        .summary-divider { height: 1px; background: #e2e8f0; margin: 8px 0; }
+        .summary-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; color: var(--text-soft); font-weight: 600; }
+        .summary-row strong { color: var(--text); font-weight: 800; font-family: 'Inter', monospace; }
+        .summary-divider { height: 1px; background: var(--border); margin: 8px 0; }
         .balance-row { font-size: 13px; margin-bottom: 2px; }
-        .balance-value { font-size: 15px; font-weight: 900; color: #0f172a; }
-        .balance-underline { height: 2px; border-bottom: 1px solid #0f172a; border-top: 1px solid #0f172a; width: 100%; margin-top: 3px; opacity: 0.3; }
+        .balance-value { font-size: 15px; font-weight: 900; color: var(--text); }
+        .balance-underline { height: 2px; border-bottom: 1px solid var(--text); border-top: 1px solid var(--text); width: 100%; margin-top: 3px; opacity: 0.3; }
 
-        .document-toolbar { padding: 15px 50px; background: #fff; border-bottom: 1px solid #f1f5f9; }
+        .document-toolbar { padding: 15px 50px; background: transparent; border-bottom: 1px solid var(--border); }
 
         .document-body { padding: 0 50px 40px 50px; position: relative; z-index: 1; }
         .statement-table { width: 100%; border-collapse: separate; border-spacing: 0; }
@@ -461,22 +467,22 @@ export default function AccountStatement({ api, session, onNotice }) {
           font-size: 9px; 
           font-weight: 900; 
           color: #ffffff; 
+          background: var(--accent); 
           text-transform: uppercase; 
           letter-spacing: 1.2px;
-          background: #0f172a;
           border: none;
         }
         .statement-table th:first-child { border-top-left-radius: 4px; }
         .statement-table th:last-child { border-top-right-radius: 4px; }
 
-        .statement-table td { 
+        .statement-row td { 
           padding: 10px 12px; 
-          border-bottom: 1px solid #f1f5f9; 
+          border-bottom: 1px solid var(--border); 
           font-size: 12px;
-          color: #334155;
+          color: var(--text);
           font-weight: 500;
         }
-        .statement-row:hover { background: #f8fafc; }
+        .statement-row:hover { background: var(--panel-hover); }
 
         .formal-status { font-size: 9px; font-weight: 900; letter-spacing: 1px; padding: 2px 0; border-bottom: 2px solid transparent; }
         .formal-status.settled { color: #059669; border-color: #059669; }
@@ -503,8 +509,8 @@ export default function AccountStatement({ api, session, onNotice }) {
 
         .document-footer { 
           padding: 40px 50px; 
-          background: #ffffff; 
-          border-top: 2px solid #0f172a; 
+          background: transparent; 
+          border-top: 2px solid var(--accent-soft); 
           page-break-inside: avoid;
           position: relative;
           z-index: 1;
@@ -558,6 +564,8 @@ export default function AccountStatement({ api, session, onNotice }) {
             margin: 0 !important;
             padding: 0 !important;
             visibility: visible !important;
+            background: #ffffff !important;
+            color: #000000 !important;
           }
 
           .document-watermark {
@@ -569,6 +577,7 @@ export default function AccountStatement({ api, session, onNotice }) {
             gap: 15mm !important;
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
+            background: #fff !important;
           }
           
           .document-body {
@@ -577,10 +586,13 @@ export default function AccountStatement({ api, session, onNotice }) {
 
           .financial-summary-box {
             border: 1.5px solid #000 !important;
-            background: #fff !important;
+            background: #ffffff !important;
             width: 100% !important;
             margin-top: 5mm !important;
+            color: #000000 !important;
           }
+          .summary-row { color: #444 !important; }
+          .summary-row strong, .balance-value { color: #000 !important; }
 
           .statement-table {
             width: 100% !important;
@@ -597,14 +609,17 @@ export default function AccountStatement({ api, session, onNotice }) {
           }
 
           .statement-table th {
-            background: #000 !important;
-            color: #fff !important;
+            background: #f1f5f9 !important;
+            color: #000000 !important;
             padding: 3mm 2mm !important;
+            border-bottom: 1px solid #000 !important;
             -webkit-print-color-adjust: exact;
           }
 
           .statement-table td {
             padding: 2.5mm 2mm !important;
+            color: #000000 !important;
+            background: #ffffff !important;
           }
 
           .formal-status {
@@ -616,6 +631,8 @@ export default function AccountStatement({ api, session, onNotice }) {
             padding: 10mm 15mm 15mm 15mm !important;
             border-top: 1.5px solid #000 !important;
             margin-top: auto !important;
+            background: #fff !important;
+            color: #000 !important;
           }
         }
       `}</style>
