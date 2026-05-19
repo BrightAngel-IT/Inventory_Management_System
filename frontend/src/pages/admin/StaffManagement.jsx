@@ -86,7 +86,7 @@ export default function StaffManagement({ api, session, onNotice, setEditingStaf
   return (
     <div className="stack gap-6 animate-fade">
       {/* Header Section */}
-      <div className="between wrap-row panel p-8 glass-panel border-glow relative overflow-hidden">
+      <div className="between wrap-row panel p-6 glass-panel" style={{ borderLeft: '4px solid var(--accent)' }}>
         {/* Background Accent */}
         <div className="cluster gap-6 relative z-10">
           <div className="icon-btn large accent-glow" style={{ width: '64px', height: '64px', background: 'var(--accent-soft)', color: 'var(--accent-strong)', border: 'none' }}>

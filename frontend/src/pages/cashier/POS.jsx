@@ -243,6 +243,7 @@ export function POS({
                   <option value="card">Card Payment</option>
                   <option value="upi">UPI / Digital</option>
                   <option value="credit">Store Credit / Account</option>
+                  <option value="split">Split / Multiple</option>
                 </select>
               </label>
               <label className="field">
@@ -297,9 +298,92 @@ export function POS({
               </div>
             )}
 
-            <button className="btn btn-primary w-full mt-2 glow-on-hover" type="submit" disabled={busyAction === 'checkout' || cart.length === 0} style={{ height: '48px', borderRadius: '14px' }}>
+            {checkoutForm.paymentMethod === 'split' && (
+              <div className="stack gap-3 p-3 mt-1" style={{ borderRadius: '14px', background: 'var(--panel-strong)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
+                <div className="between align-center" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>
+                  <span className="muted small font-strong">Split Allocation</span>
+                  <span className="x-small pill neutral-soft" style={{ fontSize: '0.7rem' }}>Total: {formatCurrency(cartTotal)}</span>
+                </div>
+                
+                <div className="stack gap-2">
+                  <div className="between align-center">
+                    <span className="small">Cash Portion</span>
+                    <input
+                      className="input"
+                      type="number"
+                      placeholder="0.00"
+                      style={{ width: '120px', textAlign: 'right', height: '34px', padding: '0 8px', fontSize: '0.9rem' }}
+                      value={checkoutForm.splitCash || ''}
+                      onChange={e => setCheckoutForm({ ...checkoutForm, splitCash: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="between align-center">
+                    <span className="small">Card Portion</span>
+                    <input
+                      className="input"
+                      type="number"
+                      placeholder="0.00"
+                      style={{ width: '120px', textAlign: 'right', height: '34px', padding: '0 8px', fontSize: '0.9rem' }}
+                      value={checkoutForm.splitCard || ''}
+                      onChange={e => setCheckoutForm({ ...checkoutForm, splitCard: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="between align-center">
+                    <span className="small">UPI Portion</span>
+                    <input
+                      className="input"
+                      type="number"
+                      placeholder="0.00"
+                      style={{ width: '120px', textAlign: 'right', height: '34px', padding: '0 8px', fontSize: '0.9rem' }}
+                      value={checkoutForm.splitUpi || ''}
+                      onChange={e => setCheckoutForm({ ...checkoutForm, splitUpi: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="between align-center" style={{ opacity: checkoutForm.customerId ? 1 : 0.5 }}>
+                    <div className="stack gap-0">
+                      <span className="small">Credit Portion</span>
+                      {!checkoutForm.customerId && <span className="muted" style={{ fontSize: '0.65rem' }}>Select customer first</span>}
+                    </div>
+                    <input
+                      className="input"
+                      type="number"
+                      placeholder="0.00"
+                      disabled={!checkoutForm.customerId}
+                      style={{ width: '120px', textAlign: 'right', height: '34px', padding: '0 8px', fontSize: '0.9rem' }}
+                      value={checkoutForm.splitCredit || ''}
+                      onChange={e => setCheckoutForm({ ...checkoutForm, splitCredit: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="between pt-2" style={{ borderTop: '1px dashed var(--border)' }}>
+                  <span className="muted small font-strong">Remaining to Split</span>
+                  <strong style={{ color: Math.abs(cartTotal - (Number(checkoutForm.splitCash || 0) + Number(checkoutForm.splitCard || 0) + Number(checkoutForm.splitUpi || 0) + Number(checkoutForm.splitCredit || 0))) < 0.01 ? 'var(--success)' : 'var(--danger)' }}>
+                    {formatCurrency(cartTotal - (Number(checkoutForm.splitCash || 0) + Number(checkoutForm.splitCard || 0) + Number(checkoutForm.splitUpi || 0) + Number(checkoutForm.splitCredit || 0)))}
+                  </strong>
+                </div>
+              </div>
+            )}
+
+            <button 
+              className="btn btn-primary w-full mt-2 glow-on-hover" 
+              type="submit" 
+              disabled={
+                busyAction === 'checkout' || 
+                cart.length === 0 || 
+                (checkoutForm.paymentMethod === 'split' && Math.abs(cartTotal - (Number(checkoutForm.splitCash || 0) + Number(checkoutForm.splitCard || 0) + Number(checkoutForm.splitUpi || 0) + Number(checkoutForm.splitCredit || 0))) > 0.01)
+              } 
+              style={{ height: '48px', borderRadius: '14px' }}
+            >
               {busyAction === 'checkout' ? <div className="spinner" style={{ width: '20px', height: '20px' }}></div> : <Receipt size={18} />}
-              {busyAction === 'checkout' ? 'Processing...' : `Finalize & Pay ${formatCurrency(cartTotal)}`}
+              {busyAction === 'checkout' ? 'Processing...' : (
+                checkoutForm.paymentMethod === 'split' && Math.abs(cartTotal - (Number(checkoutForm.splitCash || 0) + Number(checkoutForm.splitCard || 0) + Number(checkoutForm.splitUpi || 0) + Number(checkoutForm.splitCredit || 0))) > 0.01
+                ? `Remaining: ${formatCurrency(cartTotal - (Number(checkoutForm.splitCash || 0) + Number(checkoutForm.splitCard || 0) + Number(checkoutForm.splitUpi || 0) + Number(checkoutForm.splitCredit || 0)))}`
+                : `Finalize & Pay ${formatCurrency(cartTotal)}`
+              )}
             </button>
           </div>
         </form>

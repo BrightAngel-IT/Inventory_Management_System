@@ -34,6 +34,7 @@ export function Sidebar({
       ? [
         { path: '/sales-history', label: 'Sales History', icon: Clock },
         { path: '/customers', label: 'Customers', icon: User },
+        { path: '/returns', label: 'Returns', icon: RotateCcw },
         { path: '/settlements', label: 'Settlements', icon: Wallet }
       ]
       : []),
@@ -57,7 +58,7 @@ export function Sidebar({
       {/* Fixed Header */}
       <div className="brand-lockup between" style={{
         paddingBottom: '24px',
-        marginBottom: '24px',
+        marginBottom: '10px',
         borderBottom: '1px solid var(--border)',
         flexShrink: 0
       }}>

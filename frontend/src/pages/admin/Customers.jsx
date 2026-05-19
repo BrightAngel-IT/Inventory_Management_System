@@ -103,9 +103,9 @@ export default function Customers({ api, session, onNotice }) {
 
   return (
     <div className="stack gap-6 animate-fade">
-      <div className="between wrap-row panel p-6 glass-panel" style={{ borderLeft: '4px solid var(--success)' }}>
+      <div className="between wrap-row panel p-6 glass-panel" style={{ borderLeft: '4px solid var(--accent)' }}>
         <div className="cluster gap-4">
-          <div className="icon-btn" style={{ background: 'var(--success-soft)', color: 'var(--success)', border: 'none' }}>
+          <div className="icon-btn" style={{ background: 'var(--accent-soft)', color: 'var(--accent)', border: 'none' }}>
             <UserPlus size={24} />
           </div>
           <SectionHeading

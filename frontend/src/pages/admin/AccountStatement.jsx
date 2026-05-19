@@ -36,6 +36,7 @@ export default function AccountStatement({ api, session, onNotice }) {
   const [entity, setEntity] = useState(null)
   const [invoices, setInvoices] = useState([])
   const [payments, setPayments] = useState([])
+  const [returns, setReturns] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showAllocations, setShowAllocations] = useState(null) // ID of payment to show allocations for
@@ -56,15 +57,17 @@ export default function AccountStatement({ api, session, onNotice }) {
     setLoading(true)
     try {
       const config = authConfig(session.token)
-      const [entityRes, invoicesRes, paymentsRes] = await Promise.all([
+      const [entityRes, invoicesRes, paymentsRes, returnsRes] = await Promise.all([
         api.get(`/${type}s/${id}`, config),
         api.get(`/${type === 'customer' ? 'customer-invoices/customer' : 'supplier-invoices/supplier'}/${id}`, config),
-        api.get(`/${type === 'customer' ? 'payments' : 'supplier-payments'}?${type}Id=${id}`, config)
+        api.get(`/${type === 'customer' ? 'payments' : 'supplier-payments'}?${type}Id=${id}`, config),
+        api.get(`/returns?entityId=${id}`, config)
       ])
 
       setEntity(entityRes.data)
       setInvoices(invoicesRes.data || [])
       setPayments(paymentsRes.data || [])
+      setReturns(returnsRes.data || [])
     } catch (err) {
       onNotice?.({ type: 'error', text: 'Failed to load account data.' })
     } finally {
@@ -94,6 +97,17 @@ export default function AccountStatement({ api, session, onNotice }) {
         payment: pay.totalAmount,
         status: 'PAID',
         raw: pay
+      })),
+      ...returns.filter(ret => ret.refundMethod === 'credit-note').map(ret => ({
+        _id: ret._id,
+        date: ret.createdAt,
+        type: 'Return (Credit Note)',
+        reference: ret.returnNo,
+        method: 'CREDIT NOTE',
+        billing: 0,
+        payment: ret.totalAmount,
+        status: 'COMPLETED',
+        raw: ret
       }))
     ]
 
@@ -106,7 +120,7 @@ export default function AccountStatement({ api, session, onNotice }) {
       balance += t.billing - t.payment
       return { ...t, balance }
     })
-  }, [invoices, payments])
+  }, [invoices, payments, returns])
 
   const filteredData = useMemo(() => {
     return statementData.filter(t => {
@@ -123,9 +137,10 @@ export default function AccountStatement({ api, session, onNotice }) {
   const stats = useMemo(() => {
     const totalInvoiced = invoices.reduce((sum, i) => sum + i.totalAmount, 0)
     const totalPaid = payments.reduce((sum, p) => sum + p.totalAmount, 0)
-    const outstanding = totalInvoiced - totalPaid
-    return { totalInvoiced, totalPaid, outstanding }
-  }, [invoices, payments])
+    const totalReturned = returns.filter(ret => ret.refundMethod === 'credit-note').reduce((sum, r) => sum + r.totalAmount, 0)
+    const outstanding = totalInvoiced - totalPaid - totalReturned
+    return { totalInvoiced, totalPaid, totalReturned, outstanding }
+  }, [invoices, payments, returns])
 
   const handlePrint = () => {
     window.print()
@@ -255,9 +270,15 @@ export default function AccountStatement({ api, session, onNotice }) {
                 <strong>{formatCurrency(stats.totalInvoiced)}</strong>
               </div>
               <div className="summary-row">
-                <span>{type === 'customer' ? 'Total Payments' : 'Total Credits'}</span>
+                <span>{type === 'customer' ? 'Total Payments' : 'Total Payments'}</span>
                 <strong>{formatCurrency(stats.totalPaid)}</strong>
               </div>
+              {stats.totalReturned > 0 && (
+                <div className="summary-row">
+                  <span>Total Returns (CN)</span>
+                  <strong>{formatCurrency(stats.totalReturned)}</strong>
+                </div>
+              )}
               <div className="summary-divider"></div>
               <div className="summary-row balance-row">
                 <span>Balance Due</span>

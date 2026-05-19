@@ -150,14 +150,23 @@ export const printReceipt = (sale, user, receivedAmount = 0) => {
             <span>${Number(sale.total).toFixed(2)}</span>
           </div>
 
-          <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 12px;">
-            <span>CASH PAID:</span>
-            <span>${Number(receivedAmount || sale.total).toFixed(2)}</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 14px;">
-            <span>BALANCE:</span>
-            <span>${balance.toFixed(2)}</span>
-          </div>
+          ${sale.paymentMethod === 'split' && sale.splitPayments && sale.splitPayments.length > 0 ? 
+            sale.splitPayments.map(p => `
+              <div style="display: flex; justify-content: space-between; margin-top: 2px; font-size: 12px; font-weight: 800;">
+                <span>PAYMENT (${p.method.toUpperCase()}):</span>
+                <span>${Number(p.amount).toFixed(2)}</span>
+              </div>
+            `).join('') : `
+              <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 12px;">
+                <span>PAYMENT (${sale.paymentMethod.toUpperCase()}):</span>
+                <span>${Number(receivedAmount || sale.total).toFixed(2)}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 14px;">
+                <span>BALANCE:</span>
+                <span>${balance.toFixed(2)}</span>
+              </div>
+            `
+          }
         </div>
 
         <div class="double-dashed-line"></div>

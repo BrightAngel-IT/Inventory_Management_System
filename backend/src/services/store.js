@@ -457,14 +457,15 @@ async function createSale(payload) {
   const salePayload = {
     invoiceNumber: makeInvoiceNumber(),
     customerName: String(payload.customerName || 'Walk-in customer').trim(),
-    paymentMethod: ['cash', 'card', 'upi', 'bank-transfer', 'credit'].includes(payload.paymentMethod)
+    paymentMethod: ['cash', 'card', 'upi', 'bank-transfer', 'credit', 'split'].includes(payload.paymentMethod)
       ? payload.paymentMethod
       : 'cash',
+    splitPayments: payload.splitPayments || undefined,
     discount,
     tax,
     subtotal,
     total,
-    customerId: payload.customerId, // Optional customer link
+    customerId: payload.customerId || undefined, // Optional customer link
     items: saleItems,
     cashier: {
       userId: payload.cashier._id,
@@ -483,14 +484,24 @@ async function createSale(payload) {
       });
     }
 
-    // Create Invoice if Credit
-    if (salePayload.paymentMethod === 'credit' && salePayload.customerId) {
+    // Create Invoice if Credit or has Credit component in split
+    let creditAmount = 0;
+    if (salePayload.paymentMethod === 'credit') {
+      creditAmount = salePayload.total;
+    } else if (salePayload.paymentMethod === 'split' && salePayload.splitPayments) {
+      const creditPart = salePayload.splitPayments.find(p => p.method === 'credit');
+      if (creditPart) {
+        creditAmount = Number(creditPart.amount || 0);
+      }
+    }
+
+    if (creditAmount > 0 && salePayload.customerId) {
       await CustomerInvoice.create({
         invoiceNo: salePayload.invoiceNumber,
         customerId: salePayload.customerId,
         date: new Date(),
-        totalAmount: salePayload.total,
-        balanceAmount: salePayload.total,
+        totalAmount: creditAmount,
+        balanceAmount: creditAmount,
         status: 'UNPAID'
       });
     }
@@ -531,7 +542,8 @@ async function createReturn(payload) {
     throw createError('At least one item must be returned.');
   }
 
-  // 1. Verify and Process Stock
+  // 1. Verify and Process Stock, and calculate item totals
+  const processedItems = [];
   for (const item of items) {
     const product = await Product.findById(item.productId);
     if (!product) throw createError(`Product not found: ${item.name}`, 404);
@@ -539,38 +551,56 @@ async function createReturn(payload) {
     // If customer return, add back to stock. If supplier return, remove from stock.
     const qtyChange = type === 'customer' ? item.quantity : -item.quantity;
     await Product.findByIdAndUpdate(item.productId, { $inc: { quantityInStock: qtyChange } });
+
+    processedItems.push({
+      productId: item.productId,
+      name: item.name,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      total: item.quantity * item.unitPrice
+    });
   }
 
   // 2. Calculate Total
-  const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+  const totalAmount = processedItems.reduce((sum, item) => sum + item.total, 0);
 
   // 3. Update Financials
   if (type === 'customer') {
-    const customer = await Customer.findById(entityId);
-    if (!customer) throw createError('Customer not found', 404);
-
-    if (refundMethod === 'credit-note') {
-      await Customer.findByIdAndUpdate(entityId, { $inc: { balance: -totalAmount } });
-      
-      // If there's a specific invoice, try to update it too
-      if (referenceNo) {
-        const inv = await CustomerInvoice.findOne({ invoiceNo: referenceNo, customerId: entityId });
-        if (inv) {
-          await CustomerInvoice.findByIdAndUpdate(inv._id, { $inc: { balanceAmount: -totalAmount } });
+    if (entityId) {
+      const customer = await Customer.findById(entityId);
+      if (customer && refundMethod === 'credit-note') {
+        await Customer.findByIdAndUpdate(entityId, { $inc: { balance: -totalAmount } });
+        
+        // If there's a specific invoice, try to update it too
+        if (referenceNo) {
+          const inv = await CustomerInvoice.findOne({ invoiceNo: referenceNo, customerId: entityId });
+          if (inv) {
+            const nextBalance = Math.max(0, inv.balanceAmount - totalAmount);
+            const status = nextBalance === 0 ? 'PAID' : 'PARTIAL';
+            await CustomerInvoice.findByIdAndUpdate(inv._id, { 
+              balanceAmount: nextBalance, 
+              status: status 
+            });
+          }
         }
       }
     }
   } else {
-    const supplier = await Supplier.findById(entityId);
-    if (!supplier) throw createError('Supplier not found', 404);
-
-    if (refundMethod === 'credit-note') {
-      await Supplier.findByIdAndUpdate(entityId, { $inc: { balance: -totalAmount } });
-      
-      if (referenceNo) {
-        const inv = await SupplierInvoice.findOne({ invoiceNo: referenceNo, supplierId: entityId });
-        if (inv) {
-          await SupplierInvoice.findByIdAndUpdate(inv._id, { $inc: { balanceAmount: -totalAmount } });
+    if (entityId) {
+      const supplier = await Supplier.findById(entityId);
+      if (supplier && refundMethod === 'credit-note') {
+        await Supplier.findByIdAndUpdate(entityId, { $inc: { balance: -totalAmount } });
+        
+        if (referenceNo) {
+          const inv = await SupplierInvoice.findOne({ invoiceNo: referenceNo, supplierId: entityId });
+          if (inv) {
+            const nextBalance = Math.max(0, inv.balanceAmount - totalAmount);
+            const status = nextBalance === 0 ? 'PAID' : 'PARTIAL';
+            await SupplierInvoice.findByIdAndUpdate(inv._id, { 
+              balanceAmount: nextBalance, 
+              status: status 
+            });
+          }
         }
       }
     }
@@ -581,10 +611,10 @@ async function createReturn(payload) {
   const returnPayload = {
     returnNo,
     type,
-    entityId,
-    entityName: payload.entityName,
+    entityId: entityId || null,
+    entityName: payload.entityName || (type === 'customer' ? 'Walk-in customer' : 'Default Supplier'),
     referenceNo,
-    items,
+    items: processedItems,
     totalAmount,
     reason,
     refundMethod,
@@ -743,10 +773,19 @@ async function getSalesReport(range = 'weekly') {
   const categoryBreakdownMap = new Map();
 
   filteredSales.forEach((sale) => {
-    paymentBreakdownMap.set(
-      sale.paymentMethod,
-      formatCurrencyAmount((paymentBreakdownMap.get(sale.paymentMethod) || 0) + Number(sale.total)),
-    );
+    if (sale.paymentMethod === 'split' && sale.splitPayments && sale.splitPayments.length > 0) {
+      sale.splitPayments.forEach((p) => {
+        paymentBreakdownMap.set(
+          p.method,
+          formatCurrencyAmount((paymentBreakdownMap.get(p.method) || 0) + Number(p.amount)),
+        );
+      });
+    } else {
+      paymentBreakdownMap.set(
+        sale.paymentMethod,
+        formatCurrencyAmount((paymentBreakdownMap.get(sale.paymentMethod) || 0) + Number(sale.total)),
+      );
+    }
 
     sale.items.forEach((item) => {
       const product = products.find((entry) => String(entry._id) === String(item.productId));
@@ -1056,7 +1095,9 @@ async function getSales(filters = {}) {
     // Query filter (invoice number or customer name)
     if (filters.query) {
       const q = String(filters.query).toLowerCase();
-      if (!sale.invoiceNumber.toLowerCase().includes(q) && !sale.customerName.toLowerCase().includes(q)) {
+      const invNo = String(sale.invoiceNumber || '').toLowerCase();
+      const custName = String(sale.customerName || '').toLowerCase();
+      if (!invNo.includes(q) && !custName.includes(q)) {
         return false;
       }
     }

@@ -106,7 +106,7 @@ export default function Suppliers({ api, session, onNotice }) {
 
   return (
     <div className="stack gap-6 animate-fade">
-      <div className="between wrap-row panel p-6 glass-panel">
+      <div className="between wrap-row panel p-6 glass-panel" style={{ borderLeft: '4px solid var(--accent)' }}>
         <div className="cluster gap-4">
           <div className="icon-btn" style={{ background: 'var(--accent-soft)', color: 'var(--accent)', border: 'none' }}>
             <Users size={24} />

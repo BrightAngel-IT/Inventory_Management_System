@@ -527,6 +527,22 @@ function App() {
     if (cart.length === 0) return
     setBusyAction('checkout')
     try {
+      const splitPayments = [];
+      if (checkoutForm.paymentMethod === 'split') {
+        if (Number(checkoutForm.splitCash || 0) > 0) {
+          splitPayments.push({ method: 'cash', amount: Number(checkoutForm.splitCash) });
+        }
+        if (Number(checkoutForm.splitCard || 0) > 0) {
+          splitPayments.push({ method: 'card', amount: Number(checkoutForm.splitCard) });
+        }
+        if (Number(checkoutForm.splitUpi || 0) > 0) {
+          splitPayments.push({ method: 'upi', amount: Number(checkoutForm.splitUpi) });
+        }
+        if (Number(checkoutForm.splitCredit || 0) > 0) {
+          splitPayments.push({ method: 'credit', amount: Number(checkoutForm.splitCredit) });
+        }
+      }
+
       const response = await api.post(
         '/sales',
         {
@@ -536,12 +552,23 @@ function App() {
           discount: Number(checkoutForm.discount || 0),
           notes: checkoutForm.notes,
           items: cart.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+          splitPayments: splitPayments.length > 0 ? splitPayments : undefined,
         },
         authConfig(session.token),
       )
       await refreshCoreData()
       setCart([])
-      setCheckoutForm({ customerName: 'Walk-in customer', customerId: '', paymentMethod: 'cash', discount: '0', notes: '' })
+      setCheckoutForm({
+        customerName: 'Walk-in customer',
+        customerId: '',
+        paymentMethod: 'cash',
+        discount: '0',
+        notes: '',
+        splitCash: '',
+        splitCard: '',
+        splitUpi: '',
+        splitCredit: ''
+      })
       printReceipt(response.data.sale, session.user)
       setNotice({ type: 'success', text: 'Sale completed.' })
     } catch (error) {
@@ -711,7 +738,7 @@ function App() {
             <Route path="/invoices" element={<AdminRoute session={session}><Invoices api={api} session={session} onNotice={setNotice} sales={sales} customers={customers} /></AdminRoute>} />
             <Route path="/payments" element={<AdminRoute session={session}><PaymentAllocation api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
             <Route path="/accounts/:type/:id" element={<AccountStatement api={api} session={session} onNotice={setNotice} />} />
-            <Route path="/returns" element={<AdminRoute session={session}><Returns api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
+            <Route path="/returns" element={<Returns api={api} session={session} onNotice={setNotice} />} />
 
             <Route path="/notifications" element={
               <Notifications

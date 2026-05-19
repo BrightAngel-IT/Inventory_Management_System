@@ -11,7 +11,7 @@ const returnItemSchema = new mongoose.Schema({
 const returnSchema = new mongoose.Schema({
   returnNo: { type: String, required: true, unique: true },
   type: { type: String, enum: ['customer', 'supplier'], required: true },
-  entityId: { type: mongoose.Schema.Types.ObjectId, required: true }, // Customer or Supplier ID
+  entityId: { type: mongoose.Schema.Types.ObjectId }, // Customer or Supplier ID
   entityName: String,
   referenceNo: String, // Original Invoice Number
   items: [returnItemSchema],

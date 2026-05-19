@@ -67,9 +67,28 @@ export default function SalesHistory({ api, session, onNotice }) {
     const count = filteredSales.length
     
     const breakdown = {
-      cash: filteredSales.filter(s => s.paymentMethod === 'cash').reduce((sum, s) => sum + s.total, 0),
-      card: filteredSales.filter(s => s.paymentMethod === 'card').reduce((sum, s) => sum + s.total, 0),
-      digital: filteredSales.filter(s => s.paymentMethod === 'upi' || s.paymentMethod === 'bank-transfer').reduce((sum, s) => sum + s.total, 0),
+      cash: filteredSales.reduce((sum, s) => {
+        if (s.paymentMethod === 'split' && s.splitPayments) {
+          const cashPart = s.splitPayments.find(p => p.method === 'cash');
+          return sum + (cashPart ? cashPart.amount : 0);
+        }
+        return sum + (s.paymentMethod === 'cash' ? s.total : 0);
+      }, 0),
+      card: filteredSales.reduce((sum, s) => {
+        if (s.paymentMethod === 'split' && s.splitPayments) {
+          const cardPart = s.splitPayments.find(p => p.method === 'card');
+          return sum + (cardPart ? cardPart.amount : 0);
+        }
+        return sum + (s.paymentMethod === 'card' ? s.total : 0);
+      }, 0),
+      digital: filteredSales.reduce((sum, s) => {
+        if (s.paymentMethod === 'split' && s.splitPayments) {
+          const upiPart = s.splitPayments.find(p => p.method === 'upi');
+          const bankPart = s.splitPayments.find(p => p.method === 'bank-transfer');
+          return sum + (upiPart ? upiPart.amount : 0) + (bankPart ? bankPart.amount : 0);
+        }
+        return sum + (s.paymentMethod === 'upi' || s.paymentMethod === 'bank-transfer' ? s.total : 0);
+      }, 0),
     }
 
     return { total, count, breakdown }
@@ -79,6 +98,7 @@ export default function SalesHistory({ api, session, onNotice }) {
     switch (method) {
       case 'cash': return <Banknote size={14} />
       case 'card': return <CreditCard size={14} />
+      case 'split': return <Layers size={14} />
       default: return <Smartphone size={14} />
     }
   }
@@ -89,6 +109,7 @@ export default function SalesHistory({ api, session, onNotice }) {
       case 'card': return 'info'
       case 'upi': return 'warning'
       case 'bank-transfer': return 'accent'
+      case 'split': return 'primary'
       default: return 'neutral'
     }
   }
@@ -251,9 +272,16 @@ export default function SalesHistory({ api, session, onNotice }) {
                     </div>
                   </td>
                   <td style={{ borderBottom: idx === paginatedSales.length - 1 ? 'none' : '1px solid var(--border-soft)' }}>
-                    <div className={`pill ${getPaymentColor(sale.paymentMethod)}-soft cluster gap-2`} style={{ fontSize: '0.65rem', textTransform: 'capitalize', padding: '4px 10px' }}>
-                      {getPaymentIcon(sale.paymentMethod)}
-                      {sale.paymentMethod}
+                    <div className="stack gap-1">
+                      <div className={`pill ${getPaymentColor(sale.paymentMethod)}-soft cluster gap-2`} style={{ fontSize: '0.65rem', textTransform: 'capitalize', padding: '4px 10px', width: 'fit-content' }}>
+                        {getPaymentIcon(sale.paymentMethod)}
+                        {sale.paymentMethod}
+                      </div>
+                      {sale.paymentMethod === 'split' && sale.splitPayments && (
+                        <span className="muted x-small font-mono" style={{ fontSize: '0.65rem', whiteSpace: 'nowrap' }}>
+                          {sale.splitPayments.map(p => `${p.method}: ${formatCurrency(p.amount)}`).join(' | ')}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="text-right" style={{ borderBottom: idx === paginatedSales.length - 1 ? 'none' : '1px solid var(--border-soft)' }}>

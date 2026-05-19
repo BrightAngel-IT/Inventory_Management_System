@@ -114,21 +114,21 @@ export function Reports({ report, reportRange, setReportRange }) {
           title="Order Count"
           value={String(report?.summary.totalOrders ?? 0)}
           helper="Success transactions"
-          accent="var(--success)"
+          accent="var(--accent)"
         />
         <MetricCard
           icon={Package}
           title="Units Moved"
           value={String(report?.summary.unitsSold ?? 0)}
           helper="Total items processed"
-          accent="var(--warning)"
+          accent="var(--accent)"
         />
         <MetricCard
           icon={TrendingUp}
           title="Ticket Mean"
           value={formatCurrency(report?.summary.averageTicket ?? 0)}
           helper="Average bill value"
-          accent="var(--accent-strong)"
+          accent="var(--accent)"
         />
       </div>
 

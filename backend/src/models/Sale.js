@@ -25,9 +25,15 @@ const saleSchema = new mongoose.Schema(
     customerName: { type: String, default: 'Walk-in customer' },
     paymentMethod: {
       type: String,
-      enum: ['cash', 'card', 'upi', 'bank-transfer', 'credit'],
+      enum: ['cash', 'card', 'upi', 'bank-transfer', 'credit', 'split'],
       default: 'cash',
     },
+    splitPayments: [
+      {
+        method: { type: String, enum: ['cash', 'card', 'upi', 'bank-transfer', 'credit'] },
+        amount: { type: Number, required: true }
+      }
+    ],
     discount: { type: Number, default: 0, min: 0 },
     tax: { type: Number, default: 0, min: 0 },
     subtotal: { type: Number, required: true, min: 0 },

@@ -29,6 +29,7 @@ export function Topbar({ activeView, session, overview }) {
           {activeView === 'product-manager' && 'Product Management'}
           {activeView === 'sales-history' && 'Sales History'}
           {activeView === 'settlements' && 'Settlements Control'}
+          {activeView === 'returns' && 'Returns Management'}
         </h1>
         <div className="cluster gap-3 muted small mt-1">
           <span>Branch: <strong className="font-strong" style={{ color: 'var(--text)' }}>{session.user.branch}</strong></span>

@@ -138,7 +138,7 @@ export default function Invoices({ api, session, onNotice, sales: initialSales =
   return (
     <div className="stack gap-6 animate-fade">
       {/* Header Panel */}
-      <div className="between wrap-row panel p-6 glass-panel">
+      <div className="between wrap-row panel p-6 glass-panel" style={{ borderLeft: '4px solid var(--accent)' }}>
         <div className="cluster gap-4">
           <div className="icon-btn" style={{ background: 'var(--info-soft)', color: 'var(--info)', border: 'none' }}>
             <Receipt size={24} />
