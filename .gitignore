@@ -14,10 +14,6 @@ logs/
 .DS_Store
 Thumbs.db
 
-# Build
-/dist
-/build
-
 # VSCode
 .vscode/
 
