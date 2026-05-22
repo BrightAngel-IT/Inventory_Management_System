@@ -93,7 +93,7 @@ export function Login({
             <input
               className="input"
               type="email"
-              placeholder="e.g. admin@nilma.lk"
+              placeholder="enter email"
               value={authForm.email}
               onChange={(event) =>
                 setAuthForm((current) => ({ ...current, email: event.target.value }))
@@ -107,7 +107,7 @@ export function Login({
             <input
               className="input"
               type="password"
-              placeholder="••••••••"
+              placeholder="enter password"
               value={authForm.password}
               onChange={(event) =>
                 setAuthForm((current) => ({ ...current, password: event.target.value }))
