@@ -110,7 +110,7 @@ export function ProductManager({
               <input
                 className="input large-input"
                 name="name"
-                placeholder="e.g. Arabica Dark Roast Coffee 1kg"
+                placeholder="e.g. Product Name"
                 value={productForm.name}
                 onChange={handleProductFormChange}
                 required

@@ -104,7 +104,7 @@ export const printReceipt = (sale, user, receivedAmount = 0) => {
       <body style="font-family: Arial, Helvetica, sans-serif; width: 300px; margin: 0 auto; color: #000; line-height: 1.2; font-smooth: never; -webkit-font-smoothing: none;">
         <div style="text-align: center; margin-bottom: 6px; padding-top: 0; margin-top: 2px;">
           <div style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1px;">NILMA Alliance (Pvt) Ltd</div>
-          <div style="font-size: 11px; font-weight: 800; border-top: 1px solid #000; border-bottom: 1px solid #000; display: inline-block; padding: 1px 6px; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px;">Inventory Management System</div>
+          <div style="font-size: 8px; font-weight: 800; border-top: 1px solid #000; border-bottom: 1px solid #000; display: inline-block; padding: 1px 6px; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px;">Excellence Across Diverse Industries</div>
           <div style="font-size: 10px; font-weight: 700; line-height: 1.1; margin-bottom: 1px;">295, 1/1 Galle Road, Colombo – 6, Sri Lanka</div>
           <div style="font-size: 10px; font-weight: 700;">Tel: +94-742-955-414</div>
         </div>
