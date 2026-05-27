@@ -23,6 +23,7 @@ const saleSchema = new mongoose.Schema(
   {
     invoiceNumber: { type: String, required: true, unique: true },
     customerName: { type: String, default: 'Walk-in customer' },
+    loyaltyCard: { type: String, default: '' },
     paymentMethod: {
       type: String,
       enum: ['cash', 'card', 'upi', 'bank-transfer', 'credit', 'split'],

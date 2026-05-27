@@ -119,6 +119,7 @@ export const printReceipt = (sale, user, receivedAmount = 0) => {
             <span>CASHIER: ${user.name.toUpperCase()}</span>
           </div>
           <div style="margin-top: 2px; border-bottom: 1px solid #000; padding-bottom: 2px;">CUSTOMER: ${sale.customerName.toUpperCase()}</div>
+          ${sale.loyaltyCard ? `<div style="margin-top: 2px; border-bottom: 1px solid #000; padding-bottom: 2px;">LOYALTY CARD: ${sale.loyaltyCard.toUpperCase()}</div>` : ''}
         </div>
 
         <div style="display: flex; font-weight: 900; font-size: 10px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 0; margin-bottom: 8px; text-transform: uppercase;">
@@ -191,4 +192,3 @@ export const printReceipt = (sale, user, receivedAmount = 0) => {
   `)
   receiptWindow.document.close()
 }
-

@@ -148,7 +148,10 @@ export function POS({
               <div key={item.productId} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px 100px 40px', gap: '8px', padding: '6px 12px', borderBottom: '1px solid var(--border)', background: 'var(--panel)', alignItems: 'center', transition: 'background 0.2s' }} className="glow-on-hover">
                 <div className="stack" style={{ minWidth: 0 }}>
                   <strong style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</strong>
-                  <span className="muted" style={{ fontSize: '0.7rem' }}>{item.sku}</span>
+                  <span className="muted" style={{ fontSize: '0.7rem' }}>
+                    {item.sku}
+                    {checkoutForm.loyaltyCard && item.loyaltyDiscount > 0 && <span style={{ color: 'var(--success)', marginLeft: '4px' }}>(-{formatCurrency(item.loyaltyDiscount)})</span>}
+                  </span>
                 </div>
                 <div className="qty-box" style={{ background: 'var(--bg-soft)', borderRadius: '8px', padding: '1px', justifyContent: 'center' }}>
                   <button className="qty-btn" type="button" style={{ width: '22px', height: '22px', fontSize: '0.8rem' }} onClick={() => changeCartQuantity(item.productId, 'decrease')}>-</button>
@@ -228,6 +231,18 @@ export function POS({
                 </div>
                 <Users size={16} className="muted" />
               </button>
+            </label>
+
+            <label className="field">
+              <span>Loyalty Card</span>
+              <div className="input-shell compact" style={{ border: checkoutForm.loyaltyCard ? '1px solid var(--success)' : '1px solid var(--border)' }}>
+                <input
+                  className="ghost-input"
+                  placeholder="Scan or type LC-..."
+                  value={checkoutForm.loyaltyCard || ''}
+                  onChange={(e) => setCheckoutForm({ ...checkoutForm, loyaltyCard: e.target.value })}
+                />
+              </div>
             </label>
 
             <div className="split-fields" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -662,4 +677,3 @@ export function POS({
     </div>
   )
 }
-

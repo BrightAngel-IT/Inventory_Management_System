@@ -74,6 +74,7 @@ const emptyProductForm = {
   unit: 'pcs',
   price: '0',
   costPrice: '0',
+  loyaltyDiscount: '0',
   quantityInStock: '0',
   reorderLevel: '0',
   rack: {
@@ -120,6 +121,7 @@ function App() {
   const [checkoutForm, setCheckoutForm] = useState({
     customerName: 'Walk-in customer',
     customerId: '',
+    loyaltyCard: '',
     paymentMethod: 'cash',
     discount: '0',
     notes: '',
@@ -274,11 +276,24 @@ function App() {
   )
 
   const cartSubtotal = roundCurrency(
-    cart.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0),
+    cart.reduce((sum, item) => {
+      const effectivePrice = Math.max(0, item.price - (checkoutForm.loyaltyCard ? (item.loyaltyDiscount || 0) : 0));
+      return sum + effectivePrice * Number(item.quantity);
+    }, 0),
   )
   const discountValue = Number(checkoutForm.discount || 0)
   const discountAmount = roundCurrency(cartSubtotal * (discountValue / 100))
   const cartTotal = roundCurrency(cartSubtotal - discountAmount)
+
+  useEffect(() => {
+    setCart(currentCart => currentCart.map(item => {
+      const effectivePrice = Math.max(0, item.price - (checkoutForm.loyaltyCard ? (item.loyaltyDiscount || 0) : 0));
+      return {
+        ...item,
+        lineTotal: item.quantity * effectivePrice * (1 - (item.discount || 0) / 100)
+      }
+    }))
+  }, [checkoutForm.loyaltyCard])
 
   async function refreshCoreData() {
     if (!session?.token) return
@@ -332,6 +347,9 @@ function App() {
 
   function addProductToCart(product) {
     setCart((currentCart) => {
+      const isLoyalty = !!checkoutForm.loyaltyCard;
+      const effectivePrice = Math.max(0, product.price - (isLoyalty ? (product.loyaltyDiscount || 0) : 0));
+
       const existing = currentCart.find((item) => item.productId === product._id)
       if (existing) {
         return currentCart.map((item) => {
@@ -340,7 +358,7 @@ function App() {
             return { 
               ...item, 
               quantity: nextQty,
-              lineTotal: nextQty * item.price * (1 - (item.discount || 0) / 100)
+              lineTotal: nextQty * effectivePrice * (1 - (item.discount || 0) / 100)
             }
           }
           return item
@@ -354,12 +372,13 @@ function App() {
           barcode: product.barcode,
           sku: product.sku,
           price: product.price,
+          loyaltyDiscount: product.loyaltyDiscount || 0,
           image: product.image,
           rackLabel: product.rackLabel,
           available: product.quantityInStock,
           quantity: 1,
           discount: 0,
-          lineTotal: product.price,
+          lineTotal: effectivePrice,
         },
       ]
     })
@@ -372,10 +391,11 @@ function App() {
           if (item.productId !== productId) return item
           const nextQuantity = direction === 'increase' ? item.quantity + 1 : item.quantity - 1
           const finalQty = Math.max(0, Math.min(nextQuantity, item.available))
+          const effectivePrice = Math.max(0, item.price - (checkoutForm.loyaltyCard ? (item.loyaltyDiscount || 0) : 0));
           return { 
             ...item, 
             quantity: finalQty,
-            lineTotal: finalQty * item.price * (1 - (item.discount || 0) / 100)
+            lineTotal: finalQty * effectivePrice * (1 - (item.discount || 0) / 100)
           }
         })
         .filter((item) => item.quantity > 0),
@@ -386,6 +406,14 @@ function App() {
     if (location.pathname === '/returns') return
     const cleanedValue = String(scannedValue || '').trim()
     if (!cleanedValue) return
+
+    // Intercept loyalty card scans
+    if (cleanedValue.startsWith('LC-') || cleanedValue.startsWith('LOYALTY')) {
+      setCheckoutForm(prev => ({ ...prev, loyaltyCard: cleanedValue }))
+      setNotice({ type: 'success', text: `Loyalty Card ${cleanedValue} applied.` })
+      return
+    }
+
     setBarcodeValue(cleanedValue)
     navigate('/pos')
     const matchingProduct = products.find((p) => p.barcode === cleanedValue || p.sku === cleanedValue)
@@ -428,6 +456,7 @@ function App() {
       unit: product.unit,
       price: String(product.price),
       costPrice: String(product.costPrice),
+      loyaltyDiscount: String(product.loyaltyDiscount || '0'),
       quantityInStock: String(product.quantityInStock),
       reorderLevel: String(product.reorderLevel),
       rack: {
@@ -470,6 +499,7 @@ function App() {
       formData.append('unit', productForm.unit);
       formData.append('price', productForm.price);
       formData.append('costPrice', productForm.costPrice);
+      formData.append('loyaltyDiscount', productForm.loyaltyDiscount);
       formData.append('quantityInStock', productForm.quantityInStock);
       formData.append('reorderLevel', productForm.reorderLevel);
       
@@ -548,6 +578,7 @@ function App() {
         {
           customerName: checkoutForm.customerName,
           customerId: checkoutForm.customerId,
+          loyaltyCard: checkoutForm.loyaltyCard,
           paymentMethod: checkoutForm.paymentMethod,
           discount: Number(checkoutForm.discount || 0),
           notes: checkoutForm.notes,
@@ -561,6 +592,7 @@ function App() {
       setCheckoutForm({
         customerName: 'Walk-in customer',
         customerId: '',
+        loyaltyCard: '',
         paymentMethod: 'cash',
         discount: '0',
         notes: '',
