@@ -309,6 +309,7 @@ async function saveProduct(payload) {
     unit: String(payload.unit || 'pcs').trim(),
     price: Number(payload.price || 0),
     costPrice: Number(payload.costPrice || 0),
+    loyaltyDiscount: Number(payload.loyaltyDiscount || 0),
     quantityInStock: Number(payload.quantityInStock || 0),
     reorderLevel: Number(payload.reorderLevel || 0),
     rack: {
@@ -432,14 +433,16 @@ async function createSale(payload) {
       throw createError(`Not enough stock for ${product.name}.`);
     }
 
-    const lineTotal = formatCurrencyAmount(product.price * quantity);
+    const isLoyalty = !!payload.loyaltyCard;
+    const effectivePrice = Math.max(0, product.price - (isLoyalty ? (product.loyaltyDiscount || 0) : 0));
+    const lineTotal = formatCurrencyAmount(effectivePrice * quantity);
 
     return {
       productId: product._id,
       name: product.name,
       sku: product.sku,
       barcode: product.barcode,
-      price: product.price,
+      price: effectivePrice,
       quantity,
       lineTotal,
       image: product.image,
@@ -457,6 +460,7 @@ async function createSale(payload) {
   const salePayload = {
     invoiceNumber: makeInvoiceNumber(),
     customerName: String(payload.customerName || 'Walk-in customer').trim(),
+    loyaltyCard: String(payload.loyaltyCard || '').trim(),
     paymentMethod: ['cash', 'card', 'upi', 'bank-transfer', 'credit', 'split'].includes(payload.paymentMethod)
       ? payload.paymentMethod
       : 'cash',
