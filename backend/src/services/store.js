@@ -434,7 +434,14 @@ async function createSale(payload) {
     }
 
     const isLoyalty = !!payload.loyaltyCard;
-    const effectivePrice = Math.max(0, product.price - (isLoyalty ? (product.loyaltyDiscount || 0) : 0));
+    const regularPrice = Number(product.price || 0);
+    const memberPriceInDb = Number(product.loyaltyDiscount || regularPrice);
+    
+    // POS Page Logic: Loyalty Price is the value in DB (interpreted as member price)
+    const effectivePrice = isLoyalty 
+      ? Math.max(0, Math.min(regularPrice, memberPriceInDb)) 
+      : regularPrice;
+
     const lineTotal = formatCurrencyAmount(effectivePrice * quantity);
 
     return {
@@ -442,7 +449,9 @@ async function createSale(payload) {
       name: product.name,
       sku: product.sku,
       barcode: product.barcode,
-      price: effectivePrice,
+      price: effectivePrice, // The actual selling price
+      originalPrice: regularPrice, // The base price
+      loyaltyDiscount: isLoyalty ? Math.max(0, regularPrice - effectivePrice) : 0,
       quantity,
       lineTotal,
       image: product.image,

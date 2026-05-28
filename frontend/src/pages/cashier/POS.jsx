@@ -66,6 +66,16 @@ export function POS({
     (activeCategory === 'All' || p.category === activeCategory)
   )
 
+  const getRegularPrice = (item) => Number(item.price || 0)
+  const getLoyaltySellingPrice = (item) => {
+    const regularPrice = getRegularPrice(item)
+    const loyaltyPrice = Number(item.loyaltyDiscount || 0)
+    return checkoutForm.loyaltyCard
+      ? Math.max(0, Math.min(regularPrice, loyaltyPrice || regularPrice))
+      : regularPrice
+  }
+  const getSavedAmount = (item) => Math.max(0, getRegularPrice(item) - getLoyaltySellingPrice(item))
+
   const handleHoldBill = () => {
     if (cart.length === 0) return
     const newHold = {
@@ -101,12 +111,12 @@ export function POS({
             </div>
           </div>
 
-          <div className="input-shell compact mb-4" style={{
+          <div className="input-shell compact mb-2" style={{
             background: 'var(--panel)',
             border: '1px solid var(--border)',
             borderRadius: '999px',
             cursor: 'pointer',
-            padding: '10px 24px',
+            padding: '2px 24px',
             boxShadow: 'var(--shadow-sm)'
           }} onClick={() => setIsSearchModalOpen(true)}>
             <Search size={18} className="muted" />
@@ -136,36 +146,39 @@ export function POS({
             )}
           </div>
 
-          <div className="stack gap-0" style={{ flex: 1, overflowY: 'auto', maxHeight: '600px', border: '1px solid var(--border)', borderRadius: '12px', background: 'var(--bg-soft)' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px 100px 40px', gap: '8px', padding: '8px 12px', borderBottom: '1px solid var(--border)', background: 'var(--panel)', fontSize: '0.75rem', fontWeight: 700, position: 'sticky', top: 0, zIndex: 10 }}>
-              <span>Item Description</span>
-              <span style={{ textAlign: 'center' }}>Qty</span>
-              <span style={{ textAlign: 'center' }}>Disc%</span>
-              <span style={{ textAlign: 'right' }}>Total</span>
+          <div className="stack gap-0" style={{ flex: 1, overflowY: 'auto', maxHeight: '600px', border: '1px solid var(--border)', borderRadius: '12px', background: 'var(--bg-soft)', overflowX: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(170px, 1.5fr) 90px 1fr 1fr 1fr 34px', gap: '5px', padding: '10px 12px', borderBottom: '1px solid var(--border)', background: 'var(--panel)', fontSize: '0.7rem', fontWeight: 800, position: 'sticky', top: 0, zIndex: 10, letterSpacing: '0.03em', textTransform: 'uppercase', alignItems: 'center' }}>
+              <span style={{ paddingRight: '4px', whiteSpace: 'nowrap' }}>Item Description</span>
+              <span style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>Qty</span>
+              <span style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>Price</span>
+              <span style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>Discount</span>
+              <span style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>Total</span>
               <span></span>
             </div>
             {cart.map((item) => (
-              <div key={item.productId} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px 100px 40px', gap: '8px', padding: '6px 12px', borderBottom: '1px solid var(--border)', background: 'var(--panel)', alignItems: 'center', transition: 'background 0.2s' }} className="glow-on-hover">
-                <div className="stack" style={{ minWidth: 0 }}>
-                  <strong style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</strong>
-                  <span className="muted" style={{ fontSize: '0.7rem' }}>
+              <div key={item.productId} style={{ display: 'grid', gridTemplateColumns: 'minmax(170px, 1.5fr) 90px 1fr 1fr 1fr 34px', gap: '5px', padding: '10px 12px', borderBottom: '1px solid var(--border)', background: 'var(--panel)', alignItems: 'center', transition: 'background 0.2s' }} className="glow-on-hover">
+                <div className="stack" style={{ minWidth: 0, gap: '2px', justifySelf: 'stretch', paddingRight: '4px' }}>
+                  <strong style={{ fontSize: '0.84rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.1' }}>{item.name}</strong>
+                  <span className="muted" style={{ fontSize: '0.66rem', lineHeight: '1.05' }}>
                     {item.sku}
-                    {checkoutForm.loyaltyCard && item.loyaltyDiscount > 0 && <span style={{ color: 'var(--success)', marginLeft: '4px' }}>(-{formatCurrency(item.loyaltyDiscount)})</span>}
                   </span>
                 </div>
-                <div className="qty-box" style={{ background: 'var(--bg-soft)', borderRadius: '8px', padding: '1px', justifyContent: 'center' }}>
-                  <button className="qty-btn" type="button" style={{ width: '22px', height: '22px', fontSize: '0.8rem' }} onClick={() => changeCartQuantity(item.productId, 'decrease')}>-</button>
-                  <strong style={{ minWidth: '24px', textAlign: 'center', fontSize: '0.85rem' }}>{item.quantity}</strong>
-                  <button className="qty-btn" type="button" style={{ width: '22px', height: '22px', fontSize: '0.8rem' }} onClick={() => changeCartQuantity(item.productId, 'increase')}>+</button>
+                <div className="qty-box" style={{ background: 'var(--bg-soft)', borderRadius: '999px', padding: '2px', justifyContent: 'center', width: 'fit-content', justifySelf: 'center' }}>
+                  <button className="qty-btn" type="button" style={{ width: '24px', height: '24px', fontSize: '0.85rem', borderRadius: '999px' }} onClick={() => changeCartQuantity(item.productId, 'decrease')}>-</button>
+                  <strong style={{ minWidth: '24px', textAlign: 'center', fontSize: '0.9rem', fontWeight: 800 }}>{item.quantity}</strong>
+                  <button className="qty-btn" type="button" style={{ width: '24px', height: '24px', fontSize: '0.85rem', borderRadius: '999px' }} onClick={() => changeCartQuantity(item.productId, 'increase')}>+</button>
                 </div>
-                <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--success)' }}>
-                  {item.discount || 0}%
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ display: 'inline-flex', minWidth: '84px', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-strong)' }}>{formatCurrency(getRegularPrice(item))}</span>
                 </div>
-                <div style={{ textAlign: 'right', fontSize: '0.85rem', fontWeight: 600 }}>{formatCurrency(item.lineTotal)}</div>
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ display: 'inline-flex', minWidth: '84px', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800, color: getSavedAmount(item) > 0 ? 'var(--success)' : 'var(--text-soft)' }}>{formatCurrency(getSavedAmount(item))}</span>
+                </div>
+                <div style={{ textAlign: 'center', fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-strong)' }}>{formatCurrency(item.lineTotal)}</div>
                 <button
                   type="button"
                   onClick={() => setCart(cart.filter(c => c.productId !== item.productId))}
-                  style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', opacity: 0.6 }}
+                  style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', opacity: 0.6, justifySelf: 'center' }}
                 >
                   <X size={16} />
                 </button>
@@ -218,6 +231,49 @@ export function POS({
       <aside className="stack gap-3 sticky-panel">
         <form className="panel p-4 stack gap-4 glass-panel" onSubmit={handleCheckout} style={{ position: 'sticky', top: '16px', border: '1px solid var(--accent-soft)' }}>
           <div className="stack gap-3">
+            {checkoutForm.loyaltyCard && (
+              <div className="p-4 mb-4" style={{ 
+                borderRadius: '16px', 
+                background: 'linear-gradient(135deg, var(--accent-soft), rgba(59, 130, 246, 0.04))', 
+                border: '1px solid rgba(37, 99, 235, 0.15)', 
+                boxShadow: '0 10px 25px -5px rgba(37, 99, 235, 0.08)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}>
+                <div style={{ position: 'absolute', top: '-15%', right: '-10%', width: '40%', height: '80%', background: 'var(--accent)', opacity: 0.03, filter: 'blur(40px)', transform: 'rotate(-15deg)' }} />
+                
+                <div className="between mb-3">
+                  <div className="cluster gap-3">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', background: 'white', borderRadius: '12px', color: 'var(--accent)', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
+                      <CreditCard size={20} />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.01em' }}>Loyalty Member</h4>
+                      <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--text-soft)', fontWeight: 500 }}>Special Member Pricing</p>
+                    </div>
+                  </div>
+                  <div className="pill" style={{ background: 'var(--success)', color: 'white', fontSize: '0.6rem', fontWeight: 900, padding: '4px 10px', letterSpacing: '0.05em', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)' }}>
+                    APPLIED
+                  </div>
+                </div>
+
+                <div className="stack gap-2 p-3" style={{ background: 'rgba(255, 255, 255, 0.6)', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(4px)' }}>
+                  <div className="between align-center">
+                    <span style={{ fontSize: '0.6rem', color: 'black', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Member ID</span>
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.15rem', fontWeight: 900, color: 'black', letterSpacing: '0.08em', textAlign: 'center' }}>
+                    {checkoutForm.loyaltyCard}
+                  </div>
+                </div>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', padding: '0 4px' }}>
+                  <div style={{ flex: 1, height: '1px', background: 'rgba(37, 99, 235, 0.1)' }}></div>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--text-soft)', fontWeight: 500 }}>Exclusive discount active</span>
+                  <div style={{ flex: 1, height: '1px', background: 'rgba(37, 99, 235, 0.1)' }}></div>
+                </div>
+              </div>
+            )}
+
             <label className="field">
               <span>Customer Identification</span>
               <button
@@ -231,18 +287,6 @@ export function POS({
                 </div>
                 <Users size={16} className="muted" />
               </button>
-            </label>
-
-            <label className="field">
-              <span>Loyalty Card</span>
-              <div className="input-shell compact" style={{ border: checkoutForm.loyaltyCard ? '1px solid var(--success)' : '1px solid var(--border)' }}>
-                <input
-                  className="ghost-input"
-                  placeholder="Scan or type LC-..."
-                  value={checkoutForm.loyaltyCard || ''}
-                  onChange={(e) => setCheckoutForm({ ...checkoutForm, loyaltyCard: e.target.value })}
-                />
-              </div>
             </label>
 
             <div className="split-fields" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>

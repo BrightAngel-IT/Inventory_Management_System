@@ -7,6 +7,8 @@ const saleItemSchema = new mongoose.Schema(
     sku: { type: String, required: true },
     barcode: { type: String, required: true },
     price: { type: Number, required: true, min: 0 },
+    originalPrice: { type: Number, default: 0 },
+    loyaltyDiscount: { type: Number, default: 0 },
     quantity: { type: Number, required: true, min: 1 },
     lineTotal: { type: Number, required: true, min: 0 },
     image: { type: String, default: '' },

@@ -254,6 +254,8 @@ function buildDemoSales(products, users) {
         sku: product.sku,
         barcode: product.barcode,
         price: product.price,
+        originalPrice: product.price,
+        loyaltyDiscount: 0,
         quantity: item.quantity,
         rack: product.rack,
         image: product.image,

@@ -261,6 +261,18 @@ export function ProductManager({
               </label>
             </div>
 
+            <div className="grid-2 gap-4" style={{ marginTop: '8px' }}>
+              <label className="field">
+                <span className="muted small font-strong uppercase" style={{ fontSize: '0.6rem' }}>Loyalty Selling Price</span>
+                <div className="input-shell compact" style={{ borderRadius: '10px' }}>
+                  <span className="muted x-small">$</span>
+                  <input className="ghost-input font-strong small" type="number" name="loyaltyDiscount" value={productForm.loyaltyDiscount} onChange={handleProductFormChange} />
+                </div>
+                <p className="muted x-small" style={{ marginTop: '4px' }}>Price used when the loyalty card is scanned.</p>
+              </label>
+              <div />
+            </div>
+
             <div className="grid-2 gap-4">
               <label className="field">
                 <span className="muted small font-strong uppercase" style={{ fontSize: '0.6rem' }}>Stock</span>

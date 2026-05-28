@@ -277,8 +277,12 @@ function App() {
 
   const cartSubtotal = roundCurrency(
     cart.reduce((sum, item) => {
-      const effectivePrice = Math.max(0, item.price - (checkoutForm.loyaltyCard ? (item.loyaltyDiscount || 0) : 0));
-      return sum + effectivePrice * Number(item.quantity);
+      const regularPrice = Number(item.price || 0)
+      const loyaltyPrice = Number(item.loyaltyDiscount || 0)
+      const effectiveUnitPrice = checkoutForm.loyaltyCard
+        ? Math.max(0, Math.min(regularPrice, loyaltyPrice || regularPrice))
+        : regularPrice
+      return sum + effectiveUnitPrice * Number(item.quantity)
     }, 0),
   )
   const discountValue = Number(checkoutForm.discount || 0)
@@ -287,11 +291,12 @@ function App() {
 
   useEffect(() => {
     setCart(currentCart => currentCart.map(item => {
-      const effectivePrice = Math.max(0, item.price - (checkoutForm.loyaltyCard ? (item.loyaltyDiscount || 0) : 0));
-      return {
-        ...item,
-        lineTotal: item.quantity * effectivePrice * (1 - (item.discount || 0) / 100)
-      }
+      const regularPrice = Number(item.price || 0)
+      const loyaltyPrice = Number(item.loyaltyDiscount || 0)
+      const unit = checkoutForm.loyaltyCard
+        ? Math.max(0, Math.min(regularPrice, loyaltyPrice || regularPrice))
+        : regularPrice
+      return { ...item, lineTotal: item.quantity * unit }
     }))
   }, [checkoutForm.loyaltyCard])
 
@@ -347,18 +352,22 @@ function App() {
 
   function addProductToCart(product) {
     setCart((currentCart) => {
-      const isLoyalty = !!checkoutForm.loyaltyCard;
-      const effectivePrice = Math.max(0, product.price - (isLoyalty ? (product.loyaltyDiscount || 0) : 0));
+      const isLoyalty = !!checkoutForm.loyaltyCard
+      const regularPrice = Number(product.price || 0)
+      const loyaltyPrice = Number(product.loyaltyDiscount || 0)
+      const effectivePrice = isLoyalty
+        ? Math.max(0, Math.min(regularPrice, loyaltyPrice || regularPrice))
+        : regularPrice
 
       const existing = currentCart.find((item) => item.productId === product._id)
       if (existing) {
         return currentCart.map((item) => {
           if (item.productId === product._id) {
             const nextQty = Math.min(item.quantity + 1, product.quantityInStock)
-            return { 
-              ...item, 
+            return {
+              ...item,
               quantity: nextQty,
-              lineTotal: nextQty * effectivePrice * (1 - (item.discount || 0) / 100)
+              lineTotal: nextQty * effectivePrice,
             }
           }
           return item
@@ -378,6 +387,7 @@ function App() {
           available: product.quantityInStock,
           quantity: 1,
           discount: 0,
+          discountPrice: 0,
           lineTotal: effectivePrice,
         },
       ]
@@ -391,11 +401,15 @@ function App() {
           if (item.productId !== productId) return item
           const nextQuantity = direction === 'increase' ? item.quantity + 1 : item.quantity - 1
           const finalQty = Math.max(0, Math.min(nextQuantity, item.available))
-          const effectivePrice = Math.max(0, item.price - (checkoutForm.loyaltyCard ? (item.loyaltyDiscount || 0) : 0));
-          return { 
-            ...item, 
+          const regularPrice = Number(item.price || 0)
+          const loyaltyPrice = Number(item.loyaltyDiscount || 0)
+          const effectivePrice = checkoutForm.loyaltyCard
+            ? Math.max(0, Math.min(regularPrice, loyaltyPrice || regularPrice))
+            : regularPrice
+          return {
+            ...item,
             quantity: finalQty,
-            lineTotal: finalQty * effectivePrice * (1 - (item.discount || 0) / 100)
+            lineTotal: finalQty * effectivePrice,
           }
         })
         .filter((item) => item.quantity > 0),
@@ -407,8 +421,8 @@ function App() {
     const cleanedValue = String(scannedValue || '').trim()
     if (!cleanedValue) return
 
-    // Intercept loyalty card scans
-    if (cleanedValue.startsWith('LC-') || cleanedValue.startsWith('LOYALTY')) {
+    // Intercept the single allowed loyalty card barcode.
+    if (cleanedValue === 'NILMA-2026-DISC295') {
       setCheckoutForm(prev => ({ ...prev, loyaltyCard: cleanedValue }))
       setNotice({ type: 'success', text: `Loyalty Card ${cleanedValue} applied.` })
       return
