@@ -81,7 +81,7 @@ export const printReceipt = (sale, user, receivedAmount = 0) => {
         <div style="display: flex; margin-bottom: 6px; font-size: 11px; line-height: 1.2;">
           <div style="width: 20px; text-align: center; font-weight: 700;">${index + 1}</div>
           <div style="flex: 1;">
-            <div style="font-weight: 900; text-transform: uppercase; font-size: 12px; margin-bottom: 1px;">${item.name}</div>
+            <div style="font-weight: 700; text-transform: uppercase; font-size: 12px; margin-bottom: 1px;">${item.name}</div>
             <div style="display: flex; font-weight: 700; font-family: 'Courier New', Courier, monospace;">
               <span style="width: 65px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${item.sku}</span>
               <span style="width: 30px; text-align: center;">${Number(item.quantity).toFixed(0)}</span>
@@ -116,7 +116,7 @@ export const printReceipt = (sale, user, receivedAmount = 0) => {
       <body style="font-family: Arial, Helvetica, sans-serif; width: 300px; margin: 0 auto; color: #000; line-height: 1.2; font-smooth: never; -webkit-font-smoothing: none;">
         <div style="text-align: center; margin-bottom: 6px; padding-top: 0; margin-top: 2px;">
           <div style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1px;">NILMA Alliance (Pvt) Ltd</div>
-          <div style="font-size: 8px; font-weight: 800; border-top: 1px solid #000; border-bottom: 1px solid #000; display: inline-block; padding: 1px 6px; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px;">Excellence AcrossDiverse Industries</div>
+          <div style="font-size: 11px; font-weight: 800; border-top: 1px solid #000; border-bottom: 1px solid #000; display: inline-block; padding: 1px 6px; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px;">Excellence AcrossDiverse Industries</div>
           <div style="font-size: 10px; font-weight: 700; line-height: 1.1; margin-bottom: 1px;">295, 1/1 Galle Road, Colombo 06, Sri Lanka</div>
           <div style="font-size: 10px; font-weight: 700;">Tel: +94-742-955-414</div>
         </div>
@@ -163,7 +163,7 @@ export const printReceipt = (sale, user, receivedAmount = 0) => {
             <span>${Number(sale.discount || 0).toFixed(2)}</span>
           </div>
           
-          <div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 18px; margin-top: 4px; border-top: 2px solid #000; padding-top: 4px;">
+          <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 18px; margin-top: 4px; border-top: 2px solid #000; padding-top: 4px;">
             <span>NET TOTAL:</span>
             <span>${Number(sale.total).toFixed(2)}</span>
           </div>
@@ -179,7 +179,7 @@ export const printReceipt = (sale, user, receivedAmount = 0) => {
                 <span>PAYMENT (${sale.paymentMethod.toUpperCase()}):</span>
                 <span>${Number(receivedAmount || sale.total).toFixed(2)}</span>
               </div>
-              <div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 14px;">
+              <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 14px;">
                 <span>BALANCE:</span>
                 <span>${balance.toFixed(2)}</span>
               </div>
@@ -193,10 +193,10 @@ export const printReceipt = (sale, user, receivedAmount = 0) => {
           <div style="font-size: 10px; margin-bottom: 6px;">ITEMS: ${sale.items.length} | QTY: ${sale.items.reduce((sum, i) => sum + i.quantity, 0).toFixed(2)}</div>
           <div style="font-weight: 900; margin: 6px 0; font-size: 13px;">*** THANK YOU - VISIT AGAIN ***</div>
           
-          <div style="border-top: 1px dashed #000; padding-top: 8px; margin-bottom: 20px; font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase;">
-            System by: <strong>BrightAngel IT Solutions</strong>
+          <div style="border-top: 1px dashed #000; padding-top: 8px; font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase;">
+            System by: <strong>BrightAngel IT Solutions </strong>
           </div>
-          <div style="height: 250px;"></div>
+          <div style="height: 2px;"></div>
         </div>
 
         <script>

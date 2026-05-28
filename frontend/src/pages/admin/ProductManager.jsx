@@ -31,7 +31,15 @@ export function ProductManager({
         )}
       </div>
 
-      <form onSubmit={handleProductSave} className="grid-2 gap-4 align-start">
+      <form 
+        onSubmit={handleProductSave} 
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+            e.preventDefault();
+          }
+        }}
+        className="grid-2 gap-4 align-start"
+      >
         <div className="stack gap-4">
           {/* Main Attributes & Media Panel */}
           <div className="panel p-5 glass-panel stack gap-4" style={{ gridColumn: 'span 2', borderRadius: '16px' }}>

@@ -47,7 +47,7 @@ import {
 } from './utils'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://inventorymanagementsystem-production-1e18.up.railway.app/api',
 })
 
 const demoCredentials = [
@@ -425,6 +425,19 @@ function App() {
     if (cleanedValue === 'NILMA-2026-DISC295') {
       setCheckoutForm(prev => ({ ...prev, loyaltyCard: cleanedValue }))
       setNotice({ type: 'success', text: `Loyalty Card ${cleanedValue} applied.` })
+      return
+    }
+
+    // Capture in product form if currently managing catalog to prevent navigation
+    if (location.pathname === '/product-manager') {
+      setProductForm(prev => ({ ...prev, barcode: cleanedValue }))
+      setNotice({ type: 'info', text: `Captured barcode: ${cleanedValue}` })
+      return
+    }
+
+    // Capture in inventory search if on inventory page
+    if (location.pathname === '/inventory') {
+      setInventoryQuery(cleanedValue)
       return
     }
 

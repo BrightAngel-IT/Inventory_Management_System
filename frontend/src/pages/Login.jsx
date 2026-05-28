@@ -10,6 +10,7 @@ import {
   Warehouse,
 } from 'lucide-react'
 import { NoticeBanner } from '../components/NoticeBanner'
+import axios from 'axios'
 
 export function Login({
   theme,
