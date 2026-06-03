@@ -96,8 +96,8 @@ export const printReceipt = (sale, user, receivedAmount = 0) => {
     )
     .join('')
 
-  const balance = Math.max(0, receivedAmount - sale.total)
-  const subtotal = sale.items.reduce((sum, i) => sum + i.lineTotal, 0)
+  const balance = Math.max(0, (Number(receivedAmount) || 0) - sale.total)
+  const subtotal = sale.items.reduce((sum, i) => sum + (Number(i.lineTotal) || 0), 0)
 
   receiptWindow.document.write(`
     <html>
@@ -190,7 +190,7 @@ export const printReceipt = (sale, user, receivedAmount = 0) => {
         <div class="double-dashed-line"></div>
 
         <div style="text-align: center; font-weight: 700;">
-          <div style="font-size: 10px; margin-bottom: 6px;">ITEMS: ${sale.items.length} | QTY: ${sale.items.reduce((sum, i) => sum + i.quantity, 0).toFixed(2)}</div>
+          <div style="font-size: 10px; margin-bottom: 6px;">ITEMS: ${sale.items.length} | QTY: ${sale.items.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0).toFixed(2)}</div>
           <div style="font-weight: 900; margin: 6px 0; font-size: 13px;">*** THANK YOU - VISIT AGAIN ***</div>
           
           <div style="border-top: 1px dashed #000; padding-top: 8px; font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase;">
@@ -200,12 +200,18 @@ export const printReceipt = (sale, user, receivedAmount = 0) => {
         </div>
 
         <script>
-          window.focus();
-          window.print();
-          window.onafterprint = function() { window.close(); };
+          window.onload = function() {
+            setTimeout(function() {
+              window.focus();
+              window.print();
+              window.onafterprint = function() { window.close(); };
+              setTimeout(function() { window.close(); }, 1000); // safety close
+            }, 300);
+          };
         </script>
       </body>
     </html>
   `)
   receiptWindow.document.close()
 }
+

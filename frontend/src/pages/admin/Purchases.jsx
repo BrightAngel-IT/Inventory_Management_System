@@ -16,7 +16,7 @@ import { SectionHeading } from '../../components/SectionHeading'
 import { authConfig, readErrorMessage, formatCurrency, formatDate } from '../../utils'
 import { Pagination } from '../../components/Pagination'
 
-export default function Purchases({ api, session, onNotice }) {
+export default function Purchases({ api, session, onNotice, refreshCoreData }) {
   const [purchases, setPurchases] = useState([])
   const [suppliers, setSuppliers] = useState([])
   const [products, setProducts] = useState([])
@@ -87,6 +87,7 @@ export default function Purchases({ api, session, onNotice }) {
       onNotice({ type: 'success', text: 'Purchase order processed. Supplier invoice generated.' })
       setShowForm(false)
       setFormData({ supplier: '', items: [], total: 0 })
+      if (refreshCoreData) await refreshCoreData()
       fetchData()
     } catch (err) {
       onNotice({ type: 'error', text: readErrorMessage(err) })

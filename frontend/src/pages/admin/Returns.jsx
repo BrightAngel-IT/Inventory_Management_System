@@ -25,7 +25,7 @@ import { Pagination } from '../../components/Pagination'
 import _BarcodeReader from 'react-barcode-reader'
 const BarcodeReader = _BarcodeReader.default || _BarcodeReader
 
-export default function Returns({ api, session, onNotice }) {
+export default function Returns({ api, session, onNotice, refreshCoreData }) {
   const [returns, setReturns] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -184,6 +184,7 @@ export default function Returns({ api, session, onNotice }) {
       await api.post('/returns', { ...newReturn, items: itemsToReturn }, authConfig(session.token))
       onNotice({ type: 'success', text: 'Return processed successfully.' })
       setShowForm(false)
+      if (refreshCoreData) await refreshCoreData()
       fetchReturns()
       resetForm()
     } catch (error) {

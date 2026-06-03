@@ -144,7 +144,7 @@ function App() {
 
   // Auto-generate SKU for new products once data is loaded
   useEffect(() => {
-    if (products.length > 0 && !editingProductId && (!productForm.sku || productForm.sku === '')) {
+    if (products.length > 0 && !editingProductId) {
       setProductForm(prev => ({ ...prev, sku: generateNextSKU() }))
     }
   }, [products, editingProductId])
@@ -301,17 +301,24 @@ function App() {
   }, [checkoutForm.loyaltyCard])
 
   async function refreshCoreData() {
-    if (!session?.token) return
-    const [overviewResponse, productsResponse, salesResponse, customersResponse] = await Promise.all([
-      api.get('/dashboard/overview', authConfig(session.token)),
-      api.get('/products', authConfig(session.token)),
-      api.get('/sales', authConfig(session.token)),
-      api.get('/customers', authConfig(session.token)),
-    ])
-    setOverview(overviewResponse.data)
-    setProducts(productsResponse.data.products || [])
-    setSales(salesResponse.data.sales || [])
-    setCustomers(customersResponse.data || [])
+    if (!session?.token) return null
+    try {
+      const [overviewResponse, productsResponse, salesResponse, customersResponse] = await Promise.all([
+        api.get('/dashboard/overview', authConfig(session.token)),
+        api.get('/products', authConfig(session.token)),
+        api.get('/sales', authConfig(session.token)),
+        api.get('/customers', authConfig(session.token)),
+      ])
+      const freshProducts = productsResponse.data.products || [];
+      setOverview(overviewResponse.data)
+      setProducts(freshProducts)
+      setSales(salesResponse.data.sales || [])
+      setCustomers(customersResponse.data || [])
+      return freshProducts;
+    } catch (err) {
+      console.error("Refresh failed", err);
+      return null;
+    }
   }
 
   async function handleLogin(event) {
@@ -496,9 +503,10 @@ function App() {
     navigate('/inventory')
   }
 
-  function generateNextSKU() {
-    if (!products || products.length === 0) return 'SKU-001'
-    const skus = products.map(p => {
+  function generateNextSKU(customProducts) {
+    const list = customProducts || products
+    if (!list || list.length === 0) return 'SKU-001'
+    const skus = list.map(p => {
       const match = String(p.sku || '').match(/SKU-(\d+)/)
       return match ? parseInt(match[1]) : 0
     })
@@ -506,9 +514,9 @@ function App() {
     return `SKU-${String(maxNum + 1).padStart(3, '0')}`
   }
 
-  function resetProductEditor() {
+  function resetProductEditor(customProducts) {
     setEditingProductId('')
-    setProductForm({ ...emptyProductForm, sku: generateNextSKU() })
+    setProductForm({ ...emptyProductForm, sku: generateNextSKU(customProducts) })
   }
 
   async function handleProductSave(event) {
@@ -555,8 +563,8 @@ function App() {
         await api.post('/products', formData, config);
       }
       
-      await refreshCoreData()
-      resetProductEditor()
+      const freshProducts = await refreshCoreData()
+      resetProductEditor(freshProducts)
       setNotice({ type: 'success', text: 'Product saved successfully.' })
     } catch (error) {
       handleRequestError(error, 'Unable to save product.')
@@ -793,11 +801,11 @@ function App() {
               </AdminRoute>
             } />
 
-            <Route path="/purchases" element={<AdminRoute session={session}><Purchases api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
+            <Route path="/purchases" element={<AdminRoute session={session}><Purchases api={api} session={session} onNotice={setNotice} refreshCoreData={refreshCoreData} /></AdminRoute>} />
             <Route path="/invoices" element={<AdminRoute session={session}><Invoices api={api} session={session} onNotice={setNotice} sales={sales} customers={customers} /></AdminRoute>} />
             <Route path="/payments" element={<AdminRoute session={session}><PaymentAllocation api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
             <Route path="/accounts/:type/:id" element={<AccountStatement api={api} session={session} onNotice={setNotice} />} />
-            <Route path="/returns" element={<Returns api={api} session={session} onNotice={setNotice} />} />
+            <Route path="/returns" element={<Returns api={api} session={session} onNotice={setNotice} refreshCoreData={refreshCoreData} />} />
 
             <Route path="/notifications" element={
               <Notifications
