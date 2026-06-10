@@ -1,3 +1,8 @@
+export const getBaseUrl = () => {
+  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://inventorymanagementsystem-production-1e18.up.railway.app/api');
+  return apiUrl.replace(/\/api\/?$/, '');
+}
+
 export const formatCurrency = (value) => {
   return new Intl.NumberFormat('en-LK', {
     style: 'currency',
@@ -60,10 +65,16 @@ export const exportToCSV = (data, fileName) => {
   document.body.removeChild(link)
 }
 
-export const printReceipt = (sale, user, receivedAmount = 0) => {
+export const printReceipt = (sale, user, receivedAmount = 0, company = null) => {
   const receiptWindow = window.open('', '_blank', 'width=450,height=800')
 
   if (!receiptWindow) return
+
+  const logoUrl = company?.logo ? `${getBaseUrl()}${company.logo}` : ''
+  const companyName = company?.name || 'NILMA Alliance (Pvt) Ltd'
+  const companyTagline = company?.tagline || 'Excellence Across Diverse Industries'
+  const companyAddress = company?.address || '295, 1/1 Galle Road, Colombo 06, Sri Lanka'
+  const companyPhone = company?.phone || '+94-742-955-414'
 
   const rows = sale.items
     .map(
@@ -115,10 +126,11 @@ export const printReceipt = (sale, user, receivedAmount = 0) => {
       </head>
       <body style="font-family: Arial, Helvetica, sans-serif; width: 300px; margin: 0 auto; color: #000; line-height: 1.2; font-smooth: never; -webkit-font-smoothing: none;">
         <div style="text-align: center; margin-bottom: 6px; padding-top: 0; margin-top: 2px;">
-          <div style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1px;">NILMA Alliance (Pvt) Ltd</div>
-          <div style="font-size: 11px; font-weight: 800; border-top: 1px solid #000; border-bottom: 1px solid #000; display: inline-block; padding: 1px 6px; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px;">Excellence AcrossDiverse Industries</div>
-          <div style="font-size: 10px; font-weight: 700; line-height: 1.1; margin-bottom: 1px;">295, 1/1 Galle Road, Colombo 06, Sri Lanka</div>
-          <div style="font-size: 10px; font-weight: 700;">Tel: +94-742-955-414</div>
+          ${logoUrl ? `<img src="${logoUrl}" style="max-width: 150px; max-height: 60px; margin-bottom: 5px; object-fit: contain;">` : ''}
+          <div style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1px;">${companyName}</div>
+          <div style="font-size: 11px; font-weight: 800; border-top: 1px solid #000; border-bottom: 1px solid #000; display: inline-block; padding: 1px 6px; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px;">${companyTagline}</div>
+          <div style="font-size: 10px; font-weight: 700; line-height: 1.1; margin-bottom: 1px;">${companyAddress}</div>
+          <div style="font-size: 10px; font-weight: 700;">Tel: ${companyPhone}</div>
         </div>
 
         <div style="font-size: 11px; margin-bottom: 6px; font-weight: 700;">

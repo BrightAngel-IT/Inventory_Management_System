@@ -17,7 +17,7 @@ import {
   Download,
 } from 'lucide-react'
 import { SectionHeading } from '../../components/SectionHeading'
-import { formatCurrency, exportToCSV } from '../../utils'
+import { formatCurrency, exportToCSV, getBaseUrl } from '../../utils'
 import { Pagination } from '../../components/Pagination'
 
 export function Inventory({
@@ -210,7 +210,7 @@ export function Inventory({
                     <div className="cluster gap-3">
                       <div className="avatar small" style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--bg-soft)', padding: '2px', overflow: 'hidden' }}>
                         <img 
-                          src={product.image?.startsWith('/uploads') ? `${window.location.origin.replace(':5173', ':5000')}${product.image}` : product.image} 
+                          src={product.image?.startsWith('/uploads') ? `${getBaseUrl()}${product.image}` : product.image} 
                           alt="" 
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                         />

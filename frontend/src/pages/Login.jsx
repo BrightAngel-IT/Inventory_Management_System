@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { NoticeBanner } from '../components/NoticeBanner'
 import axios from 'axios'
+import { getBaseUrl } from '../utils'
 
 export function Login({
   theme,
@@ -21,7 +22,12 @@ export function Login({
   busyAction,
   demoCredentials,
   notice,
+  company,
 }) {
+  const logoUrl = company?.logo ? `${getBaseUrl()}${company.logo}` : '/logo.png'
+  const companyName = company?.name || 'NILMA Alliance'
+  const companyTagline = company?.tagline || 'Enterprise Access'
+
   return (
     <div className="auth-shell">
       <div className="auth-splash animate-fade" style={{ boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -39,7 +45,7 @@ export function Login({
             </span>
           </div>
           <h1 style={{ fontSize: '3.5rem', lineHeight: 1.1 }}>
-            Intelligent Stock <br /> Flow Management
+            {companyName} <br /> Stock Intelligence
           </h1>
           <p className="lede" style={{ color: 'rgba(255,255,255,0.8)', maxWidth: '500px' }}>
             Empower your warehouse with rack-aware inventory, high-speed billing, and real-time
@@ -71,9 +77,9 @@ export function Login({
           <div className="stack gap-1">
             <div className="cluster gap-2 mb-2">
               <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'white', display: 'grid', placeItems: 'center', boxShadow: 'var(--shadow-lg)', overflow: 'hidden' }}>
-                <img src="/logo.png" alt="NILMA Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                <img src={logoUrl} alt="Company Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
-              <p className="eyebrow">Enterprise Access</p>
+              <p className="eyebrow">{companyTagline}</p>
             </div>
             <h2 style={{ fontSize: '2.25rem', fontWeight: 800, letterSpacing: '-0.04em' }}>Sign in to start</h2>
           </div>

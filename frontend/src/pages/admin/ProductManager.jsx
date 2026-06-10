@@ -1,6 +1,7 @@
 import React from 'react'
 import { Edit, Plus, X, Warehouse, Package, Tag, FileText, DollarSign, Barcode, Layers, Image as ImageIcon, Ruler, Activity, CheckCircle2 } from 'lucide-react'
 import { SectionHeading } from '../../components/SectionHeading'
+import { getBaseUrl } from '../../utils'
 
 export function ProductManager({
   productForm,
@@ -67,7 +68,7 @@ export function ProductManager({
                 >
                   {productForm.imageFile || productForm.image ? (
                     <img 
-                      src={productForm.imageFile ? URL.createObjectURL(productForm.imageFile) : (productForm.image?.startsWith('/uploads') ? `${window.location.origin.replace(':5173', ':5000')}${productForm.image}` : productForm.image)} 
+                      src={productForm.imageFile ? URL.createObjectURL(productForm.imageFile) : (productForm.image?.startsWith('/uploads') ? `${getBaseUrl()}${productForm.image}` : productForm.image)} 
                       alt="Preview" 
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                     />

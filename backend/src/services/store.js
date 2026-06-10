@@ -12,6 +12,7 @@ const SupplierInvoice = require('../models/SupplierInvoice');
 const Customer = require('../models/Customer');
 const Supplier = require('../models/Supplier');
 const Return = require('../models/Return');
+const Company = require('../models/Company');
 
 const memoryStore = {
   ready: false,
@@ -19,6 +20,14 @@ const memoryStore = {
   products: [],
   sales: [],
   returns: [],
+  company: {
+    name: 'Inventory System',
+    tagline: 'Excellence in Management',
+    address: '',
+    phone: '',
+    email: '',
+    logo: '',
+  },
 };
 
 function clonePlain(value) {
@@ -975,7 +984,47 @@ module.exports = {
   getUsers,
   saveUser,
   deleteUser,
+  getCompany,
+  updateCompany,
 };
+
+async function getCompany() {
+  if (isDatabaseReady()) {
+    let company = await Company.findOne().lean();
+    if (!company) {
+      // Create default if none exists
+      company = await Company.create(memoryStore.company);
+    }
+    return company;
+  }
+  return memoryStore.company;
+}
+
+async function updateCompany(payload) {
+  const update = {
+    name: payload.name || 'Inventory System',
+    tagline: payload.tagline || '',
+    address: payload.address || '',
+    phone: payload.phone || '',
+    email: payload.email || '',
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (payload.logo) {
+    update.logo = payload.logo;
+  }
+
+  if (isDatabaseReady()) {
+    const company = await Company.findOneAndUpdate({}, update, {
+      new: true,
+      upsert: true,
+    }).lean();
+    return company;
+  }
+
+  memoryStore.company = { ...memoryStore.company, ...update };
+  return memoryStore.company;
+}
 
 async function getUsers() {
   if (isDatabaseReady()) {
@@ -1119,6 +1168,52 @@ async function getSales(filters = {}) {
   });
 }
 
+async function getCompany() {
+  if (isDatabaseReady()) {
+    let company = await Company.findOne().lean();
+    if (!company) {
+      company = await Company.create({
+        name: 'Inventory System',
+        tagline: 'Excellence in Management',
+      });
+    }
+    return { ...company, _id: String(company._id) };
+  }
+
+  return memoryStore.company;
+}
+
+async function updateCompany(payload) {
+  const companyData = {
+    name: String(payload.name || 'Inventory System').trim(),
+    tagline: String(payload.tagline || 'Excellence in Management').trim(),
+    address: String(payload.address || '').trim(),
+    phone: String(payload.phone || '').trim(),
+    email: String(payload.email || '').trim(),
+  };
+
+  if (payload.logo) {
+    companyData.logo = payload.logo;
+  }
+
+  if (isDatabaseReady()) {
+    let company = await Company.findOneAndUpdate({}, companyData, {
+      new: true,
+      upsert: true,
+      runValidators: true,
+    }).lean();
+
+    return { ...company, _id: String(company._id) };
+  }
+
+  memoryStore.company = {
+    ...memoryStore.company,
+    ...companyData,
+  };
+
+  return memoryStore.company;
+}
+
 module.exports = {
   createSale,
   deleteProduct,
@@ -1135,5 +1230,7 @@ module.exports = {
   saveUser,
   deleteUser,
   createReturn,
-  getReturns
+  getReturns,
+  getCompany,
+  updateCompany
 };

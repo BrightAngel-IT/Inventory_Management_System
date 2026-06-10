@@ -18,13 +18,21 @@ const supplierInvoiceRoutes = require('./routes/supplierInvoiceRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const userRoutes = require('./routes/userRoutes');
 const returnRoutes = require('./routes/returnRoutes');
+const companyRoutes = require('./routes/companyRoutes');
 
 function createApp() {
   const app = express();
 
+  let allowedOrigins = [/http:\/\/localhost:\d+/];
+  if (process.env.CLIENT_ORIGIN) {
+    const origins = process.env.CLIENT_ORIGIN.split(',').map((origin) => origin.trim());
+    allowedOrigins = [...allowedOrigins, ...origins];
+  }
+
   app.use(
     cors({
-      origin: process.env.CLIENT_ORIGIN || '*',
+      origin: allowedOrigins,
+      credentials: true,
     }),
   );
   app.use(express.json({ limit: '1mb' }));
@@ -62,6 +70,7 @@ function createApp() {
   app.use('/api/supplier-payments', require('./routes/supplierPaymentRoutes'));
   app.use('/api/users', userRoutes);
   app.use('/api/returns', returnRoutes);
+  app.use('/api/company', companyRoutes);
 
   app.use((error, _req, res, _next) => {
     console.error(error);

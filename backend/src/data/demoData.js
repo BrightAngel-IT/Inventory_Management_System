@@ -23,15 +23,15 @@ function createProductImage(label, accent, subLabel) {
 const demoUsers = [
   {
     name: 'Store Admin',
-    email: 'admin@brightangel.local',
-    password: 'Admin@123',
+    email: 'admin@gmail.com',
+    password: 'admin123',
     role: 'admin',
     branch: 'Main Warehouse',
   },
   {
     name: 'Front Cashier',
-    email: 'cashier@brightangel.local',
-    password: 'Cashier@123',
+    email: 'cashier@gmail.com',
+    password: 'cashier123',
     role: 'cashier',
     branch: 'Counter 01',
   },

@@ -4,11 +4,9 @@ import {
   Crown,
   LayoutDashboard,
   LogOut,
-  Moon,
   Receipt,
   ScanLine,
   ShoppingCart,
-  SunMedium,
   Warehouse,
   BarChart3,
   Clock,
@@ -16,16 +14,17 @@ import {
   Bell,
   Wallet,
   Users,
-  RotateCcw
+  RotateCcw,
+  Building2
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
+import { getBaseUrl } from '../utils'
 export function Sidebar({
   session,
   activeView,
-  theme,
-  setTheme,
   handleLogout,
   unreadCount,
+  company,
 }) {
   const navigation = [
     { path: '/', label: 'Overview', icon: LayoutDashboard },
@@ -49,9 +48,14 @@ export function Sidebar({
         { path: '/returns', label: 'Returns', icon: RotateCcw },
         { path: '/payments', label: 'Settlements', icon: Wallet },
         { path: '/reports', label: 'Sales Reports', icon: BarChart3 },
+        { path: '/company-profile', label: 'Company Profile', icon: Building2 },
       ]
       : []),
   ]
+
+  const logoUrl = company?.logo ? `${getBaseUrl()}${company.logo}` : '/logo.png'
+  const companyName = company?.name || 'NILMA Alliance'
+  const companyTagline = company?.tagline || 'Alliance Group'
 
   return (
     <aside className="sidebar panel glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -64,22 +68,13 @@ export function Sidebar({
       }}>
         <div className="cluster gap-3">
           <div className="brand-badge glow-on-hover" style={{ boxShadow: '0 4px 12px rgba(245, 158, 11, 0.25)', width: '42px', height: '42px', borderRadius: '12px', background: 'white', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
-            <img src="/logo.png" alt="Logo" style={{ width: '85%', height: '85%', objectFit: 'contain' }} />
+            <img src={logoUrl} alt="Logo" style={{ width: '90%', height: '90%', objectFit: 'contain' }} />
           </div>
-          <div>
-            <p className="eyebrow" style={{ fontSize: '0.65rem', color: 'var(--accent-strong)', letterSpacing: '0.05em' }}>Alliance Group</p>
-            <h2 style={{ fontSize: '1.1rem', letterSpacing: '-0.02em', fontWeight: 800, color: 'var(--text)' }}>NILMA Alliance</h2>
+          <div style={{ minWidth: 0 }}>
+            <h2 style={{ fontSize: '1.4rem', letterSpacing: '-0.02em', fontWeight: 800, color: 'var(--accent-strong)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={companyName}>{companyName}</h2>
+            <p className="eyebrow" style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text)', letterSpacing: '0.05em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={companyTagline}>{companyTagline}</p>
           </div>
         </div>
-        <button
-          type="button"
-          className="icon-btn glow-on-hover"
-          style={{ borderRadius: '12px', width: '38px', height: '38px', background: 'var(--bg-soft)', border: '1px solid var(--border)', color: 'var(--text)', transition: 'all 0.2s' }}
-          title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
-          onClick={() => setTheme((current) => (current === 'light' ? 'dark' : 'light'))}
-        >
-          {theme === 'light' ? <Moon size={18} /> : <SunMedium size={18} />}
-        </button>
       </div>
 
       {/* Scrollable Content */}
@@ -176,7 +171,7 @@ export function Sidebar({
             borderRadius: '12px',
             color: 'var(--muted)',
             background: 'transparent',
-            border: '1px solid transparent',
+            border: '1px solid var(--border)',
             transition: 'all 0.2s ease',
             cursor: 'pointer'
           }}
@@ -188,7 +183,7 @@ export function Sidebar({
           onMouseLeave={(e) => {
             e.currentTarget.style.color = 'var(--muted)';
             e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.borderColor = 'transparent';
+            e.currentTarget.style.borderColor = 'var(--border)';
           }}
           onClick={handleLogout}
         >

@@ -26,12 +26,19 @@ import {
   RefreshCw,
   MoreVertical
 } from 'lucide-react'
-import { authConfig, formatCurrency, formatDate } from '../../utils'
+import { authConfig, formatCurrency, formatDate, getBaseUrl } from '../../utils'
 import { SectionHeading } from '../../components/SectionHeading'
 
-export default function AccountStatement({ api, session, onNotice }) {
+export default function AccountStatement({ api, session, onNotice, company }) {
   const { type, id } = useParams()
   const navigate = useNavigate()
+
+  const logoUrl = company?.logo ? `${getBaseUrl()}${company.logo}` : '/logo1.png'
+  const companyName = company?.name || 'NILMA Alliance'
+  const companyTagline = company?.tagline || 'INVENTORY MANAGEMENT SOLUTIONS'
+  const companyAddress = company?.address || '295, 1/1 Galle Road, Colombo – 06, Sri Lanka'
+  const companyPhone = company?.phone || '+94 11 234 5678'
+  const companyEmail = company?.email || 'info@nilmaalliance.com'
 
   const [entity, setEntity] = useState(null)
   const [invoices, setInvoices] = useState([])
@@ -203,7 +210,7 @@ export default function AccountStatement({ api, session, onNotice }) {
       {/* Official Statement Document */}
       <div className="document-container shadow-2xl">
         {/* Official Letterhead Watermark */}
-        <div className="document-watermark">NILMA</div>
+        <div className="document-watermark">{companyName.split(' ')[0]}</div>
 
         {/* Document Header (Custom Layout) */}
         <div className="custom-document-header">
@@ -211,15 +218,15 @@ export default function AccountStatement({ api, session, onNotice }) {
           <div className="parties-col">
             <div className="company-branding-custom left-align">
               <div className="logo-vertical-stack">
-                <img src="/logo1.png" alt="NILMA Logo" className="header-logo-img large-logo" />
+                <img src={logoUrl} alt="Company Logo" className="header-logo-img large-logo" />
                 <div className="brand-text-group">
-                  <h1 className="brand-name">NILMA Alliance <span className="pvt-ltd">(Pvt) Ltd</span></h1>
-                  <p className="brand-slogan">INVENTORY MANAGEMENT SOLUTIONS</p>
+                  <h1 className="brand-name">{companyName}</h1>
+                  <p className="brand-slogan">{companyTagline}</p>
                 </div>
               </div>
               <div className="company-address-minimal">
-                <p>295, 1/1 Galle Road, Colombo – 06, Sri Lanka</p>
-                <p>+94 11 234 5678 | info@nilmaalliance.com</p>
+                <p>{companyAddress}</p>
+                <p>{companyPhone} | {companyEmail}</p>
               </div>
             </div>
 

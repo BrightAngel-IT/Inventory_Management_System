@@ -35,6 +35,7 @@ import { PaymentAllocation } from './pages/admin/PaymentAllocation'
 import StaffManagement from './pages/admin/StaffManagement'
 import StaffForm from './pages/admin/StaffForm'
 import { Settlements } from './pages/cashier/Settlements'
+import CompanyProfile from './pages/admin/CompanyProfile'
 
 
 // Utils
@@ -47,20 +48,20 @@ import {
 } from './utils'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://inventorymanagementsystem-production-1e18.up.railway.app/api',
+  baseURL: import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://inventorymanagementsystem-production-1e18.up.railway.app/api'),
 })
 
 const demoCredentials = [
   {
     label: 'Admin Demo',
-    email: 'admin@brightangel.local',
-    password: 'Admin@123',
+    email: 'admin@gmail.com',
+    password: 'admin123',
     role: 'Full reporting and inventory access',
   },
   {
     label: 'Cashier Demo',
-    email: 'cashier@brightangel.local',
-    password: 'Cashier@123',
+    email: 'cashier@gmail.com',
+    password: 'cashier123',
     role: 'Billing and stock browsing access',
   },
 ]
@@ -112,6 +113,7 @@ function App() {
   const [sales, setSales] = useState([])
   const [reportRange, setReportRange] = useState('weekly')
   const [report, setReport] = useState(null)
+  const [company, setCompany] = useState(null)
   const [customers, setCustomers] = useState([])
   const [catalogQuery, setCatalogQuery] = useState('')
   const [inventoryQuery, setInventoryQuery] = useState('')
@@ -303,21 +305,61 @@ function App() {
   async function refreshCoreData() {
     if (!session?.token) return null
     try {
-      const [overviewResponse, productsResponse, salesResponse, customersResponse] = await Promise.all([
+      const [overviewResponse, productsResponse, salesResponse, customersResponse, companyResponse] = await Promise.all([
         api.get('/dashboard/overview', authConfig(session.token)),
         api.get('/products', authConfig(session.token)),
         api.get('/sales', authConfig(session.token)),
         api.get('/customers', authConfig(session.token)),
+        api.get('/company'),
       ])
       const freshProducts = productsResponse.data.products || [];
       setOverview(overviewResponse.data)
       setProducts(freshProducts)
       setSales(salesResponse.data.sales || [])
       setCustomers(customersResponse.data || [])
+      setCompany(companyResponse.data)
       return freshProducts;
     } catch (err) {
       console.error("Refresh failed", err);
       return null;
+    }
+  }
+
+  useEffect(() => {
+    if (company?.name) {
+      document.title = `${company.name} | Inventory System`
+    }
+  }, [company])
+
+  useEffect(() => {
+    fetchCompanyInfo()
+  }, [])
+
+  async function fetchCompanyInfo() {
+    try {
+      const resp = await api.get('/company')
+      setCompany(resp.data)
+    } catch (err) {
+      console.error("Failed to load company info", err)
+    }
+  }
+
+  async function handleCompanyUpdate(formData) {
+    if (!session?.token) return
+    setBusyAction('save-company')
+    try {
+      const response = await api.post('/company', formData, {
+        headers: {
+          ...authConfig(session.token).headers,
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      setCompany(response.data)
+      setNotice({ type: 'success', text: 'Company settings updated successfully.' })
+    } catch (error) {
+      setNotice({ type: 'error', text: readErrorMessage(error, 'Unable to update company info.') })
+    } finally {
+      setBusyAction('')
     }
   }
 
@@ -636,7 +678,7 @@ function App() {
         splitUpi: '',
         splitCredit: ''
       })
-      printReceipt(response.data.sale, session.user)
+      printReceipt(response.data.sale, session.user, 0, company)
       setNotice({ type: 'success', text: 'Sale completed.' })
     } catch (error) {
       handleRequestError(error, 'Checkout failed.')
@@ -655,6 +697,7 @@ function App() {
         busyAction={busyAction}
         demoCredentials={demoCredentials}
         notice={notice}
+        company={company}
       />
     )
   }
@@ -667,14 +710,13 @@ function App() {
       <Sidebar
         session={session}
         activeView={activeView}
-        theme={theme}
-        setTheme={setTheme}
         handleLogout={handleLogout}
         unreadCount={unreadCount}
+        company={company}
       />
 
-      <main className="workspace stack gap-6">
-        <Topbar activeView={activeView} session={session} overview={overview} />
+      <main className="workspace stack gap-5">
+        <Topbar activeView={activeView} session={session} overview={overview} theme={theme} setTheme={setTheme} />
         <NoticeBanner notice={notice} />
 
         {pageLoading && (
@@ -788,7 +830,15 @@ function App() {
                 />
               </AdminRoute>
             } />
-
+            <Route path="/company-profile" element={
+              <AdminRoute session={session}>
+                <CompanyProfile
+                  company={company}
+                  onUpdate={handleCompanyUpdate}
+                  isBusy={busyAction === 'save-company'}
+                />
+              </AdminRoute>
+            } />
             <Route path="/staff-form" element={
               <AdminRoute session={session}>
                 <StaffForm
@@ -804,7 +854,7 @@ function App() {
             <Route path="/purchases" element={<AdminRoute session={session}><Purchases api={api} session={session} onNotice={setNotice} refreshCoreData={refreshCoreData} /></AdminRoute>} />
             <Route path="/invoices" element={<AdminRoute session={session}><Invoices api={api} session={session} onNotice={setNotice} sales={sales} customers={customers} /></AdminRoute>} />
             <Route path="/payments" element={<AdminRoute session={session}><PaymentAllocation api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
-            <Route path="/accounts/:type/:id" element={<AccountStatement api={api} session={session} onNotice={setNotice} />} />
+            <Route path="/accounts/:type/:id" element={<AccountStatement api={api} session={session} onNotice={setNotice} company={company} />} />
             <Route path="/returns" element={<Returns api={api} session={session} onNotice={setNotice} refreshCoreData={refreshCoreData} />} />
 
             <Route path="/notifications" element={
