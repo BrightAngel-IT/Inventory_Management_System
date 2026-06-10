@@ -23,7 +23,10 @@ const companyRoutes = require('./routes/companyRoutes');
 function createApp() {
   const app = express();
 
-  let allowedOrigins = [/http:\/\/localhost:\d+/];
+  let allowedOrigins = [
+    /http:\/\/localhost:\d+/,
+    /https?:\/\/.*\.vercel\.app$/
+  ];
   if (process.env.CLIENT_ORIGIN) {
     const origins = process.env.CLIENT_ORIGIN.split(',').map((origin) => origin.trim());
     allowedOrigins = [...allowedOrigins, ...origins];
