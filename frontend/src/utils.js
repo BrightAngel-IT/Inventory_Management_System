@@ -1,5 +1,18 @@
+export const normalizeUrl = (url) => {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('//')) {
+    return trimmed;
+  }
+  if (trimmed.includes('localhost') || trimmed.includes('127.0.0.1')) {
+    return `http://${trimmed}`;
+  }
+  return `https://${trimmed}`;
+};
+
 export const getBaseUrl = () => {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const rawUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const apiUrl = normalizeUrl(rawUrl);
   return apiUrl.replace(/\/api\/?$/, '');
 }
 
