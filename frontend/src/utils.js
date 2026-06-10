@@ -1,5 +1,5 @@
 export const getBaseUrl = () => {
-  const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : 'https://inventorymanagementsystem-production-1e18.up.railway.app/api');
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
   return apiUrl.replace(/\/api\/?$/, '');
 }
 
