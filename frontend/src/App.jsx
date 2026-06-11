@@ -472,7 +472,8 @@ function App() {
     if (!cleanedValue) return
 
     // Intercept the single allowed loyalty card barcode.
-    if (cleanedValue === 'NILMA-2026-DISC295') {
+    const expectedLoyaltyCode = company?.loyaltyCardCode || 'NILMA-2026-DISC295'
+    if (cleanedValue === expectedLoyaltyCode) {
       setCheckoutForm(prev => ({ ...prev, loyaltyCard: cleanedValue }))
       setNotice({ type: 'success', text: `Loyalty Card ${cleanedValue} applied.` })
       return
@@ -771,6 +772,7 @@ function App() {
                 api={api} 
                 session={session} 
                 onNotice={setNotice} 
+                company={company}
               />
             } />
 
@@ -853,7 +855,7 @@ function App() {
             } />
 
             <Route path="/purchases" element={<AdminRoute session={session}><Purchases api={api} session={session} onNotice={setNotice} refreshCoreData={refreshCoreData} /></AdminRoute>} />
-            <Route path="/invoices" element={<AdminRoute session={session}><Invoices api={api} session={session} onNotice={setNotice} sales={sales} customers={customers} /></AdminRoute>} />
+            <Route path="/invoices" element={<AdminRoute session={session}><Invoices api={api} session={session} onNotice={setNotice} sales={sales} customers={customers} company={company} /></AdminRoute>} />
             <Route path="/payments" element={<AdminRoute session={session}><PaymentAllocation api={api} session={session} onNotice={setNotice} /></AdminRoute>} />
             <Route path="/accounts/:type/:id" element={<AccountStatement api={api} session={session} onNotice={setNotice} company={company} />} />
             <Route path="/returns" element={<Returns api={api} session={session} onNotice={setNotice} refreshCoreData={refreshCoreData} />} />

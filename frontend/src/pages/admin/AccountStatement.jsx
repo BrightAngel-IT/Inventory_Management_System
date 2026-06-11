@@ -210,7 +210,7 @@ export default function AccountStatement({ api, session, onNotice, company }) {
       {/* Official Statement Document */}
       <div className="document-container shadow-2xl">
         {/* Official Letterhead Watermark */}
-        <div className="document-watermark">{companyName.split(' ')[0]}</div>
+        <div className="document-watermark">{company?.watermark || companyName.split(' ')[0]}</div>
 
         {/* Document Header (Custom Layout) */}
         <div className="custom-document-header">

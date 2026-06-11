@@ -19,7 +19,7 @@ import {
 import { authConfig, formatCurrency, formatDate, printReceipt, exportToCSV } from '../../utils'
 import { SectionHeading } from '../../components/SectionHeading'
 
-export default function SalesHistory({ api, session, onNotice }) {
+export default function SalesHistory({ api, session, onNotice, company }) {
   const [sales, setSales] = useState([])
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
@@ -215,8 +215,26 @@ export default function SalesHistory({ api, session, onNotice }) {
         height: '700px', 
         overflow: 'hidden',
         background: 'var(--panel-strong)',
-        boxShadow: 'var(--shadow)'
+        boxShadow: 'var(--shadow)',
+        position: 'relative'
       }}>
+        {/* Background Watermark */}
+        <div className="document-watermark" style={{
+          position: 'absolute',
+          top: '55%',
+          left: '50%',
+          transform: 'translate(-50%, -50%) rotate(-45deg)',
+          fontSize: '6.5rem',
+          fontWeight: 900,
+          color: 'var(--text)',
+          opacity: 0.02,
+          pointerEvents: 'none',
+          zIndex: 0,
+          userSelect: 'none',
+          whiteSpace: 'nowrap'
+        }}>
+          {company?.watermark || (company?.name ? company.name.split(' ')[0] : 'NILMA')}
+        </div>
         {/* Header - Fixed */}
         <div className="p-6 border-b" style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-soft)', flexShrink: 0 }}>
           <div className="between wrap-row gap-4">
@@ -295,8 +313,8 @@ export default function SalesHistory({ api, session, onNotice }) {
                   </td>
                   <td style={{ textAlign: 'right', paddingRight: '24px', borderBottom: idx === paginatedSales.length - 1 ? 'none' : '1px solid var(--border-soft)' }}>
                     <div className="cluster gap-1 justify-end">
-                      <button className="btn btn-ghost sm" title="View Detailed Bill" onClick={() => printReceipt(sale, session.user)}><Eye size={16} /></button>
-                      <button className="btn btn-ghost sm" title="Export Document" onClick={() => printReceipt(sale, session.user)}><Download size={16} /></button>
+                      <button className="btn btn-ghost sm" title="View Detailed Bill" onClick={() => printReceipt(sale, session.user, 0, company)}><Eye size={16} /></button>
+                      <button className="btn btn-ghost sm" title="Export Document" onClick={() => printReceipt(sale, session.user, 0, company)}><Download size={16} /></button>
                     </div>
                   </td>
                 </tr>

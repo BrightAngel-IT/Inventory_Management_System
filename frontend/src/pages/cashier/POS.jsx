@@ -2,6 +2,10 @@ import React, { useState } from 'react'
 import {
   CreditCard,
   Plus,
+  Minus,
+  Check,
+  Package,
+  Barcode,
   Receipt,
   Search,
   ShoppingCart,
@@ -552,59 +556,323 @@ export function POS({
                   ))}
                 </div>
               </div>
-            ) : (
-              /* Quantity Selector */
-              <div className="p-10 stack gap-8 align-center text-center animate-scale flex-1" style={{ justifyContent: 'center' }}>
-                <div className="stack gap-4 align-center">
-                  <img src={selectedItem.image || null} style={{ width: '120px', height: '120px', borderRadius: '24px', objectFit: 'cover', boxShadow: 'var(--shadow-lg)', border: '2px solid var(--accent-soft)' }} />
-                  <div className="stack gap-1">
-                    <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 900 }}>{selectedItem.name}</h2>
-                    <p className="accent-text font-strong" style={{ fontSize: '1.2rem' }}>{formatCurrency(selectedItem.price)} / unit</p>
+            ) : (() => {
+              const regularPrice = getRegularPrice(selectedItem)
+              const loyaltyPrice = getLoyaltySellingPrice(selectedItem)
+              const isLoyaltyDiscountActive = checkoutForm.loyaltyCard && loyaltyPrice < regularPrice
+              const activePrice = loyaltyPrice
+              return (
+                <div className="grid cols-1 md-cols-2 gap-6 p-6 md:p-8 flex-1 overflow-y-auto animate-scale" style={{ alignContent: 'start' }}>
+                  {/* Left Column: Showcase */}
+                  <div className="stack gap-4" style={{ alignItems: 'center' }}>
+                    <div className="panel p-4 stack gap-4 relative w-full" style={{
+                      background: 'var(--panel-strong)',
+                      borderRadius: '24px',
+                      boxShadow: 'var(--shadow-lg)',
+                      border: '1px solid var(--border)',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}>
+                      {/* Category Badge */}
+                      {selectedItem.category && (
+                        <div style={{
+                          position: 'absolute',
+                          top: 16,
+                          left: 16,
+                          background: 'var(--accent-soft)',
+                          color: 'var(--accent-strong)',
+                          padding: '4px 12px',
+                          borderRadius: '999px',
+                          fontSize: '0.7rem',
+                          fontWeight: 800,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                          zIndex: 2
+                        }}>
+                          {selectedItem.category}
+                        </div>
+                      )}
+
+                      {/* Stock Warning Badge */}
+                      {selectedItem.quantityInStock <= selectedItem.reorderLevel && (
+                        <div style={{
+                          position: 'absolute',
+                          top: 16,
+                          right: 16,
+                          background: 'var(--danger-soft)',
+                          color: 'var(--danger)',
+                          padding: '4px 12px',
+                          borderRadius: '999px',
+                          fontSize: '0.7rem',
+                          fontWeight: 800,
+                          zIndex: 2,
+                          border: '1px solid rgba(239, 68, 68, 0.2)'
+                        }}>
+                          {selectedItem.quantityInStock <= 0 ? 'SOLD OUT' : 'LOW STOCK'}
+                        </div>
+                      )}
+
+                      {/* Image Container */}
+                      <div style={{
+                        position: 'relative',
+                        width: '100%',
+                        aspectRatio: '1.3',
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        background: 'var(--bg-soft)',
+                        border: '1px solid var(--border)',
+                        marginTop: selectedItem.category || selectedItem.quantityInStock <= selectedItem.reorderLevel ? '24px' : '0px'
+                      }}>
+                        <img 
+                          src={selectedItem.image || null} 
+                          style={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            objectFit: 'cover'
+                          }} 
+                        />
+                      </div>
+
+                      {/* Product Metadata Details */}
+                      <div className="stack gap-2 pt-3" style={{ borderTop: '1px dashed var(--border)' }}>
+                        <div className="between">
+                          <div className="cluster gap-2 muted x-small">
+                            <Barcode size={13} />
+                            <span>SKU</span>
+                          </div>
+                          <strong className="x-small" style={{ color: 'var(--text)' }}>{selectedItem.sku || 'N/A'}</strong>
+                        </div>
+
+                        <div className="between">
+                          <div className="cluster gap-2 muted x-small">
+                            <Package size={13} />
+                            <span>Available Stock</span>
+                          </div>
+                          <strong className="x-small" style={{ color: selectedItem.quantityInStock <= selectedItem.reorderLevel ? 'var(--danger)' : 'var(--success)' }}>
+                            {selectedItem.quantityInStock} units
+                          </strong>
+                        </div>
+
+                        {selectedItem.barcode && (
+                          <div className="between">
+                            <div className="cluster gap-2 muted x-small">
+                              <ScanLine size={13} />
+                              <span>Barcode</span>
+                            </div>
+                            <strong className="x-small" style={{ color: 'var(--text)' }}>{selectedItem.barcode}</strong>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Pricing & Controls */}
+                  <div className="stack gap-5" style={{ textAlign: 'left', justifyContent: 'center' }}>
+                    <div className="stack gap-2">
+                      <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 900, fontFamily: 'var(--font-heading)', color: 'var(--text)', lineHeight: '1.2' }}>
+                        {selectedItem.name}
+                      </h2>
+                      {isLoyaltyDiscountActive ? (
+                        <div className="stack gap-1">
+                          <div className="cluster gap-2">
+                            <span style={{ textDecoration: 'line-through', color: 'var(--text-soft)', fontSize: '1rem' }}>
+                              {formatCurrency(regularPrice)}
+                            </span>
+                            <span style={{ background: 'var(--success-soft)', color: 'var(--success)', fontSize: '0.65rem', fontWeight: 800, padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              Loyalty Discount Active
+                            </span>
+                          </div>
+                          <div className="accent-text font-bold" style={{ fontSize: '1.6rem' }}>
+                            {formatCurrency(loyaltyPrice)} <span className="muted font-medium x-small">/ unit</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="accent-text font-bold" style={{ fontSize: '1.6rem' }}>
+                          {formatCurrency(regularPrice)} <span className="muted font-medium x-small">/ unit</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Quantity Selector Stepper */}
+                    <div className="stack gap-2">
+                      <span className="eyebrow muted x-small uppercase tracking-wider font-bold">Select Quantity</span>
+                      <div className="cluster gap-4 wrap-row">
+                        <div className="qty-box" style={{ 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          background: 'var(--bg-soft)', 
+                          borderRadius: '999px', 
+                          padding: '6px', 
+                          border: '1px solid var(--border)',
+                          boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.03)',
+                          gap: '12px'
+                        }}>
+                          <button 
+                            type="button"
+                            className="qty-btn glow-on-hover" 
+                            style={{ 
+                              width: '38px', 
+                              height: '38px', 
+                              borderRadius: '50%', 
+                              background: 'var(--panel-strong)', 
+                              border: '1px solid var(--border)',
+                              color: 'var(--text)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              fontWeight: 'bold',
+                              transition: 'all 0.2s ease'
+                            }} 
+                            onClick={() => setModalQty(q => Math.max(1, q - 1))}
+                          >
+                            <Minus size={16} />
+                          </button>
+                          <input
+                            type="number"
+                            className="ghost-input"
+                            style={{ width: '60px', textAlign: 'center', fontWeight: 900, fontSize: '1.3rem', color: 'var(--text)' }}
+                            value={modalQty}
+                            onChange={e => setModalQty(Math.max(1, parseInt(e.target.value) || 1))}
+                          />
+                          <button 
+                            type="button"
+                            className="qty-btn glow-on-hover" 
+                            style={{ 
+                              width: '38px', 
+                              height: '38px', 
+                              borderRadius: '50%', 
+                              background: 'var(--panel-strong)', 
+                              border: '1px solid var(--border)',
+                              color: 'var(--text)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              fontWeight: 'bold',
+                              transition: 'all 0.2s ease'
+                            }} 
+                            onClick={() => setModalQty(q => q + 1)}
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </div>
+
+                        {/* Quick Presets */}
+                        <div className="cluster gap-2">
+                          {[1, 2, 5, 10].map(val => (
+                            <button
+                              key={val}
+                              type="button"
+                              className="pill neutral-soft glow-on-hover"
+                              style={{ 
+                                cursor: 'pointer', 
+                                border: '1px solid var(--border)', 
+                                background: 'var(--panel-strong)', 
+                                padding: '6px 12px', 
+                                fontSize: '0.75rem', 
+                                fontWeight: 700, 
+                                borderRadius: '10px',
+                                transition: 'all 0.2s'
+                              }}
+                              onClick={() => setModalQty(q => q + val)}
+                            >
+                              +{val}
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            className="pill neutral-soft"
+                            style={{ 
+                              cursor: 'pointer', 
+                              border: '1px solid var(--border)', 
+                              background: 'var(--panel-strong)', 
+                              padding: '6px 12px', 
+                              fontSize: '0.75rem', 
+                              fontWeight: 700, 
+                              color: 'var(--danger)', 
+                              borderRadius: '10px',
+                              transition: 'all 0.2s'
+                            }}
+                            onClick={() => setModalQty(1)}
+                          >
+                            Reset
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Receipt-Style Pricing Ticket */}
+                    <div className="panel p-4 stack gap-2" style={{
+                      background: 'var(--panel-strong)',
+                      borderRadius: '16px',
+                      border: '1px dashed var(--border)',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <div className="between">
+                        <span className="muted small">Unit Price</span>
+                        <span className="font-medium small">{formatCurrency(activePrice)}</span>
+                      </div>
+                      <div className="between">
+                        <span className="muted small">Quantity</span>
+                        <span className="font-medium small">x {modalQty}</span>
+                      </div>
+                      {isLoyaltyDiscountActive && (
+                        <div className="between" style={{ color: 'var(--success)' }}>
+                          <span className="small">Loyalty Savings</span>
+                          <span className="font-bold small">-{formatCurrency((regularPrice - loyaltyPrice) * modalQty)}</span>
+                        </div>
+                      )}
+                      <div style={{ margin: '8px 0', borderTop: '1px dashed var(--border)' }}></div>
+                      <div className="between">
+                        <strong style={{ fontSize: '0.95rem', color: 'var(--text)' }}>Total Amount</strong>
+                        <strong className="accent-text" style={{ fontSize: '1.4rem', fontWeight: 900 }}>
+                          {formatCurrency(activePrice * modalQty)}
+                        </strong>
+                      </div>
+                    </div>
+
+                    {/* Actions Row */}
+                    <div className="cluster gap-3 w-full pt-2">
+                      <button
+                        type="button"
+                        className="btn btn-secondary glow-on-hover"
+                        style={{ flex: 1, padding: '12px 20px', borderRadius: '12px', fontSize: '0.95rem', fontWeight: 700 }}
+                        onClick={() => setSelectedItem(null)}
+                      >
+                        Back to Search
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-primary glow-on-hover"
+                        style={{ 
+                          flex: 1.8, 
+                          padding: '12px 20px', 
+                          borderRadius: '12px', 
+                          fontSize: '0.95rem', 
+                          fontWeight: 800,
+                          background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
+                          boxShadow: 'var(--shadow-accent)',
+                          color: '#fff'
+                        }}
+                        onClick={() => {
+                          for (let i = 0; i < modalQty; i++) {
+                            addProductToCart(selectedItem);
+                          }
+                          setIsSearchModalOpen(false);
+                          setSelectedItem(null);
+                          setModalSearch('');
+                          setModalCategory('All');
+                        }}
+                      >
+                        <Check size={18} />
+                        <span>Confirm & Add to Bill</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                <div className="stack gap-3 align-center">
-                  <span className="eyebrow muted">Select Quantity</span>
-                  <div className="qty-box p-2" style={{ background: 'var(--panel-strong)', borderRadius: '20px', scale: '1.4', border: '1px solid var(--border)' }}>
-                    <button className="qty-btn glow-on-hover" style={{ width: '44px', height: '44px', fontSize: '1.2rem', background: 'var(--bg-soft)' }} onClick={() => setModalQty(q => Math.max(1, q - 1))}>-</button>
-                    <input
-                      type="number"
-                      className="ghost-input"
-                      style={{ width: '70px', textAlign: 'center', fontWeight: 900, fontSize: '1.4rem', color: 'var(--text-strong)' }}
-                      value={modalQty}
-                      onChange={e => setModalQty(Number(e.target.value))}
-                    />
-                    <button className="qty-btn glow-on-hover" style={{ width: '44px', height: '44px', fontSize: '1.2rem', background: 'var(--bg-soft)' }} onClick={() => setModalQty(q => q + 1)}>+</button>
-                  </div>
-                  <p className="muted x-small mt-4">Total for this item: <strong>{formatCurrency(selectedItem.price * modalQty)}</strong></p>
-                </div>
-
-                <div className="cluster gap-4 w-full mt-4" style={{ maxWidth: '500px' }}>
-                  <button
-                    className="btn btn-outline glow-on-hover"
-                    style={{ flex: 1, padding: '16px', borderRadius: '16px' }}
-                    onClick={() => setSelectedItem(null)}
-                  >
-                    Back to Search
-                  </button>
-                  <button
-                    className="btn btn-primary glow-on-hover"
-                    style={{ flex: 2, padding: '16px', borderRadius: '16px', fontSize: '1.1rem', fontWeight: 800 }}
-                    onClick={() => {
-                      for (let i = 0; i < modalQty; i++) {
-                        addProductToCart(selectedItem);
-                      }
-                      setIsSearchModalOpen(false);
-                      setSelectedItem(null);
-                      setModalSearch('');
-                      setModalCategory('All');
-                    }}
-                  >
-                    Confirm & Add to Bill
-                  </button>
-                </div>
-              </div>
-            )}
+              )
+            })()}
           </div>
         </div>
       )}

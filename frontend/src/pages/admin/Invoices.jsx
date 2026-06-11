@@ -15,7 +15,7 @@ import {
 import { SectionHeading } from '../../components/SectionHeading'
 import { authConfig, formatCurrency, formatDate, exportToCSV, printReceipt } from '../../utils'
 
-export default function Invoices({ api, session, onNotice, sales: initialSales = [], customers = [] }) {
+export default function Invoices({ api, session, onNotice, sales: initialSales = [], customers = [], company }) {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('customer') // 'customer' or 'supplier'
   const [invoices, setInvoices] = useState([])
@@ -299,14 +299,14 @@ export default function Invoices({ api, session, onNotice, sales: initialSales =
                           <button 
                             className="icon-btn sm glow-on-hover" 
                             title="Preview"
-                            onClick={() => printReceipt(inv.raw, session.user)}
+                            onClick={() => printReceipt(inv.raw, session.user, 0, company)}
                           >
                             <Eye size={14} />
                           </button>
                           <button 
                             className="icon-btn sm glow-on-hover" 
                             title="Download"
-                            onClick={() => printReceipt(inv.raw, session.user)}
+                            onClick={() => printReceipt(inv.raw, session.user, 0, company)}
                           >
                             <Download size={14} />
                           </button>

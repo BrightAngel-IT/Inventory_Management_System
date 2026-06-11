@@ -257,9 +257,9 @@ export function PaymentAllocation({ api, session, onNotice }) {
                   onChange={(e) => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value })}
                 >
                   <option value="CASH">Cash</option>
+                  <option value="CARD">Card Payment</option>
                   <option value="CHEQUE">Cheque</option>
                   <option value="TRANSFER">Bank Transfer</option>
-                  <option value="CARD">Card Payment</option>
                 </select>
               </label>
               {paymentForm.paymentMethod === 'CHEQUE' && (

@@ -68,6 +68,8 @@ async function seed() {
         address: '295, 1/1 Galle Road, Colombo – 06, Sri Lanka',
         phone: '+94 11 234 5678',
         email: 'info@inventorysystem.com',
+        watermark: '',
+        loyaltyCardCode: 'NILMA-2026-DISC295',
       });
       console.log('Seeded default company profile.');
     }

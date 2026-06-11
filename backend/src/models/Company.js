@@ -8,7 +8,10 @@ const companySchema = new mongoose.Schema(
     phone: { type: String, default: '' },
     email: { type: String, default: '' },
     logo: { type: String, default: '' }, // URL or path to logo
-  },
+    watermark: { type: String, default: '' },
+    loyaltyCardCode: { type: String, default: 'NILMA-2026-DISC295' },
+    invoicePrefix: { type: String, default: 'C-INV-' },
+    nextInvoiceNumber: { type: Number, default: 1000 },  },
   {
     timestamps: true,
   },

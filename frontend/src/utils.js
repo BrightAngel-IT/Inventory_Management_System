@@ -88,6 +88,9 @@ export const printReceipt = (sale, user, receivedAmount = 0, company = null) => 
   const companyTagline = company?.tagline || 'Excellence Across Diverse Industries'
   const companyAddress = company?.address || '295, 1/1 Galle Road, Colombo 06, Sri Lanka'
   const companyPhone = company?.phone || '+94-742-955-414'
+  const watermarkText = company?.watermark || companyName.split(' ')[0]
+
+
 
   const rows = sale.items
     .map(
@@ -137,7 +140,11 @@ export const printReceipt = (sale, user, receivedAmount = 0, company = null) => 
           .double-dashed-line { border-top: 4px double #000; margin: 10px 0; }
         </style>
       </head>
-      <body style="font-family: Arial, Helvetica, sans-serif; width: 300px; margin: 0 auto; color: #000; line-height: 1.2; font-smooth: never; -webkit-font-smoothing: none;">
+      <body style="font-family: Arial, Helvetica, sans-serif; width: 300px; margin: 0 auto; color: #000; line-height: 1.2; font-smooth: never; -webkit-font-smoothing: none; position: relative;">
+        <!-- Background Watermark -->
+        <div style="position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 44px; font-weight: 900; color: #000000; opacity: 0.06; pointer-events: none; z-index: 0; user-select: none; white-space: nowrap; font-family: sans-serif;">
+          ${watermarkText}
+        </div>
         <div style="text-align: center; margin-bottom: 6px; padding-top: 0; margin-top: 2px;">
           ${logoUrl ? `<img src="${logoUrl}" style="max-width: 150px; max-height: 60px; margin-bottom: 5px; object-fit: contain;">` : ''}
           <div style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 1px;">${companyName}</div>

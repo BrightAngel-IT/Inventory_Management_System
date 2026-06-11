@@ -9,7 +9,8 @@ import {
   Type, 
   Sparkles,
   Camera,
-  Globe
+  Globe,
+  Barcode
 } from 'lucide-react'
 import { SectionHeading } from '../../components/SectionHeading'
 import { getBaseUrl } from '../../utils'
@@ -21,6 +22,10 @@ export default function CompanyProfile({ company, onUpdate, isBusy }) {
     address: '',
     phone: '',
     email: '',
+    watermark: '',
+    loyaltyCardCode: '',
+    invoicePrefix: '',
+    nextInvoiceNumber: '',
   })
   const [logoPreview, setLogoPreview] = useState(null)
   const [logoFile, setLogoFile] = useState(null)
@@ -33,6 +38,10 @@ export default function CompanyProfile({ company, onUpdate, isBusy }) {
         address: company.address || '',
         phone: company.phone || '',
         email: company.email || '',
+        watermark: company.watermark || '',
+        loyaltyCardCode: company.loyaltyCardCode || '',
+        invoicePrefix: company.invoicePrefix || '',
+        nextInvoiceNumber: company.nextInvoiceNumber || '',
       })
       if (company.logo) {
         setLogoPreview(company.logo)
@@ -52,7 +61,6 @@ export default function CompanyProfile({ company, onUpdate, isBusy }) {
       setLogoPreview(URL.createObjectURL(file))
     }
   }
-
   const handleSubmit = (e) => {
     e.preventDefault()
     const data = new FormData()
@@ -61,12 +69,15 @@ export default function CompanyProfile({ company, onUpdate, isBusy }) {
     data.append('address', formData.address)
     data.append('phone', formData.phone)
     data.append('email', formData.email)
+    data.append('watermark', formData.watermark)
+    data.append('loyaltyCardCode', formData.loyaltyCardCode)
+    data.append('invoicePrefix', formData.invoicePrefix)
+    data.append('nextInvoiceNumber', formData.nextInvoiceNumber)
     if (logoFile) {
       data.append('logo', logoFile)
     }
     onUpdate(data)
   }
-
   return (
     <div className="stack gap-6 animate-fade">
       <div className="between align-end wrap-row gap-4">
@@ -84,8 +95,27 @@ export default function CompanyProfile({ company, onUpdate, isBusy }) {
 
       <div className="grid grid-cols-12 gap-6 items-start">
         {/* Left Column: Branded Identity Card */}
+
         <div className="col-span-12 lg:col-span-4 stack gap-5">
-          <div className="panel glass-panel p-6 text-center stack align-center justify-center gap-4 glow-on-hover shadow-xl" style={{ borderRadius: '24px', minHeight: '320px', background: 'linear-gradient(145deg, var(--panel), var(--bg-soft))' }}>
+          <div className="panel glass-panel p-6 text-center stack align-center justify-center gap-4 glow-on-hover shadow-xl relative" style={{ borderRadius: '24px', minHeight: '320px', background: 'linear-gradient(145deg, var(--panel), var(--bg-soft))', overflow: 'hidden' }}>
+            {/* Watermark Preview */}
+            <div className="document-watermark-preview" style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%) rotate(-45deg)',
+              fontSize: '5.5rem',
+              fontWeight: 900,
+              color: 'var(--text)',
+              opacity: 0.03,
+              pointerEvents: 'none',
+              zIndex: 0,
+              userSelect: 'none',
+              whiteSpace: 'nowrap'
+            }}>
+              {formData.watermark || (formData.name ? formData.name.split(' ')[0] : 'COMPANY')}
+            </div>
+
             <div className="company-logo-wrapper relative" style={{ 
               width: '160px', 
               height: '160px', 
@@ -228,6 +258,82 @@ export default function CompanyProfile({ company, onUpdate, isBusy }) {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="info@nilmaalliance.com"
+                  />
+                </div>
+              </div>
+
+              <div className="col-span-2 md:col-span-1 stack gap-2">
+                <label className="label-text cluster gap-2 muted small font-bold uppercase tracking-wider">
+                  <Sparkles size={12} className="accent-text" />
+                  Watermark Text
+                </label>
+                <div className="input-shell hover-glow" style={{ borderRadius: '12px' }}>
+                  <Sparkles size={18} className="muted" />
+                  <input
+                    type="text"
+                    name="watermark"
+                    className="ghost-input"
+                    value={formData.watermark}
+                    onChange={handleChange}
+                    placeholder="e.g. NILMA"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-5">
+              <div className="col-span-2 md:col-span-1 stack gap-2">
+                <label className="label-text cluster gap-2 muted small font-bold uppercase tracking-wider">
+                  <Barcode size={12} className="accent-text" />
+                  Loyalty Card Barcode
+                </label>
+                <div className="input-shell hover-glow" style={{ borderRadius: '12px' }}>
+                  <Barcode size={18} className="muted" />
+                  <input
+                    type="text"
+                    name="loyaltyCardCode"
+                    className="ghost-input"
+                    value={formData.loyaltyCardCode}
+                    onChange={handleChange}
+                    placeholder="e.g. NILMA-2026-DISC295"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-5">
+              <div className="col-span-2 md:col-span-1 stack gap-2">
+                <label className="label-text cluster gap-2 muted small font-bold uppercase tracking-wider">
+                  <Type size={12} className="accent-text" />
+                  Invoice Prefix
+                </label>
+                <div className="input-shell hover-glow" style={{ borderRadius: '12px' }}>
+                  <Type size={18} className="muted" />
+                  <input
+                    type="text"
+                    name="invoicePrefix"
+                    className="ghost-input"
+                    value={formData.invoicePrefix}
+                    onChange={handleChange}
+                    placeholder="e.g. C-INV-"
+                  />
+                </div>
+              </div>
+
+              <div className="col-span-2 md:col-span-1 stack gap-2">
+                <label className="label-text cluster gap-2 muted small font-bold uppercase tracking-wider">
+                  <Barcode size={12} className="accent-text" />
+                  Next Invoice Number
+                </label>
+                <div className="input-shell hover-glow" style={{ borderRadius: '12px' }}>
+                  <Barcode size={18} className="muted" />
+                  <input
+                    type="number"
+                    name="nextInvoiceNumber"
+                    className="ghost-input"
+                    value={formData.nextInvoiceNumber}
+                    onChange={handleChange}
+                    placeholder="e.g. 1000"
                   />
                 </div>
               </div>

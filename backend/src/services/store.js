@@ -69,6 +69,32 @@ function makeInvoiceNumber() {
   return `C-INV-${parts.join('')}-${suffix}`;
 }
 
+async function generateInvoiceNumber() {
+  if (isDatabaseReady()) {
+    let company = await Company.findOne();
+    if (!company) {
+      company = await Company.create({
+        name: 'Inventory System',
+        tagline: 'Excellence in Management',
+        nextInvoiceNumber: 1000,
+        invoicePrefix: 'C-INV-',
+      });
+    }
+    const prefix = company.invoicePrefix || 'C-INV-';
+    const nextNum = company.nextInvoiceNumber || 1000;
+    
+    // Increment nextInvoiceNumber in DB
+    await Company.updateOne({}, { $inc: { nextInvoiceNumber: 1 } });
+    
+    return `${prefix}${nextNum}`;
+  } else {
+    const prefix = memoryStore.company.invoicePrefix || 'C-INV-';
+    const nextNum = memoryStore.company.nextInvoiceNumber || 1000;
+    memoryStore.company.nextInvoiceNumber = nextNum + 1;
+    return `${prefix}${nextNum}`;
+  }
+}
+
 function getRackLabel(rack) {
   return `R${rack.rowNumber}-C${rack.columnNumber}-S${rack.shelfNumber}`;
 }
@@ -474,12 +500,12 @@ async function createSale(payload) {
   const discount = formatCurrencyAmount(Number(payload.discount || 0));
   const tax = 0;
   const total = formatCurrencyAmount(subtotal - discount);
-
+  const invoiceNumber = await generateInvoiceNumber();
   const salePayload = {
-    invoiceNumber: makeInvoiceNumber(),
+    invoiceNumber,
     customerName: String(payload.customerName || 'Walk-in customer').trim(),
     loyaltyCard: String(payload.loyaltyCard || '').trim(),
-    paymentMethod: ['cash', 'card', 'upi', 'bank-transfer', 'credit', 'split'].includes(payload.paymentMethod)
+    paymentMethod: ['cash', 'card', 'credit', 'split'].includes(payload.paymentMethod)
       ? payload.paymentMethod
       : 'cash',
     splitPayments: payload.splitPayments || undefined,
@@ -1000,6 +1026,8 @@ async function getCompany() {
   return memoryStore.company;
 }
 
+
+
 async function updateCompany(payload) {
   const update = {
     name: payload.name || 'Inventory System',
@@ -1007,6 +1035,10 @@ async function updateCompany(payload) {
     address: payload.address || '',
     phone: payload.phone || '',
     email: payload.email || '',
+    watermark: payload.watermark || '',
+    loyaltyCardCode: payload.loyaltyCardCode || 'NILMA-2026-DISC295',
+    invoicePrefix: payload.invoicePrefix || 'C-INV-',
+    nextInvoiceNumber: payload.nextInvoiceNumber ? Number(payload.nextInvoiceNumber) : 1000,
     updatedAt: new Date().toISOString(),
   };
 
@@ -1175,6 +1207,9 @@ async function getCompany() {
       company = await Company.create({
         name: 'Inventory System',
         tagline: 'Excellence in Management',
+        loyaltyCardCode: 'NILMA-2026-DISC295',
+        invoicePrefix: 'C-INV-',
+        nextInvoiceNumber: 1000,
       });
     }
     return { ...company, _id: String(company._id) };
@@ -1190,12 +1225,15 @@ async function updateCompany(payload) {
     address: String(payload.address || '').trim(),
     phone: String(payload.phone || '').trim(),
     email: String(payload.email || '').trim(),
+    watermark: String(payload.watermark || '').trim(),
+    loyaltyCardCode: String(payload.loyaltyCardCode || 'NILMA-2026-DISC295').trim(),
+    invoicePrefix: String(payload.invoicePrefix || 'C-INV-').trim(),
+    nextInvoiceNumber: payload.nextInvoiceNumber ? Number(payload.nextInvoiceNumber) : 1000,
   };
 
   if (payload.logo) {
     companyData.logo = payload.logo;
   }
-
   if (isDatabaseReady()) {
     let company = await Company.findOneAndUpdate({}, companyData, {
       new: true,
