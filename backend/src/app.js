@@ -37,6 +37,7 @@ function createApp() {
       origin: (origin, callback) => {
         if (!origin) return callback(null, true);
         const isAllowed = allowedOrigins.some((allowed) => {
+          if (allowed === '*') return true;
           if (allowed instanceof RegExp) {
             return allowed.test(origin);
           }
