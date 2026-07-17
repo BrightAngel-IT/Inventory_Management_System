@@ -1,3 +1,4 @@
+//backend\src\app.js
 const cors = require('cors');
 const express = require('express');
 const path = require('path');
@@ -64,8 +65,17 @@ function createApp() {
   // Static serving for images
   app.use('/uploads', express.static(uploadsDir));
 
-  app.get('/api/health', (_req, res) => {
-    res.json({
+  app.get('/', (req, res) => {
+    res.status(200).json({
+      success: true,
+      message: 'Inventory backend is running',
+    });
+  });
+
+  app.get('/api/health', (req, res) => {
+    res.status(200).json({
+      success: true,
+      message: 'API is healthy',
       status: 'ok',
       mode: process.env.MONGO_URI ? 'atlas-ready' : 'demo-memory',
       timestamp: new Date().toISOString(),
